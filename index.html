@@ -289,24 +289,30 @@
         </article>
 
         <article class="panel">
-          <h2>Family setup</h2>
-          <div class="grid-2">
-            <div class="field">
-              <label for="playerName">Family member</label>
-              <input id="playerName" type="text" placeholder="Add a name" />
-            </div>
-            <div class="field">
-              <label for="playerPoints">Starting points</label>
-              <input id="playerPoints" type="number" min="0" step="1" value="10" />
-            </div>
-          </div>
-          <div class="small-actions" style="margin-top:1rem;">
-            <button class="btn btn-primary" type="button" id="addPlayerBtn">Add family member</button>
-            <button class="btn btn-secondary" type="button" id="resetDemoBtn">Load example</button>
-            <button class="btn btn-danger" type="button" id="clearAllBtn">Clear everything</button>
-          </div>
-          <p class="footer-note">Use different starting points for kids, adults, or bonus rounds if you want handicaps.</p>
-        </article>
+  <details open>
+    <summary style="cursor:pointer; list-style:none;">
+      <h2 style="display:inline;">Family setup</h2>
+    </summary>
+
+    <div class="grid-2" style="margin-top:0.75rem;">
+      <div class="field">
+        <label for="playerName">Family member</label>
+        <input id="playerName" type="text" placeholder="Add a name" />
+      </div>
+      <div class="field">
+        <label for="playerPoints">Starting points</label>
+        <input id="playerPoints" type="number" min="0" step="1" value="10" />
+      </div>
+    </div>
+
+    <div class="small-actions" style="margin-top:1rem;">
+      <button class="btn btn-primary" type="button" id="addPlayerBtn">Add family member</button>
+      <button class="btn btn-secondary" type="button" id="resetDemoBtn">Load example</button>
+      <button class="btn btn-danger" type="button" id="clearAllBtn">Clear everything</button>
+    </div>
+    <p class="footer-note">Use different starting points for kids, adults, or bonus rounds if you want handicaps.</p>
+  </details>
+</article>
 
         <article class="panel">
           <h2>Players</h2>
