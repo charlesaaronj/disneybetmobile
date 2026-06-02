@@ -1,1 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Disney Line Bet</title>
 
+  <link rel="preconnect" href="https://api.fontshare.com" />
+  <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root, [data-theme="light"] {
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+
+      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
+      --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem;
+
+      --color-bg: #f7f6f2;
+      --color-surface: #f9f8f5;
+      --color-surface-2: #fbfbf9;
+      --color-surface-offset: #f3f0ec;
+      --color-border: #d4d1ca;
+
+      --color-text: #28251d;
+      --color-text-muted: #6f6d67;
+      --color-text-faint: #9d9a92;
+      --color-text-inverse: #f9f8f4;
+
+      --color-primary: #01696f;
+      --color-primary-hover: #0c4e54;
+      --color-success: #437a22;
+      --color-warning: #964219;
+      --color-error: #a12c7b;
+      --color-gold: #d19900;
+
+      --radius-sm: 0.5rem; --radius-md: 0.8rem; --radius-lg: 1.1rem; --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 2px rgba(40,37,29,.06);
+      --shadow-md: 0 8px 24px rgba(40,37,29,.09);
+
+      --font-display: 'Cabinet Grotesk', 'Inter', sans-serif;
+      --font-body: 'Satoshi', 'Inter', sans-serif;
+    }
+
+    [data-theme="dark"] {
+      --color-bg: #171614;
+      --color-surface: #1c1b19;
+      --color-surface-2: #201f1d;
+      --color-surface-offset: #22211f;
+      --color-border: #393836;
+
+      --color-text: #e2dfd8;
+      --color-text-muted: #b1aea7;
+      --color-text-faint: #7d7a73;
+      --color-text-inverse: #211f1c;
+
+      --color-primary: #4f98a3;
+      --color-primary-hover: #227f8b;
+      --color-success: #6daa45;
+      --color-warning: #bb653b;
+      --color-error: #d163a7;
+      --color-gold: #e8af34;
+
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.25);
+      --shadow-md: 0 10px 28px rgba(0,0,0,.36);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: none; text-size-adjust: none; scroll-behavior: smooth; }
+
+    body {
+      min-height: 100dvh;
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      line-height: 1.55;
+      color: var(--color-text);
+      background:
+        radial-gradient(circle at top left, color-mix(in oklab, var(--color-gold) 10%, transparent), transparent 28%),
+        radial-gradient(circle at top right, color-mix(in oklab, var(--color-primary) 12%, transparent), transparent 30%),
+        var(--color-bg);
+    }
+
+    button, input, textarea, select { font: inherit; color: inherit; }
+    button { cursor: pointer; border: none; background: none; }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid color-mix(in oklab, var(--color-text) 14%, transparent);
+      background: var(--color-surface-2);
+      border-radius: var(--radius-md);
+      padding: 0.85rem 0.95rem;
+    }
+    textarea { min-height: 88px; resize: vertical; }
+
+    :focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+    .app { max-width: 1280px; margin: 0 auto; padding: var(--space-4); }
+
+    .topbar {
+      display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; margin-bottom: var(--space-6);
+      padding: var(--space-4);
+      background: color-mix(in oklab, var(--color-surface) 84%, transparent);
+      border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand { display: flex; gap: var(--space-3); align-items: center; }
+    .logo { width: 42px; height: 42px; color: var(--color-primary); }
+
+    h1, h2, h3 { font-family: var(--font-display); line-height: 1.08; }
+    h1 { font-size: var(--text-xl); }
+    h2 { font-size: var(--text-lg); margin-bottom: var(--space-3); }
+    h3 { font-size: 1.1rem; }
+
+    .sub { color: var(--color-text-muted); font-size: var(--text-sm); max-width: 60ch; }
+
+    .top-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+      min-height: 44px; padding: 0.8rem 1rem;
+      border-radius: var(--radius-full); border: 1px solid transparent;
+      font-weight: 700; font-size: var(--text-sm);
+      transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, transform 180ms ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: var(--color-primary); color: var(--color-text-inverse); }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-secondary { background: var(--color-surface-offset); border-color: color-mix(in oklab, var(--color-text) 10%, transparent); }
+    .btn-danger { background: color-mix(in oklab, var(--color-error) 14%, var(--color-surface)); color: var(--color-error); border-color: color-mix(in oklab, var(--color-error) 30%, transparent); }
+
+    .layout { display: grid; grid-template-columns: 1.1fr 1.6fr; gap: var(--space-4); }
+    .stack { display: grid; gap: var(--space-4); }
+
+    .panel {
+      background: color-mix(in oklab, var(--color-surface) 90%, transparent);
+      border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(12px);
+    }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+
+    .field { display: grid; gap: .45rem; }
+    .field label { font-size: var(--text-sm); font-weight: 700; }
+    .hint { color: var(--color-text-muted); font-size: var(--text-xs); }
+
+    .players { display: grid; gap: var(--space-3); }
+
+    .player-chip, .score-card, .history-item, .player-bet-row {
+      border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
+      background: var(--color-surface-2);
+      border-radius: var(--radius-md);
+    }
+
+    .player-chip { display: grid; grid-template-columns: 1fr auto auto; gap: var(--space-2); padding: var(--space-3); align-items: center; }
+
+    .scoreboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-3); }
+    .score-card { padding: var(--space-3); display: grid; gap: .35rem; }
+    .score-name { font-weight: 700; }
+    .score-points { font-size: 1.55rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--color-primary); }
+
+    .muted { color: var(--color-text-muted); }
+
+    .pill {
+      display: inline-flex; align-items: center; min-height: 28px;
+      padding: .3rem .7rem; border-radius: var(--radius-full);
+      font-size: var(--text-xs); font-weight: 700;
+    }
+    .pill-open { background: color-mix(in oklab, var(--color-gold) 18%, var(--color-surface)); color: var(--color-warning); }
+    .pill-won { background: color-mix(in oklab, var(--color-success) 18%, var(--color-surface)); color: var(--color-success); }
+    .pill-lost { background: color-mix(in oklab, var(--color-error) 14%, var(--color-surface)); color: var(--color-error); }
+
+    .bet-list, .history-list { display: grid; gap: var(--space-3); }
+    .bet-card, .history-item { padding: var(--space-4); display: grid; gap: var(--space-3); }
+
+    .bet-head { display: flex; justify-content: space-between; gap: var(--space-3); align-items: start; }
+
+    .bet-meta { display: flex; flex-wrap: wrap; gap: .45rem; }
+
+    .player-bet-row {
+      padding: .85rem;
+      display: grid;
+      grid-template-columns: 1.2fr .9fr .8fr;
+      gap: var(--space-3);
+      align-items: center;
+    }
+    .player-bet-row strong { font-size: var(--text-sm); }
+
+    .empty {
+      color: var(--color-text-muted);
+      padding: var(--space-6);
+      text-align: center;
+      border: 1px dashed color-mix(in oklab, var(--color-text) 18%, transparent);
+      border-radius: var(--radius-md);
+    }
+
+    .small-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+    .small-actions .btn { min-height: 38px; padding: .6rem .9rem; }
+
+    .totals { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+    .metric { padding: var(--space-3); background: var(--color-surface-offset); border-radius: var(--radius-md); min-width: 140px; }
+    .metric-value { display: block; font-size: 1.2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    .footer-note { margin-top: var(--space-4); font-size: var(--text-xs); color: var(--color-text-muted); }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap;
+    }
+
+    .pot-pill {
+      background: color-mix(in oklab, var(--color-gold) 24%, var(--color-surface));
+      color: var(--color-warning);
+      margin-left: .5rem;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      box-shadow: var(--shadow-md);
+      max-width: 360px;
+      width: calc(100vw - 2rem);
+      display: grid;
+      gap: var(--space-3);
+    }
+    .modal-title { font-family: var(--font-display); font-size: var(--text-lg); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
+
+    @media (max-width: 900px) {
+      .layout, .grid-2, .player-bet-row, .player-chip { grid-template-columns: 1fr; }
+      .topbar, .bet-head { align-items: start; flex-direction: column; }
+      .top-actions, .small-actions { width: 100%; }
+      .top-actions .btn, .small-actions .btn { flex: 1 1 auto; }
+      .app { padding: var(--space-3); }
+    }
+  </style>
+</head>
+
+<body>
+  <a class="sr-only" href="#main">Skip to content</a>
+
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 64 64" fill="none" aria-label="Disney Line Bet logo">
+          <path d="M14 48c4-13 14-22 28-25-2 11-9 21-20 28" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="22" cy="20" r="6" stroke="currentColor" stroke-width="4"/>
+          <circle cx="40" cy="16" r="5" stroke="currentColor" stroke-width="4"/>
+          <path d="M18 50h30" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <h1>Disney Line Bet</h1>
+          <p class="sub">Track family wagers, settle each bet in seconds, and keep a reusable history of funny in-park predictions.</p>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button class="btn btn-secondary" type="button" data-theme-toggle aria-label="Switch to dark mode">🌙 Theme</button>
+        <button class="btn btn-secondary" type="button" id="exportBtn">Export game</button>
+        <button class="btn btn-secondary" type="button" id="importBtn">Import game</button>
+        <input id="importFile" type="file" accept="application/json" class="sr-only" />
+      </div>
+    </header>
+
+    <main id="main" class="layout">
+      <section class="stack">
+        <article class="panel">
+          <h2>Scores</h2>
+          <div id="scoreboard" class="scoreboard"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Family setup</h2>
+          <div class="grid-2">
+            <div class="field">
+              <label for="playerName">Family member</label>
+              <input id="playerName" type="text" placeholder="Add a name" />
+            </div>
+            <div class="field">
+              <label for="playerPoints">Starting points</label>
+              <input id="playerPoints" type="number" min="0" step="1" value="10" />
+            </div>
+          </div>
+          <div class="small-actions" style="margin-top:1rem;">
+            <button class="btn btn-primary" type="button" id="addPlayerBtn">Add family member</button>
+            <button class="btn btn-secondary" type="button" id="resetDemoBtn">Load example</button>
+            <button class="btn btn-danger" type="button" id="clearAllBtn">Clear everything</button>
+          </div>
+          <p class="footer-note">Use different starting points for kids, adults, or bonus rounds if you want handicaps.</p>
+        </article>
+
+        <article class="panel">
+          <h2>Players</h2>
+          <p class="hint" style="margin-bottom:.5rem;">
+            Stuck at zero? Use the pot to give someone a few points back so they can keep playing.
+          </p>
+          <div id="playersList" class="players"></div>
+        </article>
+      </section>
+
+      <section class="stack">
+        <article class="panel">
+          <h2>New bet</h2>
+
+          <div class="field">
+            <label for="betDescription">Bet description</label>
+            <textarea id="betDescription" placeholder="Type your own bet or tap Random bet idea."></textarea>
+          </div>
+
+          <div class="small-actions" style="margin-top:.5rem;">
+            <button class="btn btn-secondary" type="button" id="randomBetBtn">Random bet idea</button>
+          </div>
+
+          <div id="starterHint" class="hint" style="margin-top:.75rem;"></div>
+
+          <div class="field" style="margin-top:1rem;">
+            <label>Each player's pick</label>
+            <p class="hint">Choose yes or no, then enter a wager. Use 0 points if someone is sitting this one out.</p>
+          </div>
+          <div id="betPlayers" class="players" style="margin-top:.5rem;"></div>
+
+          <div class="small-actions" style="margin-top:1rem;">
+            <button class="btn btn-primary" type="button" id="createBetBtn">Create open bet</button>
+            <button class="btn btn-secondary" type="button" id="clearBetFormBtn">Clear</button>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h2>Open bets</h2>
+          <div id="openBetMetrics" class="totals"></div>
+          <div id="openBets" class="bet-list" style="margin-top:1rem;"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Bet history</h2>
+          <div id="historyList" class="history-list"></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <!-- Pot / refund modal -->
+  <div id="refundModalBackdrop" class="modal-backdrop" style="display:none;">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="refundModalTitle">
+      <div>
+        <h3 id="refundModalTitle" class="modal-title">No one was right</h3>
+        <p class="hint" id="refundModalText"></p>
+      </div>
+      <div class="field">
+        <label for="refundPotInput">Add extra points to this pot (optional)</label>
+        <input id="refundPotInput" type="number" min="0" step="1" value="0" />
+        <p class="hint">Use this if you want to sweeten the pot before you decide what to do with it.</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="refundRemoveBtn">Remove (let pot stay lost)</button>
+        <button type="button" class="btn btn-primary" id="refundRefundBtn">Refund (return pot to players)</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Preset bet ideas (edit this list however you like)
+    const presetBets = [
+      'The next cast member we talk to will be wearing a celebration button.',
+      'The next person we see eating will be eating ice cream.',
+      'The next ride we pass will have a wait time over 40 minutes.',
+      'The next stroller we see will have balloons tied to it.',
+      'The next person in line in front of us will be wearing Mickey ears.',
+      'The next parade performer we see will be in blue.',
+      'The next song we hear will mention the word "magic".',
+      'The next souvenir someone in our group wants will cost more than 25 points.',
+      'The next ride photo will have someone with their hands up.',
+      'The next snack we buy will have chocolate in it.'
+    ];
+
+    function getRandomPresetBet() {
+      if (!presetBets.length) return '';
+      const index = Math.floor(Math.random() * presetBets.length);
+      return presetBets[index];
+    }
+
+    const state = {
+      players: [],
+      bets: [],
+      pot: 0
+    };
+
+    const els = {
+      playerName: document.getElementById('playerName'),
+      playerPoints: document.getElementById('playerPoints'),
+      playersList: document.getElementById('playersList'),
+      scoreboard: document.getElementById('scoreboard'),
+      betPlayers: document.getElementById('betPlayers'),
+      betDescription: document.getElementById('betDescription'),
+      starterHint: document.getElementById('starterHint'),
+      openBets: document.getElementById('openBets'),
+      historyList: document.getElementById('historyList'),
+      openBetMetrics: document.getElementById('openBetMetrics'),
+      importFile: document.getElementById('importFile'),
+      refundBackdrop: document.getElementById('refundModalBackdrop'),
+      refundText: document.getElementById('refundModalText'),
+      refundInput: document.getElementById('refundPotInput'),
+      refundRefundBtn: document.getElementById('refundRefundBtn'),
+      refundRemoveBtn: document.getElementById('refundRemoveBtn')
+    };
+
+    const STORAGE_KEY = 'disney-line-bet-v1';
+    const uid = () => Math.random().toString(36).slice(2, 10);
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.error('Could not save state', e);
+      }
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed.players) || !Array.isArray(parsed.bets)) return;
+        state.players = parsed.players;
+        state.bets = parsed.bets.map(bet => ({
+          ...bet,
+          entries: bet.entries.map(entry => ({ ...entry, amount: Number(entry.amount || 0) })),
+          refunded: !!bet.refunded
+        }));
+        state.pot = Number(parsed.pot || 0);
+        recalculateScores();
+        render();
+      } catch (e) {
+        console.error('Could not load saved state', e);
+      }
+    }
+
+    function addPlayer(name, startingPoints) {
+      state.players.push({
+        id: uid(),
+        name: name.trim(),
+        startingPoints: Number(startingPoints),
+        currentPoints: Number(startingPoints)
+      });
+      saveState();
+      render();
+    }
+
+    function removePlayer(playerId) {
+      state.players = state.players.filter(player => player.id !== playerId);
+      state.bets = state.bets.filter(bet => !bet.entries.some(entry => entry.playerId === playerId));
+      recalculateScores();
+      saveState();
+      render();
+    }
+
+    function recalculateScores() {
+      state.players = state.players.map(player => ({
+        ...player,
+        currentPoints: player.startingPoints
+      }));
+      const playerMap = Object.fromEntries(state.players.map(player => [player.id, player]));
+
+      state.bets.forEach(bet => {
+        if (bet.status !== 'resolved' || bet.refunded) return;
+
+        const activeEntries = bet.entries.filter(entry => entry.amount > 0);
+        const pot = activeEntries.reduce((sum, entry) => sum + entry.amount, 0);
+        const winners = bet.outcome === 'won'
+          ? activeEntries.filter(entry => entry.prediction === 'yes')
+          : activeEntries.filter(entry => entry.prediction === 'no');
+
+        activeEntries.forEach(entry => {
+          if (playerMap[entry.playerId]) {
+            playerMap[entry.playerId].currentPoints -= entry.amount;
+          }
+        });
+
+        if (winners.length > 0) {
+          const share = Math.floor(pot / winners.length);
+          const remainder = pot % winners.length;
+          winners.forEach((winner, index) => {
+            if (playerMap[winner.playerId]) {
+              playerMap[winner.playerId].currentPoints += share + (index === 0 ? remainder : 0);
+            }
+          });
+        }
+      });
+    }
+
+    function getAvailablePoints(playerId) {
+      const player = state.players.find(p => p.id === playerId);
+      return player ? player.currentPoints : 0;
+    }
+
+    function buildBetEntries() {
+      const rows = [...document.querySelectorAll('[data-bet-player-row]')];
+      const entries = rows.map(row => ({
+        playerId: row.dataset.playerId,
+        prediction: row.querySelector('[data-prediction]').value,
+        amount: Number(row.querySelector('[data-amount]').value || 0)
+      }));
+
+      const active = entries.filter(entry => entry.amount > 0);
+      if (!active.length) {
+        alertLike('Add a wager for at least one family member.');
+        return null;
+      }
+
+      for (const entry of active) {
+        const available = getAvailablePoints(entry.playerId);
+        if (entry.amount > available) {
+          const player = state.players.find(p => p.id === entry.playerId);
+          alertLike(`${player.name} only has ${available} points available.`);
+          return null;
+        }
+      }
+      return entries;
+    }
+
+    function pickStarterPlayerId(entries) {
+      const availablePlayers = state.players.filter(p => p.currentPoints > 0);
+      if (!availablePlayers.length) return null;
+      const randomIndex = Math.floor(Math.random() * availablePlayers.length);
+      return availablePlayers[randomIndex].id;
+    }
+
+    function createBet() {
+      if (!state.players.length) return alertLike('Add family members before creating a bet.');
+
+      let description = els.betDescription.value.trim();
+      if (!description) {
+        // No custom text: auto-fill with a random preset bet
+        const random = getRandomPresetBet();
+        if (!random) {
+          return alertLike('Write a bet description first.');
+        }
+        description = random;
+        els.betDescription.value = random;
+      }
+
+      const entries = buildBetEntries();
+      if (!entries) return;
+
+      const starterPlayerId = pickStarterPlayerId(entries) || entries[0].playerId;
+
+      state.bets.unshift({
+        id: uid(),
+        description,
+        createdAt: new Date().toLocaleString(),
+        status: 'open',
+        outcome: null,
+        entries,
+        refunded: false,
+        starterPlayerId
+      });
+
+      els.betDescription.value = '';
+      els.starterHint.textContent = '';
+      saveState();
+      render();
+    }
+
+    let pendingRefundBetId = null;
+
+    function openRefundModal(bet, pot) {
+      pendingRefundBetId = bet.id;
+      els.refundText.textContent = `This bet’s pot is ${pot} points. You can add extra points to this pot, then either refund everyone or remove it to keep those points in the central pot.`;
+      els.refundInput.value = 0;
+      els.refundBackdrop.style.display = 'flex';
+    }
+
+    function closeRefundModal() {
+      pendingRefundBetId = null;
+      els.refundBackdrop.style.display = 'none';
+    }
+
+    function resolveBet(betId, outcome) {
+      const bet = state.bets.find(item => item.id === betId);
+      if (!bet) return;
+
+      const activeEntries = bet.entries.filter(entry => entry.amount > 0);
+      const winningPrediction = outcome === 'won' ? 'yes' : 'no';
+      const winners = activeEntries.filter(entry => entry.prediction === winningPrediction);
+      const pot = activeEntries.reduce((sum, entry) => sum + entry.amount, 0);
+
+      if (!winners.length && activeEntries.length) {
+        openRefundModal(bet, pot);
+
+        const onRefund = () => {
+          const extra = Math.max(0, Number(els.refundInput.value || 0));
+          state.pot += extra;
+          bet.status = 'resolved';
+          bet.outcome = outcome;
+          bet.resolvedAt = new Date().toLocaleString();
+          bet.refunded = true;
+          closeRefundModal();
+          recalculateScores();
+          saveState();
+          render();
+          cleanup();
+        };
+
+        const onRemove = () => {
+          const extra = Math.max(0, Number(els.refundInput.value || 0));
+          state.pot += pot + extra;
+          bet.status = 'resolved';
+          bet.outcome = outcome;
+          bet.resolvedAt = new Date().toLocaleString();
+          bet.refunded = false;
+          closeRefundModal();
+          recalculateScores();
+          saveState();
+          render();
+          cleanup();
+        };
+
+        const cleanup = () => {
+          els.refundRefundBtn.removeEventListener('click', onRefund);
+          els.refundRemoveBtn.removeEventListener('click', onRemove);
+        };
+
+        els.refundRefundBtn.addEventListener('click', onRefund);
+        els.refundRemoveBtn.addEventListener('click', onRemove);
+
+        return;
+      }
+
+      bet.status = 'resolved';
+      bet.outcome = outcome;
+      bet.resolvedAt = new Date().toLocaleString();
+      bet.refunded = false;
+      recalculateScores();
+      saveState();
+      render();
+    }
+
+    function reopenBet(betId) {
+      const bet = state.bets.find(item => item.id === betId);
+      if (!bet) return;
+      bet.status = 'open';
+      bet.outcome = null;
+      bet.refunded = false;
+      delete bet.resolvedAt;
+      recalculateScores();
+      saveState();
+      render();
+    }
+
+    function cloneBet(betId) {
+      const bet = state.bets.find(item => item.id === betId);
+      if (!bet) return;
+      els.betDescription.value = bet.description;
+      renderBetPlayers(bet.entries);
+      const starter = state.players.find(p => p.id === bet.starterPlayerId);
+      els.starterHint.textContent = starter
+        ? `${starter.name} started this bet last time.`
+        : '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deleteBet(betId) {
+      state.bets = state.bets.filter(bet => bet.id !== betId);
+      recalculateScores();
+      saveState();
+      render();
+    }
+
+    function exportGame() {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `disney-line-bet-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function importGame(file) {
+      const reader = new FileReader();
+      reader.onload = event => {
+        try {
+          const parsed = JSON.parse(event.target.result);
+          if (!Array.isArray(parsed.players) || !Array.isArray(parsed.bets)) throw new Error('Invalid file');
+          state.players = parsed.players;
+          state.bets = parsed.bets.map(bet => ({
+            ...bet,
+            entries: bet.entries.map(entry => ({ ...entry, amount: Number(entry.amount || 0) })),
+            refunded: !!bet.refunded
+          }));
+          state.pot = Number(parsed.pot || 0);
+          recalculateScores();
+          saveState();
+          render();
+        } catch {
+          alertLike('That file could not be imported.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function alertLike(message) {
+      const existing = document.getElementById('appToast');
+      if (existing) existing.remove();
+      const toast = document.createElement('div');
+      toast.id = 'appToast';
+      toast.textContent = message;
+      Object.assign(toast.style, {
+        position: 'fixed', left: '50%', bottom: '16px', transform: 'translateX(-50%)', zIndex: 999,
+        padding: '12px 16px', borderRadius: '999px', background: 'var(--color-text)', color: 'var(--color-text-inverse)',
+        boxShadow: 'var(--shadow-md)', maxWidth: 'calc(100vw - 32px)'
+      });
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2200);
+    }
+
+    function renderPlayers() {
+      if (!state.players.length) {
+        els.playersList.innerHTML = '<div class="empty">No family members yet. Add names on the left to begin.</div>';
+        return;
+      }
+
+      const potHtml = `
+        <div class="player-chip" style="margin-bottom:.5rem;">
+          <div>
+            <strong>Central pot</strong>
+            <div class="hint">Extra points you can give back to players.</div>
+          </div>
+          <span class="pill pot-pill">Pot ${state.pot}</span>
+          <button class="btn btn-secondary" type="button" onclick="addToPot()">Add to pot</button>
+        </div>
+      `;
+
+      const playersHtml = state.players.map(player => `
+        <div class="player-chip">
+          <div>
+            <strong>${escapeHtml(player.name)}</strong>
+            <div class="hint">Starts with ${player.startingPoints} points</div>
+          </div>
+          <span class="pill pill-open">${player.currentPoints} now</span>
+          ${
+            player.currentPoints === 0 && state.pot > 0
+              ? `<button class="btn btn-secondary" type="button" onclick="giveFromPot('${player.id}')">Give from pot</button>`
+              : `<button class="btn btn-danger" type="button" onclick="removePlayer('${player.id}')">Remove</button>`
+          }
+        </div>
+      `).join('');
+
+      els.playersList.innerHTML = potHtml + playersHtml;
+    }
+
+    function renderScoreboard() {
+      if (!state.players.length) {
+        els.scoreboard.innerHTML = '<div class="empty">Scores will appear here once players are added.</div>';
+        return;
+      }
+      const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
+      els.scoreboard.innerHTML = ranked.map((player, index) => `
+        <div class="score-card">
+          <div class="muted">${index + 1 === 1 ? 'Leader' : `Place ${index + 1}`}</div>
+          <div class="score-name">${escapeHtml(player.name)}</div>
+          <div class="score-points">${player.currentPoints}</div>
+          <div class="hint">Started with ${player.startingPoints}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderBetPlayers(savedEntries = null) {
+      if (!state.players.length) {
+        els.betPlayers.innerHTML = '<div class="empty">Add players to build betting rounds.</div>';
+        return;
+      }
+
+      let order = [...state.players];
+
+      if (!savedEntries) {
+        const available = state.players.filter(p => p.currentPoints > 0);
+        if (available.length) {
+          const starterId = available[Math.floor(Math.random() * available.length)].id;
+          const starterPlayer = state.players.find(p => p.id === starterId);
+          els.starterHint.textContent = `Starter: ${starterPlayer.name} starts this bet.`;
+          order.sort((a, b) => (a.id === starterId ? -1 : b.id === starterId ? 1 : 0));
+        } else {
+          els.starterHint.textContent = '';
+        }
+      } else {
+        els.starterHint.textContent = '';
+      }
+
+      els.betPlayers.innerHTML = order.map(player => {
+        const saved = savedEntries?.find(entry => entry.playerId === player.id);
+        const prediction = saved?.prediction || 'yes';
+        const amount = saved ? Number(saved.amount || 0) : 0;
+
+        return `
+          <div class="player-bet-row" data-bet-player-row data-player-id="${player.id}">
+            <div>
+              <strong>${escapeHtml(player.name)}</strong>
+              <div class="hint">Available: ${player.currentPoints} points</div>
+            </div>
+            <div class="field">
+              <label>Prediction</label>
+              <select data-prediction>
+                <option value="yes" ${prediction === 'yes' ? 'selected' : ''}>Yes</option>
+                <option value="no" ${prediction === 'no' ? 'selected' : ''}>No</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Wager</label>
+              <input data-amount type="number" min="0" step="1" value="${amount}" placeholder="0" />
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderOpenMetrics() {
+      const openBets = state.bets.filter(bet => bet.status === 'open');
+      const totalOpen = openBets.length;
+      const totalRisk = openBets.reduce((sum, bet) =>
+        sum + bet.entries.reduce((inner, e) => inner + (Number(e.amount) || 0), 0), 0);
+      const activePlayers = new Set(
+        openBets.flatMap(bet => bet.entries.filter(e => e.amount > 0).map(e => e.playerId))
+      ).size;
+
+      els.openBetMetrics.innerHTML = `
+        <div class="metric"><span class="muted">Open bets</span><span class="metric-value">${totalOpen}</span></div>
+        <div class="metric"><span class="muted">Points in play</span><span class="metric-value">${totalRisk}</span></div>
+        <div class="metric"><span class="muted">Players active</span><span class="metric-value">${activePlayers}</span></div>
+        <div class="metric"><span class="muted">Central pot</span><span class="metric-value">${state.pot}</span></div>
+      `;
+    }
+
+    function renderOpenBets() {
+      const openBets = state.bets.filter(bet => bet.status === 'open');
+      if (!openBets.length) {
+        els.openBets.innerHTML = '<div class="empty">No open bets. Create one above when the line gets interesting.</div>';
+        return;
+      }
+      els.openBets.innerHTML = openBets.map(bet => {
+        const pot = bet.entries.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+        const starter = state.players.find(p => p.id === bet.starterPlayerId);
+        return `
+          <article class="bet-card">
+            <div class="bet-head">
+              <div>
+                <h3>${escapeHtml(bet.description)}</h3>
+                <div class="bet-meta">
+                  <span class="pill pill-open">Open</span>
+                  <span class="pill">Pot ${pot}</span>
+                  ${starter ? `<span class="pill">Starter: ${escapeHtml(starter.name)}</span>` : ''}
+                </div>
+              </div>
+              <div class="hint">Created ${escapeHtml(bet.createdAt)}</div>
+            </div>
+            <div class="players">
+              ${bet.entries.map(entry => {
+                const player = state.players.find(p => p.id === entry.playerId);
+                const sittingOut = Number(entry.amount) === 0;
+                return `
+                  <div class="player-chip">
+                    <div>
+                      <strong>${escapeHtml(player?.name || 'Unknown')}</strong>
+                      <div class="hint">Prediction: ${entry.prediction === 'yes' ? 'Yes' : 'No'}</div>
+                    </div>
+                    <span class="pill ${sittingOut ? 'pill-lost' : 'pill-open'}">
+                      ${sittingOut ? 'Sitting out' : `${entry.amount} pts`}
+                    </span>
+                    <span class="pill">${sittingOut ? '—' : 'Active'}</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+            <div class="small-actions">
+              <button class="btn btn-primary" type="button" onclick="resolveBet('${bet.id}', 'won')">Came true</button>
+              <button class="btn btn-secondary" type="button" onclick="resolveBet('${bet.id}', 'lost')">Did not come true</button>
+              <button class="btn btn-secondary" type="button" onclick="cloneBet('${bet.id}')">Reuse</button>
+              <button class="btn btn-danger" type="button" onclick="deleteBet('${bet.id}')">Delete</button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function renderHistory() {
+      const resolved = state.bets.filter(bet => bet.status === 'resolved');
+      if (!resolved.length) {
+        els.historyList.innerHTML = '<div class="empty">Resolved bets will stay here so you can repeat good prompts later.</div>';
+        return;
+      }
+      els.historyList.innerHTML = resolved.map(bet => {
+        const activeEntries = bet.entries.filter(e => e.amount > 0);
+        const pot = bet.refunded ? 0 : activeEntries.reduce((sum, e) => sum + e.amount, 0);
+        const winningPrediction = bet.outcome === 'won' ? 'yes' : 'no';
+        const winners = bet.refunded
+          ? []
+          : activeEntries
+              .filter(e => e.prediction === winningPrediction)
+              .map(e => state.players.find(p => p.id === e.playerId)?.name || 'Unknown');
+        const refundText = bet.refunded ? ' (refunded)' : '';
+        const starter = state.players.find(p => p.id === bet.starterPlayerId);
+
+        return `
+          <article class="history-item">
+            <div class="bet-head">
+              <div>
+                <h3>${escapeHtml(bet.description)}</h3>
+                <div class="bet-meta">
+                  <span class="pill ${bet.outcome === 'won' ? 'pill-won' : 'pill-lost'}">
+                    ${bet.outcome === 'won' ? 'Came true' : 'Did not come true'}${refundText}
+                  </span>
+                  <span class="pill">Pot ${pot}</span>
+                  ${starter ? `<span class="pill">Starter: ${escapeHtml(starter.name)}</span>` : ''}
+                </div>
+              </div>
+              <div class="hint">Resolved ${escapeHtml(bet.resolvedAt || '')}</div>
+            </div>
+            <div class="hint">
+              Winners: ${bet.refunded ? 'Refunded (no point changes)' : escapeHtml(winners.join(', ') || 'No winners')}
+            </div>
+            <div class="small-actions">
+              <button class="btn btn-secondary" type="button" onclick="cloneBet('${bet.id}')">Reuse bet</button>
+              <button class="btn btn-secondary" type="button" onclick="reopenBet('${bet.id}')">Reopen</button>
+              <button class="btn btn-danger" type="button" onclick="deleteBet('${bet.id}')">Delete</button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function attachWagerGuards() {
+      const rows = [...document.querySelectorAll('[data-bet-player-row]')];
+      rows.forEach(row => {
+        const playerId = row.dataset.playerId;
+        const input = row.querySelector('[data-amount]');
+        const handler = () => {
+          const available = getAvailablePoints(playerId);
+          let value = Number(input.value || 0);
+          if (value < 0) value = 0;
+          if (value > available) {
+            value = available;
+            alertLike(`That’s the max they can wager this round (${available} points).`);
+          }
+          input.value = value;
+        };
+        input.addEventListener('change', handler, { once: true });
+      });
+    }
+
+    function render() {
+      renderPlayers();
+      renderScoreboard();
+      renderBetPlayers();
+      renderOpenMetrics();
+      renderOpenBets();
+      renderHistory();
+      attachWagerGuards();
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[char]));
+    }
+
+    function giveFromPot(playerId) {
+      const player = state.players.find(p => p.id === playerId);
+      if (!player) return;
+      if (state.pot <= 0) {
+        alertLike('No points in the pot right now.');
+        return;
+      }
+      const max = state.pot;
+      const amountStr = prompt(`How many points do you want to give to ${player.name}? (Max ${max})`, String(Math.min(3, max)));
+      if (amountStr === null) return;
+      let amount = Number(amountStr);
+      if (!Number.isFinite(amount) || amount <= 0) return;
+      if (amount > max) amount = max;
+      state.pot -= amount;
+      player.currentPoints += amount;
+      saveState();
+      render();
+    }
+
+    function addToPot() {
+      const current = state.pot;
+      const input = prompt(`How many points do you want to add to the central pot? (Current: ${current})`, '5');
+      if (input === null) return;
+      let amount = Number(input);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        alertLike('Enter a number greater than 0.');
+        return;
+      }
+      state.pot += amount;
+      saveState();
+      render();
+    }
+
+    window.removePlayer = removePlayer;
+    window.resolveBet = resolveBet;
+    window.reopenBet = reopenBet;
+    window.cloneBet = cloneBet;
+    window.deleteBet = deleteBet;
+    window.giveFromPot = giveFromPot;
+    window.addToPot = addToPot;
+
+    document.getElementById('addPlayerBtn').addEventListener('click', () => {
+      const name = els.playerName.value.trim();
+      const points = Number(els.playerPoints.value || 0);
+      if (!name) return alertLike('Enter a family member name.');
+      if (points < 0) return alertLike('Starting points must be 0 or more.');
+      addPlayer(name, points);
+      els.playerName.value = '';
+      els.playerPoints.value = 10;
+    });
+
+    const playerNameInput = els.playerName;
+    playerNameInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('addPlayerBtn').click();
+      }
+    });
+    window.addEventListener('load', () => {
+      playerNameInput.focus();
+    });
+
+    document.getElementById('createBetBtn').addEventListener('click', createBet);
+
+    document.getElementById('randomBetBtn').addEventListener('click', () => {
+      const idea = getRandomPresetBet();
+      if (!idea) return;
+      els.betDescription.value = idea;
+    });
+
+    document.getElementById('clearBetFormBtn').addEventListener('click', () => {
+      els.betDescription.value = '';
+      els.starterHint.textContent = '';
+      renderBetPlayers();
+      attachWagerGuards();
+    });
+
+    document.getElementById('clearAllBtn').addEventListener('click', () => {
+      state.players = [];
+      state.bets = [];
+      state.pot = 0;
+      saveState();
+      render();
+    });
+
+    document.getElementById('resetDemoBtn').addEventListener('click', () => {
+      function ensurePlayer(name) {
+        let player = state.players.find(p => p.name === name);
+        if (!player) {
+          addPlayer(name, 10);
+          player = state.players.find(p => p.name === name);
+        }
+        return player;
+      }
+
+      const mom = ensurePlayer('Mom');
+      const dad = ensurePlayer('Dad');
+      const ava = ensurePlayer('Ava');
+      const liam = ensurePlayer('Liam');
+
+      const entries = [
+        { playerId: mom.id, prediction: 'yes', amount: 2 },
+        { playerId: dad.id, prediction: 'no', amount: 2 },
+        { playerId: ava.id, prediction: 'yes', amount: 3 },
+        { playerId: liam.id, prediction: 'no', amount: 0 }
+      ];
+
+      const starterPlayerId = mom.id;
+
+      state.bets.unshift({
+        id: uid(),
+        description: 'The next cast member we talk to will be wearing a celebration button.',
+        createdAt: new Date().toLocaleString(),
+        status: 'open',
+        outcome: null,
+        entries,
+        refunded: false,
+        starterPlayerId
+      });
+
+      saveState();
+      render();
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', exportGame);
+    document.getElementById('importBtn').addEventListener('click', () => els.importFile.click());
+    els.importFile.addEventListener('change', event => {
+      const file = event.target.files[0];
+      if (file) importGame(file);
+      event.target.value = '';
+    });
+
+    document.querySelector('[data-theme-toggle]').addEventListener('click', function() {
+      const root = document.documentElement;
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      this.textContent = next === 'dark' ? '☀️ Theme' : '🌙 Theme';
+      this.setAttribute('aria-label', `Switch to ${next === 'dark' ? 'light' : 'dark'} mode`);
+    });
+
+    els.refundBackdrop.addEventListener('click', e => {
+      if (e.target === els.refundBackdrop) {
+        closeRefundModal();
+      }
+    });
+
+    loadState();
+    render();
+  </script>
+</body>
+</html>
