@@ -245,6 +245,13 @@
     .modal-title { font-family: var(--font-display); font-size: var(--text-lg); }
     .modal-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
 
+    /* Bigger, colored starter text */
+    #starterHint {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
     @media (max-width: 900px) {
       .layout, .grid-2, .player-bet-row, .player-chip { grid-template-columns: 1fr; }
       .topbar, .bet-head { align-items: start; flex-direction: column; }
@@ -330,7 +337,7 @@
             <button class="btn btn-secondary" type="button" id="randomBetBtn">Random bet idea</button>
           </div>
 
-          <div id="starterHint" class="hint" style="margin-top:.75rem;"></div>
+          <div id="starterHint" style="margin-top:.75rem;"></div>
 
           <div class="field" style="margin-top:1rem;">
             <label>Each player's pick</label>
@@ -378,18 +385,121 @@
   </div>
 
   <script>
-    // Preset bet ideas (edit this list however you like)
+    // Preset bet ideas
     const presetBets = [
-      'The next cast member we talk to will be wearing a celebration button.',
-      'The next person we see eating will be eating ice cream.',
-      'The next ride we pass will have a wait time over 40 minutes.',
-      'The next stroller we see will have balloons tied to it.',
-      'The next person in line in front of us will be wearing Mickey ears.',
-      'The next parade performer we see will be in blue.',
-      'The next song we hear will mention the word "magic".',
-      'The next souvenir someone in our group wants will cost more than 25 points.',
-      'The next ride photo will have someone with their hands up.',
-      'The next snack we buy will have chocolate in it.'
+      // Wait time
+      'The posted wait time will be accurate within a few minutes.',
+      'The posted wait time will be off by at least ten minutes.',
+      'The posted wait time will increase before we reach the first indoor room.',
+      'The posted wait time will decrease before we reach the first indoor room.',
+      'The posted wait time will not change before we reach the preshow.',
+      'The posted wait time will change at least twice while we are in line.',
+      'The posted wait time on exit will be higher than when we entered.',
+      'The posted wait time on exit will be lower than when we entered.',
+      'The posted wait time on exit will be the same as when we entered.',
+      'The posted wait time when we enter the building will be higher than when we entered the queue.',
+      'The posted wait time when we enter the building will be lower than when we entered the queue.',
+
+      // Delays / downtime
+      'The attraction will have no delays at all.',
+      'The attraction will have at least one delay.',
+      'All delays will be under one minute.',
+      'At least one delay will be longer than one minute.',
+      'The longest delay will happen before we enter the building.',
+      'The longest delay will happen during the preshow.',
+      'The longest delay will happen after we have boarded the ride vehicle.',
+      'A delay will occur after we reach the merge point.',
+      'The ride will pause after we board for at least thirty seconds.',
+
+      // Cast members
+      'The main cast member at load will be wearing glasses.',
+      'The main cast member at load will be wearing a hat.',
+      'The main cast member at load will not be wearing a hat.',
+      'The main cast member at load will be male.',
+      'The main cast member at load will be female.',
+      'The main cast member at load will have red hair.',
+      'The main cast member at load will have blond hair.',
+      'The main cast member at load will have brown hair.',
+      'The load cast member’s name tag will show a U.S. state.',
+      'The load cast member’s name tag will show a foreign country.',
+      'The load cast member’s name tag will show a university.',
+      'A cast member will check our restraints more than once.',
+      'A cast member will give an instruction at the merge point.',
+      'A cast member will give an instruction at load.',
+
+      // Lightning Lane / merge
+      'Standby and Lightning Lane will merge before we go indoors.',
+      'We will not stop at the merge point at all.',
+      'We will be stopped at the merge point for at least one full cycle.',
+      'The Lightning Lane line will be shorter than standby.',
+      'The Lightning Lane line will be longer than standby.',
+      'We will advance past at least one Lightning Lane group at the merge.',
+
+      // Vehicle / seating
+      'Our ride vehicle will have no empty seats.',
+      'Our ride vehicle will have at least one empty seat.',
+      'Our ride vehicle will have at least three empty seats.',
+      'We will be seated in the front third of the vehicle.',
+      'We will be seated in the middle third of the vehicle.',
+      'We will be seated in the back third of the vehicle.',
+      'Our whole party will sit together in one row or car.',
+      'Our party will be split into more than one row or car.',
+      'The row in front of us will have at least one empty seat.',
+      'We will board on the left side.',
+      'We will board on the right side.',
+      'Our attraction car will be a different color than the one in front of it.',
+
+      // Queue progression
+      'We will stop at no gates before boarding.',
+      'We will stop at least once at a gate before boarding.',
+      'We will walk straight to our vehicle once we enter the load room.',
+      'We will be assigned a row at the merge point.',
+      'We will be assigned a row at the load platform.',
+      'We will enter at least two different rooms before we board.',
+
+      // Preshow
+      'We will be among the first five people into the preshow room.',
+      'We will be among the last five people to leave the preshow room.',
+
+      // Animatronics / ride condition
+      'No animatronics will be visibly broken.',
+      'At least one animatronic will be clearly not working.',
+      'A major effect will be missing in one of the scenes.',
+      'The ride will not stop at all once we are moving.',
+      'The ride will stop at least once while we are on it.',
+      'The ride will stop for at least thirty seconds while we are on it.',
+
+      // Other guests – grouping and behavior
+      'Another guest in our vehicle will be riding alone.',
+      'Another guest in our vehicle will be in a group of at least four people.',
+      'A guest in our row will hold up a phone during the ride.',
+      'A guest in our row will raise their hands before the ride starts moving.',
+      'A guest in our row will scream before the ride starts moving.',
+      'A guest will ask a question at load.',
+      'A guest will switch seats at load.',
+      'A guest will not be ready when it is time to board.',
+
+      // Clothing / accessories
+      'Someone in our row will be wearing a Disney-bounding outfit.',
+      'Someone in our row will be wearing matching family shirts.',
+      'Someone in our row will be wearing a poncho.',
+      'Someone in our row will be wearing a sports logo.',
+      'At least one person in our vehicle will be wearing Mickey ears.',
+      'At least two people in our vehicle will be wearing Mickey ears.',
+      'Someone in our row will have a backpack.',
+      'Someone in our row will have a Loungefly bag.',
+      'Someone in our row will be holding a popcorn bucket.',
+
+      // Language / origin
+      'We will hear no non-English languages in our vehicle.',
+      'We will hear at least one non-English language in our vehicle.',
+      'We will hear more than one language in our vehicle.',
+
+      // Hybrid timing
+      'Our vehicle will dispatch within thirty seconds of us reaching the load line.',
+      'Our vehicle will dispatch within one minute of us reaching the load line.',
+      'We will be the last group assigned in our dispatch.',
+      'A vehicle will dispatch completely empty before ours.'
     ];
 
     function getRandomPresetBet() {
@@ -549,7 +659,6 @@
 
       let description = els.betDescription.value.trim();
       if (!description) {
-        // No custom text: auto-fill with a random preset bet
         const random = getRandomPresetBet();
         if (!random) {
           return alertLike('Write a bet description first.');
@@ -673,7 +782,7 @@
       renderBetPlayers(bet.entries);
       const starter = state.players.find(p => p.id === bet.starterPlayerId);
       els.starterHint.textContent = starter
-        ? `${starter.name} started this bet last time.`
+        ? `Starter: ${starter.name} started this bet last time.`
         : '';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
