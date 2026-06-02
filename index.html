@@ -322,20 +322,14 @@
           <h2>New bet</h2>
           <div class="field">
             <label for="betDescription">Bet description</label>
-            <textarea id="betDescription" placeholder="Example: The next person in line will be wearing mouse ears."></textarea>
+            <textarea id="betDescription" placeholder="Example: The next cast member we see will have a birthday button."></textarea>
           </div>
 
-          <div class="grid-2" style="margin-top:1rem;">
-            <div class="field">
-              <label for="baseBet">Base bet</label>
-              <input id="baseBet" type="number" min="0" step="1" value="1" />
-              <p class="hint">Each player can fold, call this amount, or raise above it.</p>
-            </div>
-          </div>
+          <div id="starterHint" class="hint" style="margin-top:.75rem;"></div>
 
           <div class="field" style="margin-top:1rem;">
-            <label>Each player's action</label>
-            <p class="hint">Pick fold, call, or raise. For raises, type how many extra points.</p>
+            <label>Each player's pick</label>
+            <p class="hint">Choose yes or no, then enter a wager. Use 0 points if someone is sitting this one out.</p>
           </div>
           <div id="betPlayers" class="players" style="margin-top:.5rem;"></div>
 
@@ -392,7 +386,7 @@
       scoreboard: document.getElementById('scoreboard'),
       betPlayers: document.getElementById('betPlayers'),
       betDescription: document.getElementById('betDescription'),
-      baseBet: document.getElementById('baseBet'),
+      starterHint: document.getElementById('starterHint'),
       openBets: document.getElementById('openBets'),
       historyList: document.getElementById('historyList'),
       openBetMetrics: document.getElementById('openBetMetrics'),
@@ -424,12 +418,7 @@
         state.players = parsed.players;
         state.bets = parsed.bets.map(bet => ({
           ...bet,
-          entries: bet.entries.map(entry => ({
-            ...entry,
-            amount: Number(entry.amount || 0),
-            action: entry.action || 'call',
-            raiseExtra: Number(entry.raiseExtra || 0)
-          })),
+          entries: bet.entries.map(entry => ({ ...entry, amount: Number(entry.amount || 0) })),
           refunded: !!bet.refunded
         }));
         state.pot = Number(parsed.pot || 0);
@@ -499,36 +488,16 @@
     }
 
     function buildBetEntries() {
-      const baseBet = Math.max(0, Number(els.baseBet.value || 0));
       const rows = [...document.querySelectorAll('[data-bet-player-row]')];
-
-      const entries = rows.map(row => {
-        const playerId = row.dataset.playerId;
-        const action = row.querySelector('[data-action]').value;
-        const prediction = row.querySelector('[data-prediction]').value;
-        const raiseExtra = Math.max(0, Number(row.querySelector('[data-raise-extra]').value || 0));
-
-        let amount = 0;
-        if (action === 'call') {
-          amount = baseBet;
-        } else if (action === 'raise') {
-          amount = baseBet + raiseExtra;
-        } else {
-          amount = 0; // fold
-        }
-
-        return {
-          playerId,
-          prediction,
-          action,
-          raiseExtra,
-          amount
-        };
-      });
+      const entries = rows.map(row => ({
+        playerId: row.dataset.playerId,
+        prediction: row.querySelector('[data-prediction]').value,
+        amount: Number(row.querySelector('[data-amount]').value || 0)
+      }));
 
       const active = entries.filter(entry => entry.amount > 0);
       if (!active.length) {
-        alertLike('At least one player must call or raise.');
+        alertLike('Add a wager for at least one family member.');
         return null;
       }
 
@@ -543,12 +512,22 @@
       return entries;
     }
 
+    function pickStarterPlayerId(entries) {
+      const availablePlayers = state.players.filter(p => p.currentPoints > 0);
+      if (!availablePlayers.length) return null;
+      const randomIndex = Math.floor(Math.random() * availablePlayers.length);
+      return availablePlayers[randomIndex].id;
+    }
+
     function createBet() {
       if (!state.players.length) return alertLike('Add family members before creating a bet.');
       const description = els.betDescription.value.trim();
       if (!description) return alertLike('Write a bet description first.');
       const entries = buildBetEntries();
       if (!entries) return;
+
+      const starterPlayerId = pickStarterPlayerId(entries) || entries[0].playerId;
+
       state.bets.unshift({
         id: uid(),
         description,
@@ -556,9 +535,12 @@
         status: 'open',
         outcome: null,
         entries,
-        refunded: false
+        refunded: false,
+        starterPlayerId
       });
+
       els.betDescription.value = '';
+      els.starterHint.textContent = '';
       saveState();
       render();
     }
@@ -653,8 +635,11 @@
       const bet = state.bets.find(item => item.id === betId);
       if (!bet) return;
       els.betDescription.value = bet.description;
-      els.baseBet.value = 1;
       renderBetPlayers(bet.entries);
+      const starter = state.players.find(p => p.id === bet.starterPlayerId);
+      els.starterHint.textContent = starter
+        ? `${starter.name} started this bet last time.`
+        : '';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -683,12 +668,7 @@
           state.players = parsed.players;
           state.bets = parsed.bets.map(bet => ({
             ...bet,
-            entries: bet.entries.map(entry => ({
-              ...entry,
-              amount: Number(entry.amount || 0),
-              action: entry.action || 'call',
-              raiseExtra: Number(entry.raiseExtra || 0)
-            })),
+            entries: bet.entries.map(entry => ({ ...entry, amount: Number(entry.amount || 0) })),
             refunded: !!bet.refunded
           }));
           state.pot = Number(parsed.pot || 0);
@@ -773,37 +753,46 @@
         els.betPlayers.innerHTML = '<div class="empty">Add players to build betting rounds.</div>';
         return;
       }
-      els.betPlayers.innerHTML = state.players.map(player => {
+
+      // For a new bet, randomize starter and show hint
+      let order = [...state.players];
+      let starterId = null;
+
+      if (!savedEntries) {
+        const available = state.players.filter(p => p.currentPoints > 0);
+        if (available.length) {
+          starterId = available[Math.floor(Math.random() * available.length)].id;
+          const starterPlayer = state.players.find(p => p.id === starterId);
+          els.starterHint.textContent = `Starter: ${starterPlayer.name} starts this bet.`;
+          order.sort((a, b) => (a.id === starterId ? -1 : b.id === starterId ? 1 : 0));
+        } else {
+          els.starterHint.textContent = '';
+        }
+      } else {
+        els.starterHint.textContent = '';
+      }
+
+      els.betPlayers.innerHTML = order.map(player => {
         const saved = savedEntries?.find(entry => entry.playerId === player.id);
-        const action = saved?.action || 'call';
-        const raiseExtra = saved?.raiseExtra || 0;
         const prediction = saved?.prediction || 'yes';
+        const amount = saved ? Number(saved.amount || 0) : 0;
 
         return `
           <div class="player-bet-row" data-bet-player-row data-player-id="${player.id}">
             <div>
               <strong>${escapeHtml(player.name)}</strong>
               <div class="hint">Available: ${player.currentPoints} points</div>
-              <div class="field" style="margin-top:.35rem;">
-                <label style="font-size:0.7rem;">Prediction</label>
-                <select data-prediction>
-                  <option value="yes" ${prediction === 'yes' ? 'selected' : ''}>Yes</option>
-                  <option value="no" ${prediction === 'no' ? 'selected' : ''}>No</option>
-                </select>
-              </div>
             </div>
             <div class="field">
-              <label>Action</label>
-              <select data-action>
-                <option value="fold" ${action === 'fold' ? 'selected' : ''}>Fold</option>
-                <option value="call" ${action === 'call' ? 'selected' : ''}>Call</option>
-                <option value="raise" ${action === 'raise' ? 'selected' : ''}>Raise</option>
+              <label>Prediction</label>
+              <select data-prediction>
+                <option value="yes" ${prediction === 'yes' ? 'selected' : ''}>Yes</option>
+                <option value="no" ${prediction === 'no' ? 'selected' : ''}>No</option>
               </select>
             </div>
             <div class="field">
-              <label>Raise by</label>
-              <input data-raise-extra type="number" min="0" step="1" value="${Number(raiseExtra) || 0}" placeholder="0" />
-              <p class="hint">Only used if raising.</p>
+              <label>Wager</label>
+              <input data-amount type="number" min="0" step="1" value="${amount}" placeholder="0" />
             </div>
           </div>
         `;
@@ -835,6 +824,7 @@
       }
       els.openBets.innerHTML = openBets.map(bet => {
         const pot = bet.entries.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+        const starter = state.players.find(p => p.id === bet.starterPlayerId);
         return `
           <article class="bet-card">
             <div class="bet-head">
@@ -843,6 +833,7 @@
                 <div class="bet-meta">
                   <span class="pill pill-open">Open</span>
                   <span class="pill">Pot ${pot}</span>
+                  ${starter ? `<span class="pill">Starter: ${escapeHtml(starter.name)}</span>` : ''}
                 </div>
               </div>
               <div class="hint">Created ${escapeHtml(bet.createdAt)}</div>
@@ -851,17 +842,11 @@
               ${bet.entries.map(entry => {
                 const player = state.players.find(p => p.id === entry.playerId);
                 const sittingOut = Number(entry.amount) === 0;
-                const actionLabel = entry.action === 'fold'
-                  ? 'Fold'
-                  : entry.action === 'raise'
-                    ? 'Raise'
-                    : 'Call';
                 return `
                   <div class="player-chip">
                     <div>
                       <strong>${escapeHtml(player?.name || 'Unknown')}</strong>
                       <div class="hint">Prediction: ${entry.prediction === 'yes' ? 'Yes' : 'No'}</div>
-                      <div class="hint">Action: ${actionLabel}</div>
                     </div>
                     <span class="pill ${sittingOut ? 'pill-lost' : 'pill-open'}">
                       ${sittingOut ? 'Sitting out' : `${entry.amount} pts`}
@@ -898,6 +883,7 @@
               .filter(e => e.prediction === winningPrediction)
               .map(e => state.players.find(p => p.id === e.playerId)?.name || 'Unknown');
         const refundText = bet.refunded ? ' (refunded)' : '';
+        const starter = state.players.find(p => p.id === bet.starterPlayerId);
 
         return `
           <article class="history-item">
@@ -909,6 +895,7 @@
                     ${bet.outcome === 'won' ? 'Came true' : 'Did not come true'}${refundText}
                   </span>
                   <span class="pill">Pot ${pot}</span>
+                  ${starter ? `<span class="pill">Starter: ${escapeHtml(starter.name)}</span>` : ''}
                 </div>
               </div>
               <div class="hint">Resolved ${escapeHtml(bet.resolvedAt || '')}</div>
@@ -930,19 +917,16 @@
       const rows = [...document.querySelectorAll('[data-bet-player-row]')];
       rows.forEach(row => {
         const playerId = row.dataset.playerId;
-        const input = row.querySelector('[data-raise-extra]');
+        const input = row.querySelector('[data-amount]');
         const handler = () => {
           const available = getAvailablePoints(playerId);
-          const baseBet = Math.max(0, Number(els.baseBet.value || 0));
-          let extra = Number(input.value || 0);
-          if (extra < 0) extra = 0;
-          let total = baseBet + extra;
-          if (total > available) {
-            extra = Math.max(0, available - baseBet);
-            total = baseBet + extra;
-            alertLike(`That’s the max they can raise to this round (${total} points total).`);
+          let value = Number(input.value || 0);
+          if (value < 0) value = 0;
+          if (value > available) {
+            value = available;
+            alertLike(`That’s the max they can wager this round (${available} points).`);
           }
-          input.value = extra;
+          input.value = value;
         };
         input.addEventListener('change', handler, { once: true });
       });
@@ -1030,6 +1014,7 @@
 
     document.getElementById('clearBetFormBtn').addEventListener('click', () => {
       els.betDescription.value = '';
+      els.starterHint.textContent = '';
       renderBetPlayers();
       attachWagerGuards();
     });
@@ -1058,11 +1043,13 @@
       const liam = ensurePlayer('Liam');
 
       const entries = [
-        { playerId: mom.id, prediction: 'yes', action: 'call', raiseExtra: 0, amount: 1 },
-        { playerId: dad.id, prediction: 'no', action: 'call', raiseExtra: 0, amount: 1 },
-        { playerId: ava.id, prediction: 'yes', action: 'raise', raiseExtra: 1, amount: 2 },
-        { playerId: liam.id, prediction: 'no', action: 'fold', raiseExtra: 0, amount: 0 }
+        { playerId: mom.id, prediction: 'yes', amount: 2 },
+        { playerId: dad.id, prediction: 'no', amount: 2 },
+        { playerId: ava.id, prediction: 'yes', amount: 3 },
+        { playerId: liam.id, prediction: 'no', amount: 0 }
       ];
+
+      const starterPlayerId = mom.id;
 
       state.bets.unshift({
         id: uid(),
@@ -1071,7 +1058,8 @@
         status: 'open',
         outcome: null,
         entries,
-        refunded: false
+        refunded: false,
+        starterPlayerId
       });
 
       saveState();
