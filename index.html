@@ -201,7 +201,7 @@
       border-radius: var(--radius-md);
     }
 
-    .small-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+    .small-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
     .small-actions .btn { min-height: 38px; padding: .6rem .9rem; }
 
     .totals { display: flex; flex-wrap: wrap; gap: var(--space-3); }
@@ -243,7 +243,6 @@
     .modal-title { font-family: var(--font-display); font-size: var(--text-lg); }
     .modal-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
 
-    /* Bigger, colored starter text */
     #starterHint {
       font-size: var(--text-sm);
       font-weight: 700;
@@ -253,7 +252,7 @@
     @media (max-width: 900px) {
       .layout, .grid-2, .player-bet-row, .player-chip { grid-template-columns: 1fr; }
       .topbar, .bet-head { align-items: start; flex-direction: column; }
-      .small-actions { width: 100%; }
+      .small-actions { width: 100%; flex-wrap: wrap; }
       .small-actions .btn { flex: 1 1 auto; }
       .app { padding: var(--space-3); }
     }
@@ -274,7 +273,7 @@
         </svg>
         <div>
           <h1>Disney Line Guess</h1>
-          <p class="sub">Everyone predicts the ride, writes secret answers, and wagers points on who wrote which answer.</p>
+          <p class="sub">Everyone writes secret answers about the ride, then wagers points on who wrote which answer.</p>
         </div>
       </div>
     </header>
@@ -309,32 +308,34 @@
 
       <section class="stack">
         <article class="panel">
-          <h2>New question</h2>
+          <h2>Pick a question</h2>
 
-          <div class="field">
+          <div class="grid-2">
+            <div class="field">
+              <label for="attractionName">Attraction</label>
+              <input id="attractionName" type="text" placeholder="e.g., Space Mountain" />
+            </div>
+            <div class="field">
+              <label for="landName">Land / Area</label>
+              <input id="landName" type="text" placeholder="e.g., Tomorrowland" />
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:1rem;">
             <label for="betDescription">Question about this ride</label>
             <textarea id="betDescription" placeholder="Type your own question or tap Random idea."></textarea>
           </div>
 
-          <div class="small-actions" style="margin-top:.5rem;">
+          <div class="small-actions" style="margin-top:.75rem;">
             <button class="btn btn-secondary" type="button" id="randomBetBtn">Random idea</button>
-          </div>
-
-          <div id="starterHint" style="margin-top:.75rem;"></div>
-
-          <div class="field" style="margin-top:1rem;">
-            <label>Guessing for this round</label>
-            <p class="hint">
-              After everyone answers in secret, the app shows one answer and each player guesses who wrote it and wagers points.
-            </p>
-          </div>
-          <div id="betPlayers" class="players" style="margin-top:.5rem;"></div>
-
-          <div class="small-actions" style="margin-top:1rem;">
             <button class="btn btn-primary" type="button" id="createBetBtn">Start question round</button>
             <button class="btn btn-secondary" type="button" id="lockGuessesBtn">Lock guesses & reveal</button>
             <button class="btn btn-secondary" type="button" id="clearBetFormBtn">Clear</button>
           </div>
+
+          <div id="starterHint" style="margin-top:.75rem;"></div>
+
+          <div id="betPlayers" class="players" style="margin-top:.5rem;"></div>
         </article>
 
         <article class="panel">
@@ -376,7 +377,23 @@
     </div>
   </div>
 
-  <!-- Old Hunny Pot / refund modal (kept in case you want it later, but unused now) -->
+  <!-- Reveal modal -->
+  <div id="revealModalBackdrop" class="modal-backdrop" style="display:none;">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="revealModalTitle">
+      <div>
+        <h3 id="revealModalTitle" class="modal-title">Round result</h3>
+        <p class="hint" id="revealModalSub"></p>
+      </div>
+      <div class="field">
+        <div id="revealModalBody" class="hint"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary" id="revealModalCloseBtn">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Old refund modal kept but unused -->
   <div id="refundModalBackdrop" class="modal-backdrop" style="display:none;">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="refundModalTitle">
       <div>
@@ -396,7 +413,6 @@
   </div>
 
   <script>
-    // Preset ideas – you can later swap these for question‑style prompts if you want
     const presetBets = [
       'What do you think will be your favorite moment on this ride?',
       'What 3 words will you say when this ride ends?',
@@ -426,6 +442,8 @@
       scoreboard: document.getElementById('scoreboard'),
       betPlayers: document.getElementById('betPlayers'),
       betDescription: document.getElementById('betDescription'),
+      attractionName: document.getElementById('attractionName'),
+      landName: document.getElementById('landName'),
       starterHint: document.getElementById('starterHint'),
       openBets: document.getElementById('openBets'),
       historyList: document.getElementById('historyList'),
@@ -439,7 +457,12 @@
       answerPrompt: document.getElementById('answerModalPrompt'),
       answerPlayerLabel: document.getElementById('answerModalPlayerLabel'),
       answerInput: document.getElementById('answerModalInput'),
-      answerSaveBtn: document.getElementById('answerModalSaveBtn')
+      answerSaveBtn: document.getElementById('answerModalSaveBtn'),
+      revealBackdrop: document.getElementById('revealModalBackdrop'),
+      revealTitle: document.getElementById('revealModalTitle'),
+      revealSub: document.getElementById('revealModalSub'),
+      revealBody: document.getElementById('revealModalBody'),
+      revealCloseBtn: document.getElementById('revealModalCloseBtn')
     };
 
     const STORAGE_KEY = 'disney-line-bet-v1';
@@ -460,7 +483,6 @@
         const parsed = JSON.parse(raw);
         if (!Array.isArray(parsed.players) || !Array.isArray(parsed.bets)) return;
         state.players = parsed.players;
-        // Migrate old bets if any
         state.bets = parsed.bets.map(bet => ({
           ...bet,
           guesses: bet.guesses || [],
@@ -494,18 +516,22 @@
       render();
     }
 
+    // scoring helper data structure
     function recalculateScores() {
-      // Reset to starting points
       state.players = state.players.map(player => ({
         ...player,
         currentPoints: player.startingPoints
       }));
       const playerMap = Object.fromEntries(state.players.map(player => [player.id, player]));
 
+      state.pot = Number(state.pot || 0);
+      let potFromMisses = 0;
+
       state.bets.forEach(bet => {
         if (bet.status !== 'resolved') return;
         const authorId = bet.authorPlayerId;
         const guesses = bet.guesses || [];
+        const land = bet.land || '';
 
         guesses.forEach(g => {
           const player = playerMap[g.playerId];
@@ -513,20 +539,42 @@
           const wager = Number(g.wager || 0);
           if (wager <= 0) return;
 
-          // Deduct wager first
           player.currentPoints -= wager;
 
-          // If correct, pay back double (win net +wager)
           if (g.guessedAuthorId === authorId) {
             player.currentPoints += wager * 2;
+
+            const hadPrev = hasPreviousCorrectInSameLand(g.playerId, land, bet.id);
+            if (hadPrev) {
+              player.currentPoints += 1;
+            }
+          } else {
+            potFromMisses += wager;
           }
         });
 
-        // Optional: reward author a small flat bonus
         if (authorId && playerMap[authorId]) {
           playerMap[authorId].currentPoints += 2;
         }
       });
+
+      state.pot += potFromMisses;
+    }
+
+    function hasPreviousCorrectInSameLand(playerId, land, currentBetId) {
+      if (!land) return false;
+      for (const bet of state.bets) {
+        if (bet.id === currentBetId) continue;
+        if (bet.status !== 'resolved') continue;
+        if ((bet.land || '') !== land) continue;
+        const correct = (bet.guesses || []).some(g =>
+          g.playerId === playerId &&
+          g.guessedAuthorId === bet.authorPlayerId &&
+          Number(g.wager || 0) > 0
+        );
+        if (correct) return true;
+      }
+      return false;
     }
 
     function getAvailablePoints(playerId) {
@@ -534,7 +582,6 @@
       return player ? player.currentPoints : 0;
     }
 
-    // Answer modal flow (pass the phone)
     let currentAnswerBetId = null;
     let currentAnswerIndex = 0;
 
@@ -563,7 +610,6 @@
 
       const players = state.players;
       if (currentAnswerIndex >= players.length) {
-        // All answers collected, move to guessing phase
         bet.status = 'guessing';
         saveState();
         hideAnswerModal();
@@ -596,10 +642,11 @@
       nextAnswerPrompt();
     });
 
-    // Create a new question round
     function createBet() {
       if (!state.players.length) return alertLike('Add family members before starting a round.');
 
+      const attraction = els.attractionName.value.trim();
+      const land = els.landName.value.trim();
       let question = els.betDescription.value.trim();
       if (!question) {
         const random = getRandomPresetBet();
@@ -615,6 +662,8 @@
         id: betId,
         description: question,
         createdAt: new Date().toLocaleString(),
+        attraction: attraction,
+        land: land,
         status: 'answering',
         answers: [],
         chosenAnswerId: null,
@@ -631,7 +680,6 @@
       startAnswerPhase(betId);
     }
 
-    // Guessing phase and wagering
     function getCurrentGuessingBet() {
       return state.bets.find(b => b.status === 'guessing') || null;
     }
@@ -640,7 +688,6 @@
       const bet = state.bets.find(b => b.id === betId);
       if (!bet) return;
 
-      // Pick a random answer if not already chosen
       if (!bet.chosenAnswerId && bet.answers && bet.answers.length) {
         const idx = Math.floor(Math.random() * bet.answers.length);
         const chosen = bet.answers[idx];
@@ -661,7 +708,9 @@
       const chosen = (bet.answers || []).find(a => a.id === bet.chosenAnswerId);
       const answerText = chosen ? chosen.text : '';
 
-      els.starterHint.textContent = `Answer to guess: "${answerText}"`;
+      const attr = bet.attraction ? ` for ${bet.attraction}` : '';
+      const land = bet.land ? ` (${bet.land})` : '';
+      els.starterHint.textContent = `Answer to guess${attr}${land}: "${answerText}"`;
 
       els.betPlayers.innerHTML = state.players.map(player => {
         const available = getAvailablePoints(player.id);
@@ -717,6 +766,17 @@
       return guesses;
     }
 
+    function showRevealModal(title, sub, bodyHtml) {
+      els.revealTitle.textContent = title;
+      els.revealSub.textContent = sub;
+      els.revealBody.innerHTML = bodyHtml;
+      els.revealBackdrop.style.display = 'flex';
+    }
+
+    els.revealCloseBtn.addEventListener('click', () => {
+      els.revealBackdrop.style.display = 'none';
+    });
+
     function resolveGuessingBet(betId) {
       const bet = state.bets.find(b => b.id === betId);
       if (!bet) return;
@@ -729,39 +789,69 @@
       bet.resolvedAt = new Date().toLocaleString();
       bet.refunded = false;
 
-      recalculateScores();
-
+      const land = bet.land || '';
       const author = state.players.find(p => p.id === bet.authorPlayerId);
-      const correctGuessers = [];
-      (bet.guesses || []).forEach(g => {
-        if (g.guessedAuthorId === bet.authorPlayerId && g.wager > 0) {
-          const player = state.players.find(p => p.id === g.playerId);
-          if (player) {
-            correctGuessers.push(`${player.name} (+${g.wager})`);
+      const guesses = bet.guesses || [];
+
+      const winners = [];
+      let roundPotFromMisses = 0;
+      const bonusWinners = [];
+
+      guesses.forEach(g => {
+        const player = state.players.find(p => p.id === g.playerId);
+        const wager = Number(g.wager || 0);
+        if (!player || wager <= 0) return;
+        if (g.guessedAuthorId === bet.authorPlayerId) {
+          winners.push({ player, wager });
+          if (hasPreviousCorrectInSameLand(player.id, land, bet.id)) {
+            bonusWinners.push(player.name);
           }
+        } else {
+          roundPotFromMisses += wager;
         }
       });
 
-      let message = '';
-      message += `The answer was written by ${author ? author.name : 'someone'}.`;
-      if (correctGuessers.length) {
-        message += `\n\nWinners this round:\n- ${correctGuessers.join('\n- ')}`;
-      } else {
-        message += `\n\nNo one guessed correctly this round.`;
-      }
+      state.pot += roundPotFromMisses;
 
-      alert(message);
-
+      recalculateScores();
       saveState();
       render();
-      renderBetPlayers();
-      attachWagerGuards();
+
+      let bodyParts = [];
+      bodyParts.push(`<div><strong>Author:</strong> ${escapeHtml(author ? author.name : 'Unknown')}</div>`);
+      if (bet.attraction || bet.land) {
+        bodyParts.push(`<div class="hint">Attraction: ${escapeHtml(bet.attraction || 'Unknown')} ${bet.land ? '(' + escapeHtml(bet.land) + ')' : ''}</div>`);
+      }
+
+      const winnersList = winners.length
+        ? winners.map(w => `${escapeHtml(w.player.name)} (+${w.wager})`).join('<br>')
+        : 'No one guessed correctly. All wagers went to the Hunny Pot.';
+
+      bodyParts.push(`<div style="margin-top:.75rem;"><strong>Winners:</strong><br>${winnersList}</div>`);
+
+      if (bonusWinners.length) {
+        const uniqueBonus = [...new Set(bonusWinners)];
+        bodyParts.push(
+          `<div style="margin-top:.75rem;"><strong>Land streak bonus:</strong><br>` +
+          `${escapeHtml(uniqueBonus.join(', '))} earned +1 bonus point for a correct guess on the same land.</div>`
+        );
+      }
+
+      bodyParts.push(`<div style="margin-top:.75rem;" class="hint">Hunny Pot is now ${state.pot} points.</div>`);
+
+      showRevealModal(
+        'Round result',
+        'Here is who wrote the answer and who won points.',
+        bodyParts.join('')
+      );
     }
 
     function cloneBet(betId) {
       const bet = state.bets.find(item => item.id === betId);
       if (!bet) return;
       els.betDescription.value = bet.description;
+      els.attractionName.value = bet.attraction || '';
+      els.landName.value = bet.land || '';
       renderBetPlayers();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -845,7 +935,6 @@
         renderGuessingRound(guessingBet);
         return;
       }
-      // Default view when no guessing round is active
       if (!state.players.length) {
         els.betPlayers.innerHTML = '<div class="empty">Add players, then tap “Start question round” to begin.</div>';
         els.starterHint.textContent = '';
@@ -879,6 +968,10 @@
           bet.status === 'answering' ? 'Collecting answers' :
           bet.status === 'guessing' ? 'Guessing & wagering' :
           'Round';
+        const metaParts = [];
+        if (bet.attraction) metaParts.push(escapeHtml(bet.attraction));
+        if (bet.land) metaParts.push(escapeHtml(bet.land));
+        const metaText = metaParts.length ? metaParts.join(' • ') : '';
         return `
           <article class="bet-card">
             <div class="bet-head">
@@ -886,6 +979,7 @@
                 <h3>${escapeHtml(bet.description)}</h3>
                 <div class="bet-meta">
                   <span class="pill pill-open">${statusLabel}</span>
+                  ${metaText ? `<span class="pill">${metaText}</span>` : ''}
                 </div>
               </div>
               <div class="hint">Created ${escapeHtml(bet.createdAt)}</div>
@@ -910,6 +1004,9 @@
             return player ? `${player.name} (+${g.wager})` : null;
           })
           .filter(Boolean);
+        const metaParts = [];
+        if (bet.attraction) metaParts.push(escapeHtml(bet.attraction));
+        if (bet.land) metaParts.push(escapeHtml(bet.land));
 
         return `
           <article class="history-item">
@@ -919,6 +1016,7 @@
                 <div class="bet-meta">
                   <span class="pill pill-won">Round finished</span>
                   ${author ? `<span class="pill">Author: ${escapeHtml(author.name)}</span>` : ''}
+                  ${metaParts.length ? `<span class="pill">${metaParts.join(' • ')}</span>` : ''}
                 </div>
               </div>
               <div class="hint">Resolved ${escapeHtml(bet.resolvedAt || '')}</div>
@@ -1040,6 +1138,8 @@
 
     document.getElementById('clearBetFormBtn').addEventListener('click', () => {
       els.betDescription.value = '';
+      els.attractionName.value = '';
+      els.landName.value = '';
       els.starterHint.textContent = '';
       renderBetPlayers();
       attachWagerGuards();
@@ -1086,6 +1186,8 @@
         id: demoId,
         description: 'What do you think will be your favorite moment on this ride?',
         createdAt: new Date().toLocaleString(),
+        attraction: 'Test Ride',
+        land: 'Tomorrowland',
         status: 'resolved',
         answers: [
           { id: uid(), playerId: mom.id, text: 'The big drop' },
