@@ -736,11 +736,8 @@ window.addEventListener('load', () => {
 document.getElementById('createBetBtn').addEventListener('click', createBet);
 
 document.getElementById('randomBetBtn').addEventListener('click', () => {
-  const ideas = [
-    "What do you think will be your favorite moment on this ride?",
-    "What 3 words will you say when this ride ends?",
-    "What part of the ride will make you laugh?"
-  ];
+  const ideas = window.DISNEY_LINE_QUESTIONS || [];
+  if (!ideas.length) return;
   const idx = Math.floor(Math.random() * ideas.length);
   els.betDescription.value = ideas[idx];
 });
