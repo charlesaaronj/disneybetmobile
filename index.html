@@ -467,6 +467,10 @@
     const STORAGE_KEY = 'disney-line-bet-v1';
     const uid = () => Math.random().toString(36).slice(2, 10);
 
+    function clampScore(x) {
+      return Math.max(0, Math.round(x));
+    }
+
     function saveState() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -500,8 +504,8 @@
       state.players.push({
         id: uid(),
         name: name.trim(),
-        startingPoints: Number(startingPoints),
-        currentPoints: Number(startingPoints)
+        startingPoints: clampScore(startingPoints),
+        currentPoints: clampScore(startingPoints)
       });
       saveState();
       render();
@@ -515,15 +519,18 @@
       render();
     }
 
-    function hasPreviousCorrectInSameLand(playerId, land, currentBetId) {
+    function hasPreviousCorrectInSameLand(playerId, land, currentBetIndex) {
       if (!land) return false;
       for (const bet of state.bets) {
-        if (bet.id === currentBetId) continue;
         if (bet.status !== 'resolved') continue;
+        if (typeof bet.index !== 'number') continue;
+        if (bet.index >= currentBetIndex) continue;
         if ((bet.land || '') !== land) continue;
+
+        const correctAuthors = bet.correctAuthors || [bet.correctAuthorId];
         const correct = (bet.guesses || []).some(g =>
           g.playerId === playerId &&
-          g.guessedAuthorId === bet.correctAuthorId &&
+          correctAuthors.includes(g.guessedAuthorId) &&
           Number(g.wager || 0) > 0
         );
         if (correct) return true;
@@ -534,7 +541,7 @@
     function recalculateScores() {
       state.players = state.players.map(player => ({
         ...player,
-        currentPoints: player.startingPoints
+        currentPoints: clampScore(player.startingPoints)
       }));
       const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
 
@@ -543,8 +550,10 @@
       state.bets.forEach(bet => {
         if (bet.status !== 'resolved') return;
         const authorId = bet.correctAuthorId;
+        const correctAuthors = bet.correctAuthors || (authorId ? [authorId] : []);
         const guesses = bet.guesses || [];
         const land = bet.land || '';
+        const betIndex = bet.index || 0;
 
         const wagers = guesses.map(g => ({
           playerId: g.playerId,
@@ -553,14 +562,16 @@
         }));
 
         const potThisRound = wagers.reduce((sum, w) => sum + w.wager, 0);
-        const winners = wagers.filter(w => w.wager > 0 && w.guessedAuthorId === authorId);
+        const winners = wagers.filter(
+          w => w.wager > 0 && correctAuthors.includes(w.guessedAuthorId)
+        );
         const anyCorrect = winners.length > 0;
         const totalWinnerWager = winners.reduce((sum, w) => sum + w.wager, 0);
 
         wagers.forEach(w => {
           const player = playerMap[w.playerId];
           if (!player || w.wager <= 0) return;
-          player.currentPoints -= w.wager;
+          player.currentPoints = clampScore(player.currentPoints - w.wager);
         });
 
         if (anyCorrect && potThisRound > 0 && totalWinnerWager > 0) {
@@ -568,10 +579,13 @@
             const player = playerMap[w.playerId];
             if (!player) return;
             const share = potThisRound * (w.wager / totalWinnerWager);
-            player.currentPoints += Math.round(share);
-            if (hasPreviousCorrectInSameLand(w.playerId, land, bet.id)) {
-              player.currentPoints += 1;
+            let newPoints = player.currentPoints + share;
+
+            if (hasPreviousCorrectInSameLand(w.playerId, land, betIndex)) {
+              newPoints += 1;
             }
+
+            player.currentPoints = clampScore(newPoints);
           });
         } else if (!anyCorrect && potThisRound > 0) {
           state.pot += potThisRound;
@@ -581,7 +595,7 @@
 
     function getAvailablePoints(playerId) {
       const player = state.players.find(p => p.id === playerId);
-      return player ? player.currentPoints : 0;
+      return player ? clampScore(player.currentPoints) : 0;
     }
 
     let currentAnswerBetId = null;
@@ -657,8 +671,14 @@
       }
 
       const betId = uid();
+      const nextIndex =
+        state.bets.length && state.bets.some(b => typeof b.index === 'number')
+          ? Math.max(...state.bets.map(b => b.index || 0)) + 1
+          : 1;
+
       const newBet = {
         id: betId,
+        index: nextIndex,
         description: question,
         createdAt: new Date().toLocaleString(),
         attraction: attraction,
@@ -666,8 +686,8 @@
         status: 'answering',
         answers: [],
         chosenAnswerId: null,
-        // correctAuthorId will be set later
         correctAuthorId: null,
+        correctAuthors: [],
         guesses: [],
         refunded: false
       };
@@ -693,15 +713,12 @@
         const chosen = bet.answers[idx];
         bet.chosenAnswerId = chosen.id;
 
-        // All players who wrote the same answer text are considered authors
         const sameTextAuthors = bet.answers
           .filter(a => a.text === chosen.text)
           .map(a => a.playerId);
 
-        // If duplicate authors, store a special marker; guesses must match any of them to be correct
         bet.correctAuthors = sameTextAuthors;
-        // For compatibility with scoring, pick the first as primary
-        bet.correctAuthorId = sameTextAuthors[0];
+        bet.correctAuthorId = sameTextAuthors[0] || null;
 
         saveState();
       }
@@ -767,7 +784,10 @@
         const select = row.querySelector('[data-guess-player]');
         const input = row.querySelector('[data-amount]');
         const guessedAuthorId = select ? select.value : null;
-        const wager = Number(input ? input.value || 0 : 0);
+        let wager = Number(input ? input.value || 0 : 0);
+        if (!Number.isFinite(wager) || wager < 0) wager = 0;
+        const available = getAvailablePoints(playerId);
+        if (wager > available) wager = available;
         return { playerId, guessedAuthorId, wager };
       });
 
@@ -803,7 +823,7 @@
     function resolveGuessingBet(betId) {
       const bet = state.bets.find(b => b.id === betId);
       if (!bet) return;
-      if (!bet.correctAuthorId) {
+      if (!bet.correctAuthorId && !(bet.correctAuthors && bet.correctAuthors.length)) {
         alertLike('No answer was chosen to guess.');
         return;
       }
@@ -814,8 +834,9 @@
 
       const land = bet.land || '';
       const guesses = bet.guesses || [];
-
-      const correctAuthors = bet.correctAuthors || [bet.correctAuthorId];
+      const correctAuthors = bet.correctAuthors && bet.correctAuthors.length
+        ? bet.correctAuthors
+        : [bet.correctAuthorId];
 
       const wagers = guesses.map(g => ({
         playerId: g.playerId,
@@ -831,8 +852,9 @@
 
       const bonusWinners = [];
       if (anyCorrect) {
+        const betIndex = bet.index || 0;
         winners.forEach(w => {
-          if (hasPreviousCorrectInSameLand(w.playerId, land, bet.id)) {
+          if (hasPreviousCorrectInSameLand(w.playerId, land, betIndex)) {
             const player = state.players.find(p => p.id === w.playerId);
             if (player) bonusWinners.push(player.name);
           }
@@ -851,9 +873,7 @@
         .filter(Boolean);
 
       let bodyParts = [];
-      bodyParts.push(`<div class="reveal-section-title">Author${
-        authorNames.length > 1 ? 's' : ''
-      }</div>`);
+      bodyParts.push(`<div class="reveal-section-title">Author${authorNames.length > 1 ? 's' : ''}</div>`);
       bodyParts.push(`<div>${escapeHtml(authorNames.join(', ') || 'Unknown')}</div>`);
       if (bet.attraction || bet.land) {
         bodyParts.push(
@@ -901,7 +921,7 @@
       );
       bodyParts.push(
         `<div>${ranked
-          .map(p => `${escapeHtml(p.name)}: ${Math.round(p.currentPoints)}`)
+          .map(p => `${escapeHtml(p.name)}: ${clampScore(p.currentPoints)}`)
           .join('<br>')}</div>`
       );
 
@@ -988,9 +1008,9 @@
             <div class="hint">Starts with ${player.startingPoints} points</div>
           </div>
           <div class="small-actions">
-            <span class="pill pill-open">${Math.round(player.currentPoints)} now</span>
+            <span class="pill pill-open">${clampScore(player.currentPoints)} now</span>
             ${
-              player.currentPoints === 0 && state.pot > 0
+              clampScore(player.currentPoints) === 0 && state.pot > 0
                 ? `<button class="btn btn-secondary" type="button" onclick="giveFromPot('${player.id}')">Give from Hunny Pot</button>`
                 : `<button class="btn btn-danger" type="button" onclick="removePlayer('${player.id}')">Remove</button>`
             }
@@ -1018,7 +1038,7 @@
         <div class="score-card">
           <div class="muted">${index + 1 === 1 ? 'Leader' : `Place ${index + 1}`}</div>
           <div class="score-name">${escapeHtml(player.name)}</div>
-          <div class="score-points">${Math.round(player.currentPoints)}</div>
+          <div class="score-points">${clampScore(player.currentPoints)}</div>
           <div class="hint">Started with ${player.startingPoints}</div>
         </div>
       `
@@ -1095,7 +1115,9 @@
       }
       els.historyList.innerHTML = resolved
         .map(bet => {
-          const correctAuthors = bet.correctAuthors || [bet.correctAuthorId];
+          const correctAuthors = bet.correctAuthors && bet.correctAuthors.length
+            ? bet.correctAuthors
+            : [bet.correctAuthorId];
           const authorNames = correctAuthors
             .map(id => {
               const p = state.players.find(pl => pl.id === id);
@@ -1168,7 +1190,7 @@
         const handler = () => {
           const available = getAvailablePoints(playerId);
           let value = Number(input.value || 0);
-          if (value < 0) value = 0;
+          if (!Number.isFinite(value) || value < 0) value = 0;
           if (value > available) {
             value = available;
             alertLike(
@@ -1218,7 +1240,7 @@
       if (!Number.isFinite(amount) || amount <= 0) return;
       if (amount > max) amount = max;
       state.pot -= amount;
-      player.currentPoints += amount;
+      player.currentPoints = clampScore(player.currentPoints + amount);
       saveState();
       render();
     }
@@ -1333,8 +1355,14 @@
       const liam = ensurePlayer('Liam');
 
       const demoId = uid();
+      const nextIndex =
+        state.bets.length && state.bets.some(b => typeof b.index === 'number')
+          ? Math.max(...state.bets.map(b => b.index || 0)) + 1
+          : 1;
+
       state.bets.unshift({
         id: demoId,
+        index: nextIndex,
         description: 'What do you think will be your favorite moment on this ride?',
         createdAt: new Date().toLocaleString(),
         attraction: 'Test Ride',
