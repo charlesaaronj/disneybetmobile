@@ -478,17 +478,14 @@ h3 {
 }
 
 .starterHint {
-  font-size: var(--text-lg);              /* bigger text */
-  font-weight: 800;                       /* extra bold */
-  color: var(--color-text-inverse);       /* high contrast text */
-  padding: 0.6rem 1rem;                   /* larger pill */
-  border-radius: var(--radius-full);      /* fully rounded */
-  background: var(--color-primary);       /* solid primary */
-  border: 0px solid var(--color-gold);    /* gold outline */
-  margin: 14px 10px;                      /* a bit more space */
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 20%, transparent);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  margin: 10px
 }
 
 .reveal-section-title {
