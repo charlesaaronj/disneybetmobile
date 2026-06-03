@@ -485,7 +485,7 @@ h3 {
   color: var(--color-text-inverse);
   padding: 0.6rem 1rem;
   border-radius: var(--radius-full);
-  background: var(--color-primary);
+  background: color-mix(in oklab, var(--color-gold) 24%, var(--color-surface));
   font-size: var(--text-sm);
   font-weight: 700;
   margin: 15px
