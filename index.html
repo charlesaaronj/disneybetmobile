@@ -274,7 +274,7 @@
         </svg>
         <div>
           <h1>Disney Line Guess</h1>
-          <p class="sub">Make “will happen / won’t happen” guesses while you wait and keep score with Pooh’s Hunny Pot.</p>
+          <p class="sub">Make “will happen / won’t happen” guesses while you wait and keep score with the Hunny Pot.</p>
         </div>
       </div>
     </header>
@@ -340,11 +340,11 @@
           <div id="openBets" class="bet-list" style="margin-top:1rem;"></div>
         </article>
 
-        <!-- Players panel moved here -->
+        <!-- Players panel here -->
         <article class="panel">
           <h2>Players</h2>
           <p class="hint" style="margin-bottom:.5rem;">
-            Stuck at zero? Use Pooh’s Hunny Pot to give someone a few points back so they can keep playing.
+            Stuck at zero? Use the Hunny Pot to give someone a few points back so they can keep playing.
           </p>
           <div id="playersList" class="players"></div>
         </article>
@@ -365,13 +365,13 @@
         <p class="hint" id="refundModalText"></p>
       </div>
       <div class="field">
-        <label for="refundPotInput">Add extra points to Pooh’s Hunny Pot (optional)</label>
+        <label for="refundPotInput">Add extra points to the Hunny Pot (optional)</label>
         <input id="refundPotInput" type="number" min="0" step="1" value="0" />
         <p class="hint">Use this if you want to sweeten the Hunny Pot before you decide what to do with it.</p>
       </div>
       <div class="modal-actions">
-        <button type="button" class="btn btn-secondary" id="refundRemoveBtn">Remove (let points stay in Pooh’s Hunny Pot)</button>
-        <button type="button" class="btn btn-primary" id="refundRefundBtn">Refund (return Hunny Pot to players)</button>
+        <button type="button" class="btn btn-secondary" id="refundRemoveBtn">Keep in Hunny Pot</button>
+        <button type="button" class="btn btn-primary" id="refundRefundBtn">Refund guesses (no score changes)</button>
       </div>
     </div>
   </div>
@@ -678,13 +678,15 @@
       els.starterHint.textContent = '';
       saveState();
       render();
+      renderBetPlayers();
+      attachWagerGuards();
     }
 
     let pendingRefundBetId = null;
 
     function openRefundModal(bet, pot) {
       pendingRefundBetId = bet.id;
-      els.refundText.textContent = `This guess’s Pooh’s Hunny Pot total is ${pot} points. You can add extra points to the Hunny Pot, then either refund everyone or keep it in Pooh’s Hunny Pot.`;
+      els.refundText.textContent = `This guess’s Hunny Pot total is ${pot} points. You can add extra points to the Hunny Pot, then either refund everyone or keep it in the Hunny Pot.`;
       els.refundInput.value = 0;
       els.refundBackdrop.style.display = 'flex';
     }
@@ -717,7 +719,8 @@
           recalculateScores();
           saveState();
           render();
-          els.starterHint.textContent = '';
+          renderBetPlayers();
+          attachWagerGuards();
           cleanup();
         };
 
@@ -732,7 +735,8 @@
           recalculateScores();
           saveState();
           render();
-          els.starterHint.textContent = '';
+          renderBetPlayers();
+          attachWagerGuards();
           cleanup();
         };
 
@@ -754,7 +758,8 @@
       recalculateScores();
       saveState();
       render();
-      els.starterHint.textContent = '';
+      renderBetPlayers();
+      attachWagerGuards();
     }
 
     function reopenBet(betId) {
@@ -812,7 +817,7 @@
       const potHtml = `
         <div class="player-chip" style="margin-bottom:.5rem;">
           <div>
-            <strong>Pooh’s Hunny Pot</strong>
+            <strong>Hunny Pot</strong>
             <div class="hint">Extra points you can give back to players.</div>
           </div>
           <span class="pill pot-pill">Hunny Pot ${state.pot}</span>
@@ -916,7 +921,7 @@
         <div class="metric"><span class="muted">Open guesses</span><span class="metric-value">${totalOpen}</span></div>
         <div class="metric"><span class="muted">Points in play</span><span class="metric-value">${totalRisk}</span></div>
         <div class="metric"><span class="muted">Players active</span><span class="metric-value">${activePlayers}</span></div>
-        <div class="metric"><span class="muted">Pooh’s Hunny Pot</span><span class="metric-value">${state.pot}</span></div>
+        <div class="metric"><span class="muted">Hunny Pot</span><span class="metric-value">${state.pot}</span></div>
       `;
     }
 
@@ -1056,11 +1061,11 @@
       const player = state.players.find(p => p.id === playerId);
       if (!player) return;
       if (state.pot <= 0) {
-        alertLike('No points in Pooh’s Hunny Pot right now.');
+        alertLike('No points in the Hunny Pot right now.');
         return;
       }
       const max = state.pot;
-      const amountStr = prompt(`How many points do you want to give to ${player.name} from Pooh’s Hunny Pot? (Max ${max})`, String(Math.min(3, max)));
+      const amountStr = prompt(`How many points do you want to give to ${player.name} from the Hunny Pot? (Max ${max})`, String(Math.min(3, max)));
       if (amountStr === null) return;
       let amount = Number(amountStr);
       if (!Number.isFinite(amount) || amount <= 0) return;
@@ -1073,7 +1078,7 @@
 
     function addToPot() {
       const current = state.pot;
-      const input = prompt(`How many points do you want to add to Pooh’s Hunny Pot? (Current: ${current})`, '5');
+      const input = prompt(`How many points do you want to add to the Hunny Pot? (Current: ${current})`, '5');
       if (input === null) return;
       let amount = Number(input);
       if (!Number.isFinite(amount) || amount <= 0) {
