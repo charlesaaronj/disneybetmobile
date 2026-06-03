@@ -477,7 +477,7 @@ h3 {
 
 .starterHint {
   font-size: var(--text-sm);
-  font-weight: 800;
+  font-weight: 700;
   color: var(--color-primary);
   padding: 0.4rem 0.7rem;
   border-radius: var(--radius-md);
