@@ -164,7 +164,13 @@
       border-radius: var(--radius-md);
     }
 
-    .player-chip { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); padding: var(--space-3); align-items: center; }
+    .player-chip {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: var(--space-2);
+      padding: var(--space-3);
+      align-items: center;
+    }
 
     .scoreboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-3); }
     .score-card { padding: var(--space-3); display: grid; gap: .35rem; }
@@ -526,14 +532,14 @@
     }
 
     function recalculateScores() {
-      // Reset players to their starting points
+      // reset players
       state.players = state.players.map(player => ({
         ...player,
         currentPoints: player.startingPoints
       }));
-      const playerMap = Object.fromEntries(state.players.map(player => [player.id, player]));
+      const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
 
-      // Rebuild Hunny Pot purely from history
+      // rebuild pot from scratch
       state.pot = 0;
 
       state.bets.forEach(bet => {
@@ -542,43 +548,40 @@
         const guesses = bet.guesses || [];
         const land = bet.land || '';
 
-        const totalWagered = guesses.reduce(
-          (sum, g) => sum + Math.max(0, Number(g.wager || 0)),
-          0
-        );
-        const anyCorrect = guesses.some(
-          g =>
-            g.guessedAuthorId === authorId &&
-            Number(g.wager || 0) > 0
-        );
+        const wagers = guesses.map(g => ({
+          playerId: g.playerId,
+          guessedAuthorId: g.guessedAuthorId,
+          wager: Math.max(0, Number(g.wager || 0))
+        }));
 
-        // Apply wagers to players
-        guesses.forEach(g => {
-          const player = playerMap[g.playerId];
-          if (!player) return;
-          const wager = Number(g.wager || 0);
-          if (wager <= 0) return;
+        const potThisRound = wagers.reduce((sum, w) => sum + w.wager, 0);
+        const winners = wagers.filter(w => w.wager > 0 && w.guessedAuthorId === authorId);
+        const losers = wagers.filter(w => w.wager > 0 && w.guessedAuthorId !== authorId);
 
-          // everyone pays their wager
-          player.currentPoints -= wager;
+        const anyCorrect = winners.length > 0;
+        const totalWinnerWager = winners.reduce((sum, w) => sum + w.wager, 0);
 
-          // correct guesses get double back + land streak bonus
-          if (g.guessedAuthorId === authorId) {
-            player.currentPoints += wager * 2;
-            if (hasPreviousCorrectInSameLand(g.playerId, land, bet.id)) {
-              player.currentPoints += 1;
-            }
-          }
+        // everyone who wagered pays their stake
+        wagers.forEach(w => {
+          const player = playerMap[w.playerId];
+          if (!player || w.wager <= 0) return;
+          player.currentPoints -= w.wager;
         });
 
-        // If no one guessed correctly, all wagered points flow into the Hunny Pot
-        if (!anyCorrect && totalWagered > 0) {
-          state.pot += totalWagered;
-        }
-
-        // Author gets flat +2
-        if (authorId && playerMap[authorId]) {
-          playerMap[authorId].currentPoints += 2;
+        if (anyCorrect && potThisRound > 0 && totalWinnerWager > 0) {
+          // proportional pot split
+          winners.forEach(w => {
+            const player = playerMap[w.playerId];
+            if (!player) return;
+            const share = potThisRound * (w.wager / totalWinnerWager);
+            player.currentPoints += share;
+            if (hasPreviousCorrectInSameLand(w.playerId, land, bet.id)) {
+              player.currentPoints += 1;
+            }
+          });
+        } else if (!anyCorrect && potThisRound > 0) {
+          // whole pot into Hunny Pot
+          state.pot += potThisRound;
         }
       });
     }
@@ -809,24 +812,27 @@
       const author = state.players.find(p => p.id === bet.authorPlayerId);
       const guesses = bet.guesses || [];
 
-      const winners = [];
+      const wagers = guesses.map(g => ({
+        playerId: g.playerId,
+        guessedAuthorId: g.guessedAuthorId,
+        wager: Math.max(0, Number(g.wager || 0))
+      }));
+
+      const potThisRound = wagers.reduce((sum, w) => sum + w.wager, 0);
+      const winners = wagers.filter(w => w.wager > 0 && w.guessedAuthorId === bet.authorPlayerId);
+      const anyCorrect = winners.length > 0;
+
       const bonusWinners = [];
-      let totalWagered = 0;
-
-      guesses.forEach(g => {
-        const player = state.players.find(p => p.id === g.playerId);
-        const wager = Number(g.wager || 0);
-        if (!player || wager <= 0) return;
-        totalWagered += wager;
-        if (g.guessedAuthorId === bet.authorPlayerId) {
-          winners.push({ player, wager });
-          if (hasPreviousCorrectInSameLand(player.id, land, bet.id)) {
-            bonusWinners.push(player.name);
+      if (anyCorrect) {
+        winners.forEach(w => {
+          if (hasPreviousCorrectInSameLand(w.playerId, land, bet.id)) {
+            const player = state.players.find(p => p.id === w.playerId);
+            if (player) bonusWinners.push(player.name);
           }
-        }
-      });
+        });
+      }
 
-      // Hunny Pot is handled entirely in recalculateScores
+      // Scores & pot will be recomputed from all rounds
       recalculateScores();
       saveState();
       render();
@@ -839,9 +845,12 @@
       }
 
       bodyParts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Winners</div>`);
-      if (winners.length) {
-        bodyParts.push(`<div>${winners.map(w => `${escapeHtml(w.player.name)} (+${w.wager})`).join('<br>')}</div>`);
-      } else if (totalWagered > 0) {
+      if (anyCorrect) {
+        bodyParts.push(`<div>${winners.map(w => {
+          const player = state.players.find(p => p.id === w.playerId);
+          return player ? `${escapeHtml(player.name)} (wagered ${w.wager})` : '';
+        }).join('<br>')}</div>`);
+      } else if (potThisRound > 0) {
         bodyParts.push(`<div>No one guessed correctly. All wagers went to the Hunny Pot.</div>`);
       } else {
         bodyParts.push(`<div>No one placed a wager this round.</div>`);
@@ -954,7 +963,7 @@
         <div class="score-card">
           <div class="muted">${index + 1 === 1 ? 'Leader' : `Place ${index + 1}`}</div>
           <div class="score-name">${escapeHtml(player.name)}</div>
-          <div class="score-points">${player.currentPoints}</div>
+          <div class="score-points">${Math.round(player.currentPoints)}</div>
           <div class="hint">Started with ${player.startingPoints}</div>
         </div>
       `).join('');
@@ -1027,7 +1036,7 @@
           .filter(g => g.guessedAuthorId === bet.authorPlayerId && g.wager > 0)
           .map(g => {
             const player = state.players.find(p => p.id === g.playerId);
-            return player ? `${player.name} (+${g.wager})` : null;
+            return player ? `${player.name} (wager ${g.wager})` : null;
           })
           .filter(Boolean);
         const metaParts = [];
