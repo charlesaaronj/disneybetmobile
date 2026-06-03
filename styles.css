@@ -393,6 +393,7 @@ h3 {
   flex-wrap: wrap;
   align-items: center;
   margin-top: var(--space-3); /* space above a row of buttons */
+  margin-bot: var(--space-3); /* space above a row of buttons */
 }
 
 .small-actions .btn {
