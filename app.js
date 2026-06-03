@@ -620,38 +620,74 @@ function renderOpenBets() {
 function renderHistory() {
   const resolved = state.bets.filter(b => b.status === 'resolved');
   if (!resolved.length) {
-    els.historyList.innerHTML = '<div class="empty">Resolved rounds will stay here so you can reuse fun questions later.</div>';
+    els.historyList.innerHTML =
+      '<div class="empty">Resolved rounds will stay here so you can reuse fun questions later.</div>';
     return;
   }
-  els.historyList.innerHTML = resolved.map(bet => {
-    const correctAuthors = (bet.correctAuthors && bet.correctAuthors.length
-      ? bet.correctAuthors
-      : (bet.correctAuthorId ? [bet.correctAuthorId] : [])) || [];
-    const authorNames = correctAuthors
-      .map(id => {
-        const p = state.players.find(pl => pl.id === id);
-        return p ? p.name : null;
-      })
-      .filter(Boolean);
-    return `
-      <article class="history-item">
-        <div class="bet-head">
-          <div>
-            <h3>${escapeHtml(bet.description)}</h3>
-            <div class="hint">Resolved ${escapeHtml(bet.resolvedAt || '')}</div>
+
+  els.historyList.innerHTML = resolved
+    .map(bet => {
+      // Who was actually correct for this round
+      const correctAuthors = (bet.correctAuthors && bet.correctAuthors.length
+        ? bet.correctAuthors
+        : (bet.correctAuthorId ? [bet.correctAuthorId] : [])) || [];
+
+      const authorNames = correctAuthors
+        .map(id => {
+          const p = state.players.find(pl => pl.id === id);
+          return p ? p.name : null;
+        })
+        .filter(Boolean);
+
+      // Winners: players who guessed one of the correct authors and wagered > 0
+      const winners = (bet.guesses || [])
+        .filter(g => correctAuthors.includes(g.guessedAuthorId) && g.wager > 0)
+        .map(g => {
+          const player = state.players.find(p => p.id === g.playerId);
+          return player ? `${player.name} (wagered ${g.wager})` : null;
+        })
+        .filter(Boolean);
+
+      // Attraction + land pill
+      const metaParts = [];
+      if (bet.attraction) metaParts.push(escapeHtml(bet.attraction));
+      if (bet.land) metaParts.push(escapeHtml(bet.land));
+      const metaText = metaParts.length ? metaParts.join(' • ') : '';
+
+      return `
+        <article class="history-item">
+          <div class="bet-head">
+            <div>
+              <h3>${escapeHtml(bet.description)}</h3>
+              <div class="hint">
+                Resolved ${escapeHtml(bet.resolvedAt || '')}
+                ${
+                  metaText
+                    ? `<span class="pill" style="margin-left:0.35rem;">${metaText}</span>`
+                    : ''
+                }
+              </div>
+            </div>
+            <div class="bet-meta">
+              <span class="pill pill-won">Round finished</span>
+              ${
+                authorNames.length
+                  ? `<span class="pill">Author: ${escapeHtml(authorNames.join(', '))}</span>`
+                  : ''
+              }
+            </div>
           </div>
-          <div class="bet-meta">
-            <span class="pill pill-won">Round finished</span>
-            ${
-              authorNames.length
-                ? `<span class="pill">Author: ${escapeHtml(authorNames.join(', '))}</span>`
-                : ''
+          <div class="hint" style="margin-top:0.35rem;">
+            Winners: ${
+              winners.length
+                ? escapeHtml(winners.join(', '))
+                : 'No winners'
             }
           </div>
-        </div>
-      </article>
-    `;
-  }).join('');
+        </article>
+      `;
+    })
+    .join('');
 }
 
 function renderBetPlayers() {
