@@ -483,6 +483,7 @@ h3 {
   border-radius: var(--radius-md);
   background: color-mix(in oklab, var(--color-primary) 8%, var(--color-surface-2));
   border: 1px solid color-mix(in oklab, var(--color-primary) 25%, transparent);
+  margin: 10px;
 }
 
 .reveal-section-title {
