@@ -469,6 +469,8 @@ h3 {
   font-size: var(--text-lg);
 }
 
+
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -476,14 +478,17 @@ h3 {
 }
 
 .starterHint {
-  font-size: var(--text-sm);
-  font-weight: 700;
-  color: var(--color-primary);
-  padding: 0.4rem 0.7rem;
-  border-radius: var(--radius-md);
-  background: color-mix(in oklab, var(--color-primary) 8%, var(--color-surface-2));
-  border: 1px solid color-mix(in oklab, var(--color-primary) 25%, transparent);
-  margin: 10px;
+  font-size: var(--text-lg);              /* bigger text */
+  font-weight: 800;                       /* extra bold */
+  color: var(--color-text-inverse);       /* high contrast text */
+  padding: 0.6rem 1rem;                   /* larger pill */
+  border-radius: var(--radius-full);      /* fully rounded */
+  background: var(--color-primary);       /* solid primary */
+  border: 2px solid var(--color-gold);    /* gold outline */
+  margin: 14px 10px;                      /* a bit more space */
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 20%, transparent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .reveal-section-title {
