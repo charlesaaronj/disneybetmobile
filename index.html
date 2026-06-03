@@ -274,7 +274,7 @@
         </svg>
         <div>
           <h1>Disney Line Guess</h1>
-          <p class="sub">Make “will happen / won’t happen” guesses while you wait and keep score with the Hunny Pot.</p>
+          <p class="sub">Everyone predicts the ride, writes secret answers, and wagers points on who wrote which answer.</p>
         </div>
       </div>
     </header>
@@ -309,38 +309,40 @@
 
       <section class="stack">
         <article class="panel">
-          <h2>New guess</h2>
+          <h2>New question</h2>
 
           <div class="field">
-            <label for="betDescription">Guess description</label>
-            <textarea id="betDescription" placeholder="Type your own guess or tap Random guess idea."></textarea>
+            <label for="betDescription">Question about this ride</label>
+            <textarea id="betDescription" placeholder="Type your own question or tap Random idea."></textarea>
           </div>
 
           <div class="small-actions" style="margin-top:.5rem;">
-            <button class="btn btn-secondary" type="button" id="randomBetBtn">Random guess idea</button>
+            <button class="btn btn-secondary" type="button" id="randomBetBtn">Random idea</button>
           </div>
 
           <div id="starterHint" style="margin-top:.75rem;"></div>
 
           <div class="field" style="margin-top:1rem;">
-            <label>Each player's pick</label>
-            <p class="hint">Choose will happen or won’t happen, then enter a wager. Use 0 points if someone is sitting this one out.</p>
+            <label>Guessing for this round</label>
+            <p class="hint">
+              After everyone answers in secret, the app shows one answer and each player guesses who wrote it and wagers points.
+            </p>
           </div>
           <div id="betPlayers" class="players" style="margin-top:.5rem;"></div>
 
           <div class="small-actions" style="margin-top:1rem;">
-            <button class="btn btn-primary" type="button" id="createBetBtn">Create open guess</button>
+            <button class="btn btn-primary" type="button" id="createBetBtn">Start question round</button>
+            <button class="btn btn-secondary" type="button" id="lockGuessesBtn">Lock guesses & reveal</button>
             <button class="btn btn-secondary" type="button" id="clearBetFormBtn">Clear</button>
           </div>
         </article>
 
         <article class="panel">
-          <h2>Open guesses</h2>
+          <h2>Rounds</h2>
           <div id="openBetMetrics" class="totals"></div>
           <div id="openBets" class="bet-list" style="margin-top:1rem;"></div>
         </article>
 
-        <!-- Players panel here -->
         <article class="panel">
           <h2>Players</h2>
           <p class="hint" style="margin-bottom:.5rem;">
@@ -350,14 +352,31 @@
         </article>
 
         <article class="panel">
-          <h2>Guess history</h2>
+          <h2>Round history</h2>
           <div id="historyList" class="history-list"></div>
         </article>
       </section>
     </main>
   </div>
 
-  <!-- Hunny Pot / refund modal -->
+  <!-- Answer collection modal -->
+  <div id="answerModalBackdrop" class="modal-backdrop" style="display:none;">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="answerModalTitle">
+      <div>
+        <h3 id="answerModalTitle" class="modal-title">Pass the phone</h3>
+        <p class="hint" id="answerModalPrompt"></p>
+      </div>
+      <div class="field">
+        <label id="answerModalPlayerLabel"></label>
+        <textarea id="answerModalInput"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary" id="answerModalSaveBtn">Save and pass</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Old Hunny Pot / refund modal (kept in case you want it later, but unused now) -->
   <div id="refundModalBackdrop" class="modal-backdrop" style="display:none;">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="refundModalTitle">
       <div>
@@ -377,121 +396,15 @@
   </div>
 
   <script>
-    // Preset guess ideas
+    // Preset ideas – you can later swap these for question‑style prompts if you want
     const presetBets = [
-      // Wait time
-      'The posted wait time will be accurate within a few minutes.',
-      'The posted wait time will be off by at least ten minutes.',
-      'The posted wait time will increase before we reach the first indoor room.',
-      'The posted wait time will decrease before we reach the first indoor room.',
-      'The posted wait time will not change before we reach the preshow.',
-      'The posted wait time will change at least twice while we are in line.',
-      'The posted wait time on exit will be higher than when we entered.',
-      'The posted wait time on exit will be lower than when we entered.',
-      'The posted wait time on exit will be the same as when we entered.',
-      'The posted wait time when we enter the building will be higher than when we entered the queue.',
-      'The posted wait time when we enter the building will be lower than when we entered the queue.',
-
-      // Delays / downtime
-      'The attraction will have no delays at all.',
-      'The attraction will have at least one delay.',
-      'All delays will be under one minute.',
-      'At least one delay will be longer than one minute.',
-      'The longest delay will happen before we enter the building.',
-      'The longest delay will happen during the preshow.',
-      'The longest delay will happen after we have boarded the ride vehicle.',
-      'A delay will occur after we reach the merge point.',
-      'The ride will pause after we board for at least thirty seconds.',
-
-      // Cast members
-      'The main cast member at load will be wearing glasses.',
-      'The main cast member at load will be wearing a hat.',
-      'The main cast member at load will not be wearing a hat.',
-      'The main cast member at load will be male.',
-      'The main cast member at load will be female.',
-      'The main cast member at load will have red hair.',
-      'The main cast member at load will have blond hair.',
-      'The main cast member at load will have brown hair.',
-      'The load cast member’s name tag will show a U.S. state.',
-      'The load cast member’s name tag will show a foreign country.',
-      'The load cast member’s name tag will show a university.',
-      'A cast member will check our restraints more than once.',
-      'A cast member will give an instruction at the merge point.',
-      'A cast member will give an instruction at load.',
-
-      // Lightning Lane / merge
-      'Standby and Lightning Lane will merge before we go indoors.',
-      'We will not stop at the merge point at all.',
-      'We will be stopped at the merge point for at least one full cycle.',
-      'The Lightning Lane line will be shorter than standby.',
-      'The Lightning Lane line will be longer than standby.',
-      'We will advance past at least one Lightning Lane group at the merge.',
-
-      // Vehicle / seating
-      'Our ride vehicle will have no empty seats.',
-      'Our ride vehicle will have at least one empty seat.',
-      'Our ride vehicle will have at least three empty seats.',
-      'We will be seated in the front third of the vehicle.',
-      'We will be seated in the middle third of the vehicle.',
-      'We will be seated in the back third of the vehicle.',
-      'Our whole party will sit together in one row or car.',
-      'Our party will be split into more than one row or car.',
-      'The row in front of us will have at least one empty seat.',
-      'We will board on the left side.',
-      'We will board on the right side.',
-      'Our attraction car will be a different color than the one in front of it.',
-
-      // Queue progression
-      'We will stop at no gates before boarding.',
-      'We will stop at least once at a gate before boarding.',
-      'We will walk straight to our vehicle once we enter the load room.',
-      'We will be assigned a row at the merge point.',
-      'We will be assigned a row at the load platform.',
-      'We will enter at least two different rooms before we board.',
-
-      // Preshow
-      'We will be among the first five people into the preshow room.',
-      'We will be among the last five people to leave the preshow room.',
-
-      // Animatronics / ride condition
-      'No animatronics will be visibly broken.',
-      'At least one animatronic will be clearly not working.',
-      'A major effect will be missing in one of the scenes.',
-      'The ride will not stop at all once we are moving.',
-      'The ride will stop at least once while we are on it.',
-      'The ride will stop for at least thirty seconds while we are on it.',
-
-      // Other guests – grouping and behavior
-      'Another guest in our vehicle will be riding alone.',
-      'Another guest in our vehicle will be in a group of at least four people.',
-      'A guest in our row will hold up a phone during the ride.',
-      'A guest in our row will raise their hands before the ride starts moving.',
-      'A guest in our row will scream before the ride starts moving.',
-      'A guest will ask a question at load.',
-      'A guest will switch seats at load.',
-      'A guest will not be ready when it is time to board.',
-
-      // Clothing / accessories
-      'Someone in our row will be wearing a Disney-bounding outfit.',
-      'Someone in our row will be wearing matching family shirts.',
-      'Someone in our row will be wearing a poncho.',
-      'Someone in our row will be wearing a sports logo.',
-      'At least one person in our vehicle will be wearing Mickey ears.',
-      'At least two people in our vehicle will be wearing Mickey ears.',
-      'Someone in our row will have a backpack.',
-      'Someone in our row will have a Loungefly bag.',
-      'Someone in our row will be holding a popcorn bucket.',
-
-      // Language / origin
-      'We will hear no non-English languages in our vehicle.',
-      'We will hear at least one non-English language in our vehicle.',
-      'We will hear more than one language in our vehicle.',
-
-      // Hybrid timing
-      'Our vehicle will dispatch within thirty seconds of us reaching the load line.',
-      'Our vehicle will dispatch within one minute of us reaching the load line.',
-      'We will be the last group assigned in our dispatch.',
-      'A vehicle will dispatch completely empty before ours.'
+      'What do you think will be your favorite moment on this ride?',
+      'What 3 words will you say when this ride ends?',
+      'What will surprise you most about this ride?',
+      'What part of the ride will make you laugh?',
+      'What part of the ride will be the scariest?',
+      'What is one thing you think you will notice that no one else will?',
+      'Describe this ride in 3 silly words you haven’t used before.'
     ];
 
     function getRandomPresetBet() {
@@ -502,7 +415,7 @@
 
     const state = {
       players: [],
-      bets: [],
+      bets: [],   // each bet is now a Q&A round
       pot: 0
     };
 
@@ -521,7 +434,12 @@
       refundText: document.getElementById('refundModalText'),
       refundInput: document.getElementById('refundPotInput'),
       refundRefundBtn: document.getElementById('refundRefundBtn'),
-      refundRemoveBtn: document.getElementById('refundRemoveBtn')
+      refundRemoveBtn: document.getElementById('refundRemoveBtn'),
+      answerBackdrop: document.getElementById('answerModalBackdrop'),
+      answerPrompt: document.getElementById('answerModalPrompt'),
+      answerPlayerLabel: document.getElementById('answerModalPlayerLabel'),
+      answerInput: document.getElementById('answerModalInput'),
+      answerSaveBtn: document.getElementById('answerModalSaveBtn')
     };
 
     const STORAGE_KEY = 'disney-line-bet-v1';
@@ -542,9 +460,11 @@
         const parsed = JSON.parse(raw);
         if (!Array.isArray(parsed.players) || !Array.isArray(parsed.bets)) return;
         state.players = parsed.players;
+        // Migrate old bets if any
         state.bets = parsed.bets.map(bet => ({
           ...bet,
-          entries: bet.entries.map(entry => ({ ...entry, amount: Number(entry.amount || 0) })),
+          guesses: bet.guesses || [],
+          answers: bet.answers || [],
           refunded: !!bet.refunded
         }));
         state.pot = Number(parsed.pot || 0);
@@ -568,13 +488,14 @@
 
     function removePlayer(playerId) {
       state.players = state.players.filter(player => player.id !== playerId);
-      state.bets = state.bets.filter(bet => !bet.entries.some(entry => entry.playerId === playerId));
+      state.bets = state.bets.filter(bet => !bet.guesses?.some(entry => entry.playerId === playerId));
       recalculateScores();
       saveState();
       render();
     }
 
     function recalculateScores() {
+      // Reset to starting points
       state.players = state.players.map(player => ({
         ...player,
         currentPoints: player.startingPoints
@@ -582,28 +503,28 @@
       const playerMap = Object.fromEntries(state.players.map(player => [player.id, player]));
 
       state.bets.forEach(bet => {
-        if (bet.status !== 'resolved' || bet.refunded) return;
+        if (bet.status !== 'resolved') return;
+        const authorId = bet.authorPlayerId;
+        const guesses = bet.guesses || [];
 
-        const activeEntries = bet.entries.filter(entry => entry.amount > 0);
-        const pot = activeEntries.reduce((sum, entry) => sum + entry.amount, 0);
-        const winners = bet.outcome === 'won'
-          ? activeEntries.filter(entry => entry.prediction === 'yes')
-          : activeEntries.filter(entry => entry.prediction === 'no');
+        guesses.forEach(g => {
+          const player = playerMap[g.playerId];
+          if (!player) return;
+          const wager = Number(g.wager || 0);
+          if (wager <= 0) return;
 
-        activeEntries.forEach(entry => {
-          if (playerMap[entry.playerId]) {
-            playerMap[entry.playerId].currentPoints -= entry.amount;
+          // Deduct wager first
+          player.currentPoints -= wager;
+
+          // If correct, pay back double (win net +wager)
+          if (g.guessedAuthorId === authorId) {
+            player.currentPoints += wager * 2;
           }
         });
 
-        if (winners.length > 0) {
-          const share = Math.floor(pot / winners.length);
-          const remainder = pot % winners.length;
-          winners.forEach((winner, index) => {
-            if (playerMap[winner.playerId]) {
-              playerMap[winner.playerId].currentPoints += share + (index === 0 ? remainder : 0);
-            }
-          });
+        // Optional: reward author a small flat bonus
+        if (authorId && playerMap[authorId]) {
+          playerMap[authorId].currentPoints += 2;
         }
       });
     }
@@ -613,176 +534,235 @@
       return player ? player.currentPoints : 0;
     }
 
-    function buildBetEntries() {
-      const rows = [...document.querySelectorAll('[data-bet-player-row]')];
-      const entries = rows.map(row => ({
-        playerId: row.dataset.playerId,
-        prediction: row.querySelector('[data-prediction]').value,
-        amount: Number(row.querySelector('[data-amount]').value || 0)
-      }));
+    // Answer modal flow (pass the phone)
+    let currentAnswerBetId = null;
+    let currentAnswerIndex = 0;
 
-      const active = entries.filter(entry => entry.amount > 0);
-      if (!active.length) {
-        alertLike('Add a wager for at least one family member.');
-        return null;
-      }
-
-      for (const entry of active) {
-        const available = getAvailablePoints(entry.playerId);
-        if (entry.amount > available) {
-          const player = state.players.find(p => p.id === entry.playerId);
-          alertLike(`${player.name} only has ${available} points available.`);
-          return null;
-        }
-      }
-      return entries;
+    function showAnswerModal() {
+      els.answerBackdrop.style.display = 'flex';
     }
 
-    function pickStarterPlayerId(entries) {
-      const availablePlayers = state.players.filter(p => p.currentPoints > 0);
-      if (!availablePlayers.length) return null;
-      const randomIndex = Math.floor(Math.random() * availablePlayers.length);
-      return availablePlayers[randomIndex].id;
+    function hideAnswerModal() {
+      els.answerBackdrop.style.display = 'none';
     }
 
+    function startAnswerPhase(betId) {
+      currentAnswerBetId = betId;
+      currentAnswerIndex = 0;
+      const bet = state.bets.find(b => b.id === betId);
+      if (!bet) return;
+      bet.answers = [];
+      bet.status = 'answering';
+      saveState();
+      nextAnswerPrompt();
+    }
+
+    function nextAnswerPrompt() {
+      const bet = state.bets.find(b => b.id === currentAnswerBetId);
+      if (!bet) return;
+
+      const players = state.players;
+      if (currentAnswerIndex >= players.length) {
+        // All answers collected, move to guessing phase
+        bet.status = 'guessing';
+        saveState();
+        hideAnswerModal();
+        render();
+        startGuessPhase(bet.id);
+        return;
+      }
+
+      const player = players[currentAnswerIndex];
+      els.answerPrompt.textContent = `Hand the phone to ${player.name}. Only they should see this screen.`;
+      els.answerPlayerLabel.textContent = `${player.name}, type your answer:`;
+      els.answerInput.value = '';
+      showAnswerModal();
+    }
+
+    els.answerSaveBtn.addEventListener('click', () => {
+      const bet = state.bets.find(b => b.id === currentAnswerBetId);
+      if (!bet) return;
+      const players = state.players;
+      const player = players[currentAnswerIndex];
+      const text = els.answerInput.value.trim();
+      if (!text) {
+        alertLike('Type an answer before saving.');
+        return;
+      }
+      bet.answers = bet.answers || [];
+      bet.answers.push({ id: uid(), playerId: player.id, text });
+      saveState();
+      currentAnswerIndex += 1;
+      nextAnswerPrompt();
+    });
+
+    // Create a new question round
     function createBet() {
-      if (!state.players.length) return alertLike('Add family members before creating a guess.');
+      if (!state.players.length) return alertLike('Add family members before starting a round.');
 
-      let description = els.betDescription.value.trim();
-      if (!description) {
+      let question = els.betDescription.value.trim();
+      if (!question) {
         const random = getRandomPresetBet();
         if (!random) {
-          return alertLike('Write a guess description first.');
+          return alertLike('Write a question first.');
         }
-        description = random;
+        question = random;
         els.betDescription.value = random;
       }
 
-      const entries = buildBetEntries();
-      if (!entries) return;
-
-      const starterPlayerId = pickStarterPlayerId(entries) || entries[0].playerId;
-
-      state.bets.unshift({
-        id: uid(),
-        description,
+      const betId = uid();
+      const newBet = {
+        id: betId,
+        description: question,
         createdAt: new Date().toLocaleString(),
-        status: 'open',
-        outcome: null,
-        entries,
-        refunded: false,
-        starterPlayerId
-      });
+        status: 'answering',
+        answers: [],
+        chosenAnswerId: null,
+        authorPlayerId: null,
+        guesses: [],
+        refunded: false
+      };
 
+      state.bets.unshift(newBet);
       els.betDescription.value = '';
       els.starterHint.textContent = '';
       saveState();
       render();
-      renderBetPlayers();
+      startAnswerPhase(betId);
+    }
+
+    // Guessing phase and wagering
+    function getCurrentGuessingBet() {
+      return state.bets.find(b => b.status === 'guessing') || null;
+    }
+
+    function startGuessPhase(betId) {
+      const bet = state.bets.find(b => b.id === betId);
+      if (!bet) return;
+
+      // Pick a random answer if not already chosen
+      if (!bet.chosenAnswerId && bet.answers && bet.answers.length) {
+        const idx = Math.floor(Math.random() * bet.answers.length);
+        const chosen = bet.answers[idx];
+        bet.chosenAnswerId = chosen.id;
+        bet.authorPlayerId = chosen.playerId;
+        saveState();
+      }
+      renderGuessingRound(bet);
+    }
+
+    function renderGuessingRound(bet) {
+      if (!bet) {
+        els.betPlayers.innerHTML = '<div class="empty">No round ready for guessing yet.</div>';
+        els.starterHint.textContent = '';
+        return;
+      }
+
+      const chosen = (bet.answers || []).find(a => a.id === bet.chosenAnswerId);
+      const answerText = chosen ? chosen.text : '';
+
+      els.starterHint.textContent = `Answer to guess: "${answerText}"`;
+
+      els.betPlayers.innerHTML = state.players.map(player => {
+        const available = getAvailablePoints(player.id);
+        return `
+          <div class="player-bet-row" data-bet-player-row data-player-id="${player.id}">
+            <div>
+              <strong>${escapeHtml(player.name)}</strong>
+              <div class="hint">Available: ${available} points</div>
+            </div>
+            <div class="field">
+              <label>Who wrote it?</label>
+              <select data-guess-player>
+                ${state.players.map(p => `
+                  <option value="${p.id}">${escapeHtml(p.name)}</option>
+                `).join('')}
+              </select>
+            </div>
+            <div class="field">
+              <label>Wager</label>
+              <input data-amount type="number" min="0" step="1" value="0" placeholder="0" />
+            </div>
+          </div>
+        `;
+      }).join('');
+
       attachWagerGuards();
     }
 
-    let pendingRefundBetId = null;
+    function buildGuessesForBet(bet) {
+      const rows = [...document.querySelectorAll('[data-bet-player-row]')];
+      const guesses = rows.map(row => {
+        const playerId = row.dataset.playerId;
+        const guessedAuthorId = row.querySelector('[data-guess-player]').value;
+        const wager = Number(row.querySelector('[data-amount]').value || 0);
+        return { playerId, guessedAuthorId, wager };
+      });
 
-    function openRefundModal(bet, pot) {
-      pendingRefundBetId = bet.id;
-      els.refundText.textContent = `This guess’s Hunny Pot total is ${pot} points. You can add extra points to the Hunny Pot, then either refund everyone or keep it in the Hunny Pot.`;
-      els.refundInput.value = 0;
-      els.refundBackdrop.style.display = 'flex';
+      const active = guesses.filter(g => g.wager > 0);
+      if (!active.length) {
+        alertLike('At least one player must wager points.');
+        return null;
+      }
+
+      for (const g of active) {
+        const available = getAvailablePoints(g.playerId);
+        if (g.wager > available) {
+          const player = state.players.find(p => p.id === g.playerId);
+          alertLike(`${player.name} only has ${available} points available.`);
+          return null;
+        }
+      }
+
+      return guesses;
     }
 
-    function closeRefundModal() {
-      pendingRefundBetId = null;
-      els.refundBackdrop.style.display = 'none';
-    }
-
-    function resolveBet(betId, outcome) {
-      const bet = state.bets.find(item => item.id === betId);
+    function resolveGuessingBet(betId) {
+      const bet = state.bets.find(b => b.id === betId);
       if (!bet) return;
-
-      const activeEntries = bet.entries.filter(entry => entry.amount > 0);
-      const winningPrediction = outcome === 'won' ? 'yes' : 'no';
-      const winners = activeEntries.filter(entry => entry.prediction === winningPrediction);
-      const pot = activeEntries.reduce((sum, entry) => sum + entry.amount, 0);
-
-      if (!winners.length && activeEntries.length) {
-        openRefundModal(bet, pot);
-
-        const onRefund = () => {
-          const extra = Math.max(0, Number(els.refundInput.value || 0));
-          state.pot += extra;
-          bet.status = 'resolved';
-          bet.outcome = outcome;
-          bet.resolvedAt = new Date().toLocaleString();
-          bet.refunded = true;
-          closeRefundModal();
-          recalculateScores();
-          saveState();
-          render();
-          renderBetPlayers();
-          attachWagerGuards();
-          cleanup();
-        };
-
-        const onRemove = () => {
-          const extra = Math.max(0, Number(els.refundInput.value || 0));
-          state.pot += pot + extra;
-          bet.status = 'resolved';
-          bet.outcome = outcome;
-          bet.resolvedAt = new Date().toLocaleString();
-          bet.refunded = false;
-          closeRefundModal();
-          recalculateScores();
-          saveState();
-          render();
-          renderBetPlayers();
-          attachWagerGuards();
-          cleanup();
-        };
-
-        const cleanup = () => {
-          els.refundRefundBtn.removeEventListener('click', onRefund);
-          els.refundRemoveBtn.removeEventListener('click', onRemove);
-        };
-
-        els.refundRefundBtn.addEventListener('click', onRefund);
-        els.refundRemoveBtn.addEventListener('click', onRemove);
-
+      if (!bet.authorPlayerId) {
+        alertLike('No answer was chosen to guess.');
         return;
       }
 
       bet.status = 'resolved';
-      bet.outcome = outcome;
       bet.resolvedAt = new Date().toLocaleString();
       bet.refunded = false;
+
       recalculateScores();
+
+      const author = state.players.find(p => p.id === bet.authorPlayerId);
+      const correctGuessers = [];
+      (bet.guesses || []).forEach(g => {
+        if (g.guessedAuthorId === bet.authorPlayerId && g.wager > 0) {
+          const player = state.players.find(p => p.id === g.playerId);
+          if (player) {
+            correctGuessers.push(`${player.name} (+${g.wager})`);
+          }
+        }
+      });
+
+      let message = '';
+      message += `The answer was written by ${author ? author.name : 'someone'}.`;
+      if (correctGuessers.length) {
+        message += `\n\nWinners this round:\n- ${correctGuessers.join('\n- ')}`;
+      } else {
+        message += `\n\nNo one guessed correctly this round.`;
+      }
+
+      alert(message);
+
       saveState();
       render();
       renderBetPlayers();
       attachWagerGuards();
-    }
-
-    function reopenBet(betId) {
-      const bet = state.bets.find(item => item.id === betId);
-      if (!bet) return;
-      bet.status = 'open';
-      bet.outcome = null;
-      bet.refunded = false;
-      delete bet.resolvedAt;
-      recalculateScores();
-      saveState();
-      render();
     }
 
     function cloneBet(betId) {
       const bet = state.bets.find(item => item.id === betId);
       if (!bet) return;
       els.betDescription.value = bet.description;
-      renderBetPlayers(bet.entries);
-      const starter = state.players.find(p => p.id === bet.starterPlayerId);
-      els.starterHint.textContent = starter
-        ? `Starter: ${starter.name} started this guess last time.`
-        : '';
+      renderBetPlayers();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -859,117 +839,56 @@
       `).join('');
     }
 
-    function renderBetPlayers(savedEntries = null) {
-      if (!state.players.length) {
-        els.betPlayers.innerHTML = '<div class="empty">Add players to build guessing rounds.</div>';
+    function renderBetPlayers() {
+      const guessingBet = getCurrentGuessingBet();
+      if (guessingBet) {
+        renderGuessingRound(guessingBet);
         return;
       }
-
-      let order = [...state.players];
-
-      if (!savedEntries) {
-        const available = state.players.filter(p => p.currentPoints > 0);
-        if (available.length) {
-          const starterId = available[Math.floor(Math.random() * available.length)].id;
-          const starterPlayer = state.players.find(p => p.id === starterId);
-          els.starterHint.textContent = `Starter: ${starterPlayer.name} starts this guess.`;
-          order.sort((a, b) => (a.id === starterId ? -1 : b.id === starterId ? 1 : 0));
-        } else {
-          els.starterHint.textContent = '';
-        }
-      } else {
+      // Default view when no guessing round is active
+      if (!state.players.length) {
+        els.betPlayers.innerHTML = '<div class="empty">Add players, then tap “Start question round” to begin.</div>';
         els.starterHint.textContent = '';
+        return;
       }
-
-      els.betPlayers.innerHTML = order.map(player => {
-        const saved = savedEntries?.find(entry => entry.playerId === player.id);
-        const prediction = saved?.prediction || 'yes';
-        const amount = saved ? Number(saved.amount || 0) : 0;
-
-        return `
-          <div class="player-bet-row" data-bet-player-row data-player-id="${player.id}">
-            <div>
-              <strong>${escapeHtml(player.name)}</strong>
-              <div class="hint">Available: ${player.currentPoints} points</div>
-            </div>
-            <div class="field">
-              <label>Prediction</label>
-              <select data-prediction>
-                <option value="yes" ${prediction === 'yes' ? 'selected' : ''}>Will happen</option>
-                <option value="no" ${prediction === 'no' ? 'selected' : ''}>Won’t happen</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Wager</label>
-              <input data-amount type="number" min="0" step="1" value="${amount}" placeholder="0" />
-            </div>
-          </div>
-        `;
-      }).join('');
+      els.betPlayers.innerHTML = '<div class="empty">Tap “Start question round” to begin collecting answers.</div>';
+      els.starterHint.textContent = '';
     }
 
     function renderOpenMetrics() {
-      const openBets = state.bets.filter(bet => bet.status === 'open');
-      const totalOpen = openBets.length;
-      const totalRisk = openBets.reduce((sum, bet) =>
-        sum + bet.entries.reduce((inner, e) => inner + (Number(e.amount) || 0), 0), 0);
-      const activePlayers = new Set(
-        openBets.flatMap(bet => bet.entries.filter(e => e.amount > 0).map(e => e.playerId))
-      ).size;
+      const answering = state.bets.filter(bet => bet.status === 'answering').length;
+      const guessing = state.bets.filter(bet => bet.status === 'guessing').length;
+      const resolved = state.bets.filter(bet => bet.status === 'resolved').length;
 
       els.openBetMetrics.innerHTML = `
-        <div class="metric"><span class="muted">Open guesses</span><span class="metric-value">${totalOpen}</span></div>
-        <div class="metric"><span class="muted">Points in play</span><span class="metric-value">${totalRisk}</span></div>
-        <div class="metric"><span class="muted">Players active</span><span class="metric-value">${activePlayers}</span></div>
+        <div class="metric"><span class="muted">Answering rounds</span><span class="metric-value">${answering}</span></div>
+        <div class="metric"><span class="muted">Guessing rounds</span><span class="metric-value">${guessing}</span></div>
+        <div class="metric"><span class="muted">Resolved rounds</span><span class="metric-value">${resolved}</span></div>
         <div class="metric"><span class="muted">Hunny Pot</span><span class="metric-value">${state.pot}</span></div>
       `;
     }
 
     function renderOpenBets() {
-      const openBets = state.bets.filter(bet => bet.status === 'open');
-      if (!openBets.length) {
-        els.openBets.innerHTML = '<div class="empty">No open guesses. Create one above when the line gets interesting.</div>';
+      const nonResolved = state.bets.filter(bet => bet.status !== 'resolved');
+      if (!nonResolved.length) {
+        els.openBets.innerHTML = '<div class="empty">No active rounds. Start a new question above.</div>';
         return;
       }
-      els.openBets.innerHTML = openBets.map(bet => {
-        const pot = bet.entries.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-        const starter = state.players.find(p => p.id === bet.starterPlayerId);
+      els.openBets.innerHTML = nonResolved.map(bet => {
+        const statusLabel =
+          bet.status === 'answering' ? 'Collecting answers' :
+          bet.status === 'guessing' ? 'Guessing & wagering' :
+          'Round';
         return `
           <article class="bet-card">
             <div class="bet-head">
               <div>
                 <h3>${escapeHtml(bet.description)}</h3>
                 <div class="bet-meta">
-                  <span class="pill pill-open">Open guess</span>
-                  <span class="pill">Hunny Pot ${pot}</span>
-                  ${starter ? `<span class="pill">Starter: ${escapeHtml(starter.name)}</span>` : ''}
+                  <span class="pill pill-open">${statusLabel}</span>
                 </div>
               </div>
               <div class="hint">Created ${escapeHtml(bet.createdAt)}</div>
-            </div>
-            <div class="players">
-              ${bet.entries.map(entry => {
-                const player = state.players.find(p => p.id === entry.playerId);
-                const sittingOut = Number(entry.amount) === 0;
-                return `
-                  <div class="player-chip">
-                    <div>
-                      <strong>${escapeHtml(player?.name || 'Unknown')}</strong>
-                      <div class="hint">Prediction: ${entry.prediction === 'yes' ? 'Will happen' : 'Won’t happen'}</div>
-                    </div>
-                    <span class="pill ${sittingOut ? 'pill-lost' : 'pill-open'}">
-                      ${sittingOut ? 'Sitting out' : `${entry.amount} pts`}
-                    </span>
-                    <span class="pill">${sittingOut ? '—' : 'Active'}</span>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-            <div class="small-actions">
-              <button class="btn btn-primary" type="button" onclick="resolveBet('${bet.id}', 'won')">Came true</button>
-              <button class="btn btn-secondary" type="button" onclick="resolveBet('${bet.id}', 'lost')">Did not come true</button>
-              <button class="btn btn-secondary" type="button" onclick="cloneBet('${bet.id}')">Reuse</button>
-              <button class="btn btn-danger" type="button" onclick="deleteBet('${bet.id}')">Delete</button>
             </div>
           </article>
         `;
@@ -979,20 +898,18 @@
     function renderHistory() {
       const resolved = state.bets.filter(bet => bet.status === 'resolved');
       if (!resolved.length) {
-        els.historyList.innerHTML = '<div class="empty">Resolved guesses will stay here so you can repeat good prompts later.</div>';
+        els.historyList.innerHTML = '<div class="empty">Resolved rounds will stay here so you can reuse fun questions later.</div>';
         return;
       }
       els.historyList.innerHTML = resolved.map(bet => {
-        const activeEntries = bet.entries.filter(e => e.amount > 0);
-        const pot = bet.refunded ? 0 : activeEntries.reduce((sum, e) => sum + e.amount, 0);
-        const winningPrediction = bet.outcome === 'won' ? 'yes' : 'no';
-        const winners = bet.refunded
-          ? []
-          : activeEntries
-              .filter(e => e.prediction === winningPrediction)
-              .map(e => state.players.find(p => p.id === e.playerId)?.name || 'Unknown');
-        const refundText = bet.refunded ? ' (refunded to players)' : '';
-        const starter = state.players.find(p => p.id === bet.starterPlayerId);
+        const author = state.players.find(p => p.id === bet.authorPlayerId);
+        const winners = (bet.guesses || [])
+          .filter(g => g.guessedAuthorId === bet.authorPlayerId && g.wager > 0)
+          .map(g => {
+            const player = state.players.find(p => p.id === g.playerId);
+            return player ? `${player.name} (+${g.wager})` : null;
+          })
+          .filter(Boolean);
 
         return `
           <article class="history-item">
@@ -1000,21 +917,17 @@
               <div>
                 <h3>${escapeHtml(bet.description)}</h3>
                 <div class="bet-meta">
-                  <span class="pill ${bet.outcome === 'won' ? 'pill-won' : 'pill-lost'}">
-                    ${bet.outcome === 'won' ? 'Guess came true' : 'Guess did not come true'}${refundText}
-                  </span>
-                  <span class="pill">Hunny Pot ${pot}</span>
-                  ${starter ? `<span class="pill">Starter: ${escapeHtml(starter.name)}</span>` : ''}
+                  <span class="pill pill-won">Round finished</span>
+                  ${author ? `<span class="pill">Author: ${escapeHtml(author.name)}</span>` : ''}
                 </div>
               </div>
               <div class="hint">Resolved ${escapeHtml(bet.resolvedAt || '')}</div>
             </div>
             <div class="hint">
-              Winners: ${bet.refunded ? 'Refunded (no point changes)' : escapeHtml(winners.join(', ') || 'No winners')}
+              Winners: ${winners.length ? escapeHtml(winners.join(', ')) : 'No winners'}
             </div>
             <div class="small-actions">
-              <button class="btn btn-secondary" type="button" onclick="cloneBet('${bet.id}')">Reuse guess</button>
-              <button class="btn btn-secondary" type="button" onclick="reopenBet('${bet.id}')">Reopen</button>
+              <button class="btn btn-secondary" type="button" onclick="cloneBet('${bet.id}')">Reuse question</button>
               <button class="btn btn-danger" type="button" onclick="deleteBet('${bet.id}')">Delete</button>
             </div>
           </article>
@@ -1052,7 +965,7 @@
     }
 
     function escapeHtml(value) {
-      return String(value).replace(/[&<>"']/g, char => ({
+      return String(value).replace(/[&<>\"']/g, char => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
       }[char]));
     }
@@ -1091,8 +1004,6 @@
     }
 
     window.removePlayer = removePlayer;
-    window.resolveBet = resolveBet;
-    window.reopenBet = reopenBet;
     window.cloneBet = cloneBet;
     window.deleteBet = deleteBet;
     window.giveFromPot = giveFromPot;
@@ -1134,6 +1045,19 @@
       attachWagerGuards();
     });
 
+    document.getElementById('lockGuessesBtn').addEventListener('click', () => {
+      const bet = getCurrentGuessingBet();
+      if (!bet) {
+        alertLike('No round is ready for guessing right now.');
+        return;
+      }
+      const guesses = buildGuessesForBet(bet);
+      if (!guesses) return;
+      bet.guesses = guesses;
+      saveState();
+      resolveGuessingBet(bet.id);
+    });
+
     document.getElementById('clearAllBtn').addEventListener('click', () => {
       state.players = [];
       state.bets = [];
@@ -1157,33 +1081,38 @@
       const ava = ensurePlayer('Ava');
       const liam = ensurePlayer('Liam');
 
-      const entries = [
-        { playerId: mom.id, prediction: 'yes', amount: 2 },
-        { playerId: dad.id, prediction: 'no', amount: 2 },
-        { playerId: ava.id, prediction: 'yes', amount: 3 },
-        { playerId: liam.id, prediction: 'no', amount: 0 }
-      ];
-
-      const starterPlayerId = mom.id;
-
+      const demoId = uid();
       state.bets.unshift({
-        id: uid(),
-        description: 'The next cast member we talk to will be wearing a celebration button.',
+        id: demoId,
+        description: 'What do you think will be your favorite moment on this ride?',
         createdAt: new Date().toLocaleString(),
-        status: 'open',
-        outcome: null,
-        entries,
+        status: 'resolved',
+        answers: [
+          { id: uid(), playerId: mom.id, text: 'The big drop' },
+          { id: uid(), playerId: dad.id, text: 'The animatronics' },
+          { id: uid(), playerId: ava.id, text: 'The music' },
+          { id: uid(), playerId: liam.id, text: 'The queue theming' }
+        ],
+        chosenAnswerId: null,
+        authorPlayerId: mom.id,
+        guesses: [
+          { playerId: mom.id, guessedAuthorId: mom.id, wager: 2 },
+          { playerId: dad.id, guessedAuthorId: mom.id, wager: 1 },
+          { playerId: ava.id, guessedAuthorId: dad.id, wager: 1 },
+          { playerId: liam.id, guessedAuthorId: ava.id, wager: 1 }
+        ],
         refunded: false,
-        starterPlayerId
+        resolvedAt: new Date().toLocaleString()
       });
 
+      recalculateScores();
       saveState();
       render();
     });
 
     els.refundBackdrop.addEventListener('click', e => {
       if (e.target === els.refundBackdrop) {
-        closeRefundModal();
+        els.refundBackdrop.style.display = 'none';
       }
     });
 
