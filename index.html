@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Disney Line Guess</title>
 
+  <!-- Optional: fonts, keep or remove as you like -->
   <link rel="preconnect" href="https://api.fontshare.com" />
   <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet" />
-
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -24,14 +24,9 @@
         </svg>
         <div>
           <h1>Disney Line Guess</h1>
-          <p class="sub">
-            Everyone writes secret answers about the ride, then wagers points on who wrote which answer.
-          </p>
+          <p class="sub">Everyone writes secret answers about the ride, then wagers points on who wrote which answer.</p>
         </div>
       </div>
-      <button class="btn btn-secondary" type="button" id="themeToggleBtn">
-        Toggle theme
-      </button>
     </header>
 
     <main id="main" class="layout">
@@ -53,19 +48,16 @@
               <input id="playerPoints" type="number" min="0" step="1" value="10" />
             </div>
           </div>
-          <div class="small-actions" style="margin-top:1rem;">
+          <div class="small-actions">
             <button class="btn btn-primary" type="button" id="addPlayerBtn">Add family member</button>
-            <button class="btn btn-secondary" type="button" id="resetDemoBtn">Load example</button>
             <button class="btn btn-danger" type="button" id="clearAllBtn">Clear everything</button>
           </div>
-          <p class="footer-note">
-            Use different starting points for kids, adults, or bonus rounds if you want handicaps.
-          </p>
+          <p class="footer-note">Use different starting points for kids, adults, or bonus rounds if you want handicaps.</p>
         </article>
 
         <article class="panel">
           <h2>Players</h2>
-          <p class="hint" style="margin-bottom:.5rem;">
+          <p class="hint">
             Stuck at zero? Use the Hunny Pot to give someone a few points back so they can keep playing.
           </p>
           <div id="playersList" class="players"></div>
@@ -85,18 +77,18 @@
               <input id="landName" type="text" placeholder="e.g., Tomorrowland" />
             </div>
           </div>
-          <div class="field" style="margin-top:1rem;">
+          <div class="field">
             <label for="betDescription">Question about this ride</label>
             <textarea id="betDescription" placeholder="Type your own question. All three fields are required."></textarea>
           </div>
-          <div class="small-actions" style="margin-top:.75rem;">
+          <div class="small-actions">
             <button class="btn btn-secondary" type="button" id="randomBetBtn">Random idea</button>
             <button class="btn btn-primary" type="button" id="createBetBtn">Start question round</button>
             <button class="btn btn-secondary" type="button" id="clearBetFormBtn">Clear</button>
           </div>
-          <div id="starterHint" style="margin-top:.75rem;"></div>
-          <div id="betPlayers" class="players" style="margin-top:.5rem;"></div>
-          <div class="small-actions" style="margin-top:.75rem;">
+          <div id="starterHint"></div>
+          <div id="betPlayers" class="players"></div>
+          <div class="small-actions">
             <button class="btn btn-primary" type="button" id="lockGuessesBtn">Lock guesses &amp; reveal</button>
           </div>
         </article>
@@ -104,7 +96,7 @@
         <article class="panel">
           <h2>Rounds</h2>
           <div id="openBetMetrics" class="totals"></div>
-          <div id="openBets" class="bet-list" style="margin-top:1rem;"></div>
+          <div id="openBets" class="bet-list"></div>
         </article>
 
         <article class="panel">
@@ -120,11 +112,11 @@
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="answerModalTitle">
       <h3 id="answerModalTitle" class="modal-title">Pass the phone</h3>
       <p class="hint" id="answerModalPrompt"></p>
-      <div class="field" style="margin-top:.75rem;">
+      <div class="field">
         <label id="answerModalPlayerLabel"></label>
         <textarea id="answerModalInput"></textarea>
       </div>
-      <div class="modal-actions">
+      <div class="small-actions">
         <button type="button" class="btn btn-primary" id="answerModalSaveBtn">Save and pass</button>
       </div>
     </div>
@@ -135,15 +127,16 @@
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="revealModalTitle">
       <h3 id="revealModalTitle" class="modal-title">Round result</h3>
       <p class="hint" id="revealModalSub"></p>
-      <div class="field" style="margin-top:.75rem;">
+      <div class="field">
         <div id="revealModalBody" class="hint"></div>
       </div>
-      <div class="modal-actions">
+      <div class="small-actions">
         <button type="button" class="btn btn-primary" id="revealModalCloseBtn">OK</button>
       </div>
     </div>
   </div>
 
+  <!-- Load your JS -->
   <script src="app.js"></script>
 </body>
 </html>
