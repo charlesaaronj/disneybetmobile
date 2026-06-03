@@ -1,5 +1,7 @@
 // Disney Line Guess – app.js
 
+// ---------- Preset questions ----------
+
 const presetBets = [
   "What do you think will be your favorite moment on this ride?",
   "What 3 words will you say when this ride ends?",
@@ -15,6 +17,8 @@ function getRandomPresetBet() {
   const index = Math.floor(Math.random() * presetBets.length);
   return presetBets[index];
 }
+
+// ---------- State & helpers ----------
 
 const state = {
   players: [],
@@ -87,6 +91,8 @@ function loadState() {
   }
 }
 
+// ---------- Player management ----------
+
 function addPlayer(name, startingPoints) {
   state.players.push({
     id: uid(),
@@ -108,6 +114,13 @@ function removePlayer(playerId) {
   render();
 }
 
+function getAvailablePoints(playerId) {
+  const player = state.players.find(p => p.id === playerId);
+  return player ? clampScore(player.currentPoints) : 0;
+}
+
+// ---------- Streak helper ----------
+
 function hasPreviousCorrectInSameLand(playerId, land, currentBetIndex) {
   if (!land) return false;
   for (const bet of state.bets) {
@@ -116,7 +129,10 @@ function hasPreviousCorrectInSameLand(playerId, land, currentBetIndex) {
     if (bet.index >= currentBetIndex) continue;
     if (bet.land !== land) continue;
 
-    const correctAuthors = bet.correctAuthors || (bet.correctAuthorId ? [bet.correctAuthorId] : []);
+    const correctAuthors = bet.correctAuthors && bet.correctAuthors.length
+      ? bet.correctAuthors
+      : (bet.correctAuthorId ? [bet.correctAuthorId] : []);
+
     const correct = bet.guesses?.some(g =>
       g.playerId === playerId &&
       correctAuthors.includes(g.guessedAuthorId) &&
@@ -127,19 +143,71 @@ function hasPreviousCorrectInSameLand(playerId, land, currentBetIndex) {
   return false;
 }
 
+// ---------- SCORE ENGINE (fixed for Hunny Pot) ----------
+
 function recalculateScores() {
-  // Do NOT reset from startingPoints; keep whatever the player has now
+  // Start from whatever players have now (including Hunny Pot gifts)
+  const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
+  state.pot = clampScore(state.pot || 0);
+
+  state.bets.forEach(bet => {
+    if (bet.status !== 'resolved') return;
+
+    const authorId = bet.correctAuthorId;
+    const correctAuthors = bet.correctAuthors && bet.correctAuthors.length
+      ? bet.correctAuthors
+      : (authorId ? [authorId] : []);
+    const guesses = bet.guesses || [];
+    const land = bet.land;
+    const betIndex = bet.index || 0;
+
+    const wagers = guesses.map(g => ({
+      playerId: g.playerId,
+      guessedAuthorId: g.guessedAuthorId,
+      wager: Math.max(0, Number(g.wager) || 0)
+    }));
+
+    const potThisRound = wagers.reduce((sum, w) => sum + w.wager, 0);
+    const winners = wagers.filter(
+      w => w.wager > 0 && correctAuthors.includes(w.guessedAuthorId)
+    );
+    const anyCorrect = winners.length > 0;
+    const totalWinnerWager = winners.reduce((sum, w) => sum + w.wager, 0);
+
+    // Subtract wagers from each player
+    wagers.forEach(w => {
+      const player = playerMap[w.playerId];
+      if (!player || w.wager <= 0) return;
+      player.currentPoints = clampScore(player.currentPoints - w.wager);
+    });
+
+    // Distribute the pot to winners, or send to Hunny Pot if nobody is right
+    if (anyCorrect && potThisRound > 0 && totalWinnerWager > 0) {
+      winners.forEach(w => {
+        const player = playerMap[w.playerId];
+        if (!player) return;
+        const share = (potThisRound * w.wager) / totalWinnerWager;
+        let newPoints = player.currentPoints + share;
+
+        if (hasPreviousCorrectInSameLand(w.playerId, land, betIndex)) {
+          newPoints += 1;
+        }
+
+        player.currentPoints = clampScore(newPoints);
+      });
+    } else if (!anyCorrect && potThisRound > 0) {
+      state.pot += potThisRound;
+    }
+  });
+
+  // Final cleanup: clamp scores
   state.players = state.players.map(player => ({
     ...player,
     currentPoints: clampScore(player.currentPoints)
   }));
-  state.pot = clampScore(state.pot || 0);
 }
 
-function getAvailablePoints(playerId) {
-  const player = state.players.find(p => p.id === playerId);
-  return player ? clampScore(player.currentPoints) : 0;
-}
+// ---------- Answer collection flow ----------
 
 let currentAnswerBetId = null;
 let currentAnswerIndex = 0;
@@ -205,6 +273,8 @@ els.answerSaveBtn.addEventListener('click', () => {
   nextAnswerPrompt();
 });
 
+// ---------- Bet / guessing flow ----------
+
 function createBet() {
   if (!state.players.length) {
     alertLike('Add family members before starting a round.');
@@ -223,11 +293,7 @@ function createBet() {
   const betId = uid();
 
   const nextIndex = state.bets.length
-    ? Math.max(
-        0,
-        ...state.bets
-          .map(b => b.index ?? 0)
-      ) + 1
+    ? Math.max(0, ...state.bets.map(b => b.index ?? 0)) + 1
     : 1;
 
   const newBet = {
@@ -288,10 +354,12 @@ function renderGuessingRound(bet) {
 
   const chosen = bet.answers.find(a => a.id === bet.chosenAnswerId);
   const answerText = chosen ? chosen.text : '';
-  const attr = bet.attraction ? `(${bet.attraction}` : '';
-  const land = bet.land ? (attr ? ` • ${bet.land})` : `(${bet.land})`) : (attr ? `${attr})` : '');
+  const pieces = [];
+  if (bet.attraction) pieces.push(bet.attraction);
+  if (bet.land) pieces.push(bet.land);
+  const meta = pieces.length ? `(${pieces.join(' • ')})` : '';
 
-  els.starterHint.textContent = `Answer to guess ${land ? land + ' ' : ''}${answerText}`;
+  els.starterHint.textContent = `Answer to guess ${meta ? meta + ' ' : ''}${answerText}`;
   renderBetRows();
 }
 
@@ -385,6 +453,8 @@ function buildGuessesForBet(bet) {
   return guesses;
 }
 
+// ---------- Reveal modal & resolving ----------
+
 function showRevealModal(title, sub, bodyHtml) {
   els.revealTitle.textContent = title;
   els.revealSub.textContent = sub;
@@ -400,7 +470,12 @@ function resolveGuessingBet(betId) {
   const bet = state.bets.find(b => b.id === betId);
   if (!bet) return;
 
-  if (!bet.correctAuthorId && (!bet.correctAuthors || !bet.correctAuthors.length)) {
+  const correctAuthors =
+    bet.correctAuthors && bet.correctAuthors.length
+      ? bet.correctAuthors
+      : (bet.correctAuthorId ? [bet.correctAuthorId] : []);
+
+  if (!correctAuthors || !correctAuthors.length) {
     alertLike('No answer was chosen to guess.');
     return;
   }
@@ -409,16 +484,13 @@ function resolveGuessingBet(betId) {
   bet.resolvedAt = new Date().toLocaleString();
   bet.refunded = false;
 
-  const land = bet.land;
+  const land = bet.land || '';
   const guesses = bet.guesses || [];
-  const correctAuthors = bet.correctAuthors && bet.correctAuthors.length
-    ? bet.correctAuthors
-    : (bet.correctAuthorId ? [bet.correctAuthorId] : []);
 
   const wagers = guesses.map(g => ({
     playerId: g.playerId,
     guessedAuthorId: g.guessedAuthorId,
-    wager: Math.max(0, Number(g.wager) || 0)
+    wager: Math.max(0, Number(g.wager || 0))
   }));
 
   const potThisRound = wagers.reduce((sum, w) => sum + w.wager, 0);
@@ -428,7 +500,6 @@ function resolveGuessingBet(betId) {
   const anyCorrect = winners.length > 0;
 
   const bonusWinners = [];
-
   if (anyCorrect) {
     const betIndex = bet.index || 0;
     winners.forEach(w => {
@@ -443,44 +514,52 @@ function resolveGuessingBet(betId) {
   saveState();
   render();
 
-  const authorNames = (correctAuthors || [])
+  const authorNames = correctAuthors
     .map(id => {
       const p = state.players.find(pl => pl.id === id);
       return p ? p.name : null;
     })
     .filter(Boolean);
 
-  const winnersList = bet.guesses
+  const winnersList = guesses
     .filter(g => correctAuthors.includes(g.guessedAuthorId) && g.wager > 0)
     .map(g => {
       const player = state.players.find(p => p.id === g.playerId);
-      return player ? `${player.name} wagered ${g.wager}` : null;
+      return player ? `${player.name} (wagered ${g.wager})` : null;
     })
     .filter(Boolean);
 
-  const metaParts = [];
-  if (bet.attraction) metaParts.push(escapeHtml(bet.attraction));
-  if (bet.land) metaParts.push(escapeHtml(bet.land));
-
   const bodyParts = [];
 
-  bodyParts.push(`<div class="reveal-section-title">Author${authorNames.length !== 1 ? 's' : ''}</div>`);
-  bodyParts.push(`<div>${escapeHtml(authorNames.join(', ') || 'Unknown')}</div>`);
+  bodyParts.push(
+    `<div class="reveal-section-title">Author${
+      authorNames.length > 1 ? 's' : ''
+    }</div>`
+  );
+  bodyParts.push(
+    `<div>${escapeHtml(authorNames.join(', ') || 'Unknown')}</div>`
+  );
 
   if (bet.attraction || bet.land) {
     bodyParts.push(
-      `<div class="hint">Attraction: ${escapeHtml(bet.attraction || 'Unknown')} ${
-        bet.land ? `• ${escapeHtml(bet.land)}` : ''
-      }</div>`
+      `<div class="hint">Attraction: ${escapeHtml(
+        bet.attraction || 'Unknown'
+      )} ${bet.land ? '(' + escapeHtml(bet.land) + ')' : ''}</div>`
     );
   }
 
-  bodyParts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Winners</div>`);
+  bodyParts.push(
+    `<div class="reveal-section-title" style="margin-top:.75rem;">Winners</div>`
+  );
 
   if (anyCorrect && winnersList.length) {
-    bodyParts.push(`<div>${escapeHtml(winnersList.join('<br>'))}</div>`);
+    bodyParts.push(
+      `<div>${winnersList.map(w => escapeHtml(w)).join('<br>')}</div>`
+    );
   } else if (potThisRound > 0) {
-    bodyParts.push(`<div>No one guessed correctly. All wagers went to the Hunny Pot.</div>`);
+    bodyParts.push(
+      `<div>No one guessed correctly. All wagers went to the Hunny Pot.</div>`
+    );
   } else {
     bodyParts.push(`<div>No one placed a wager this round.</div>`);
   }
@@ -488,22 +567,25 @@ function resolveGuessingBet(betId) {
   if (bonusWinners.length) {
     const uniqueBonus = [...new Set(bonusWinners)];
     bodyParts.push(
-      `<div class="reveal-section-title" style="margin-top:.75rem;">Land streak bonus</div>`
-    );
-    bodyParts.push(
-      `<div>${escapeHtml(uniqueBonus.join(', '))} earned 1 bonus point for a correct guess on the same land.</div>`
+      `<div class="reveal-section-title" style="margin-top:.75rem;">Land streak bonus</div>` +
+        `<div>${escapeHtml(
+          uniqueBonus.join(', ')
+        )} earned +1 bonus point for a correct guess on the same land.</div>`
     );
   }
 
   bodyParts.push(
     `<div class="reveal-section-title" style="margin-top:.75rem;">Scores after this round</div>`
   );
-  const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
+  const ranked = [...state.players].sort(
+    (a, b) => b.currentPoints - a.currentPoints
+  );
   bodyParts.push(
     `<div>${ranked
       .map(p => `${escapeHtml(p.name)}: ${clampScore(p.currentPoints)}`)
       .join('<br>')}</div>`
   );
+
   bodyParts.push(
     `<div class="hint" style="margin-top:.75rem;">Hunny Pot is now ${state.pot} points.</div>`
   );
@@ -515,10 +597,12 @@ function resolveGuessingBet(betId) {
   );
 }
 
+// ---------- History helpers ----------
+
 function cloneBet(betId) {
   const bet = state.bets.find(item => item.id === betId);
   if (!bet) return;
-  els.betDescription.value = bet.description || '';
+  els.betDescription.value = bet.description;
   els.attractionName.value = bet.attraction || '';
   els.landName.value = bet.land || '';
   renderBetRows();
@@ -532,10 +616,11 @@ function deleteBet(betId) {
   render();
 }
 
+// ---------- UI helpers ----------
+
 function alertLike(message) {
   const existing = document.getElementById('appToast');
   if (existing) existing.remove();
-
   const toast = document.createElement('div');
   toast.id = 'appToast';
   toast.textContent = message;
@@ -555,6 +640,18 @@ function alertLike(message) {
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 2200);
 }
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[char]);
+}
+
+// ---------- Rendering: players & scores ----------
 
 function renderPlayers() {
   if (!state.players.length) {
@@ -630,6 +727,8 @@ function renderScoreboard() {
     })
     .join('');
 }
+
+// ---------- Rendering: bets & history ----------
 
 function renderBetPlayers() {
   const guessingBet = getCurrentGuessingBet();
@@ -731,7 +830,7 @@ function renderHistory() {
         .filter(g => correctAuthors.includes(g.guessedAuthorId) && g.wager > 0)
         .map(g => {
           const player = state.players.find(p => p.id === g.playerId);
-          return player ? `${player.name} wagered ${g.wager}` : null;
+          return player ? `${player.name} (wagered ${g.wager})` : null;
         })
         .filter(Boolean);
 
@@ -771,6 +870,8 @@ function renderHistory() {
     .join('');
 }
 
+// ---------- Wager guards ----------
+
 function attachWagerGuards() {
   const rows = [...document.querySelectorAll('[data-bet-player-row]')];
   rows.forEach(row => {
@@ -793,6 +894,8 @@ function attachWagerGuards() {
   });
 }
 
+// ---------- Render root ----------
+
 function render() {
   renderPlayers();
   renderScoreboard();
@@ -803,15 +906,7 @@ function render() {
   attachWagerGuards();
 }
 
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, char => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  })[char]);
-}
+// ---------- Hunny Pot ----------
 
 function giveFromPot(playerId) {
   const player = state.players.find(p => p.id === playerId);
@@ -861,12 +956,16 @@ function clearPot() {
   render();
 }
 
+// ---------- Expose some functions to HTML ----------
+
 window.removePlayer = removePlayer;
 window.cloneBet = cloneBet;
 window.deleteBet = deleteBet;
 window.giveFromPot = giveFromPot;
 window.addToPot = addToPot;
 window.clearPot = clearPot;
+
+// ---------- Event wiring ----------
 
 document.getElementById('addPlayerBtn').addEventListener('click', () => {
   const name = els.playerName.value.trim();
@@ -929,62 +1028,4 @@ document.getElementById('clearAllBtn').addEventListener('click', () => {
   render();
 });
 
-document.getElementById('resetDemoBtn').addEventListener('click', () => {
-  function ensurePlayer(name) {
-    let player = state.players.find(p => p.name === name);
-    if (!player) {
-      addPlayer(name, 10);
-      player = state.players.find(p => p.name === name);
-    }
-    return player;
-  }
-
-  const mom = ensurePlayer('Mom');
-  const dad = ensurePlayer('Dad');
-  const ava = ensurePlayer('Ava');
-  const liam = ensurePlayer('Liam');
-
-  const demoId = uid();
-  const nextIndex = state.bets.length
-    ? Math.max(0, ...state.bets.map(b => b.index ?? 0)) + 1
-    : 1;
-
-  state.bets.unshift({
-    id: demoId,
-    index: nextIndex,
-    description: 'What do you think will be your favorite moment on this ride?',
-    createdAt: new Date().toLocaleString(),
-    attraction: 'Test Ride',
-    land: 'Tomorrowland',
-    status: 'resolved',
-    answers: [
-      { id: uid(), playerId: mom.id, text: 'The big drop' },
-      { id: uid(), playerId: dad.id, text: 'The animatronics' },
-      { id: uid(), playerId: ava.id, text: 'The music' },
-      { id: uid(), playerId: liam.id, text: 'The queue theming' }
-    ],
-    chosenAnswerId: null,
-    correctAuthorId: mom.id,
-    correctAuthors: [mom.id],
-    guesses: [
-      { playerId: mom.id, guessedAuthorId: mom.id, wager: 2 },
-      { playerId: dad.id, guessedAuthorId: mom.id, wager: 1 },
-      { playerId: ava.id, guessedAuthorId: dad.id, wager: 1 },
-      { playerId: liam.id, guessedAuthorId: ava.id, wager: 1 }
-    ],
-    refunded: false,
-    resolvedAt: new Date().toLocaleString()
-  });
-
-  recalculateScores();
-  saveState();
-  render();
-});
-
-// Theme toggle
-document.getElementById('themeToggleBtn').addEventListener('click', () => {
-  const html = document.documentElement;
-  const current = html.getAttribute('data-theme') || 'light';
-  const next = current === 'light' ? 'dark' : 'light';
-  html.setAttribute('data-theme', next);
-});
+// If you removed the demo and theme toggle, no extra handlers here.
