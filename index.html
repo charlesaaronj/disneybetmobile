@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bibbidy Bobbity Bet</title>
+  <title>Disney Line Guess</title>
 
   <link rel="preconnect" href="https://api.fontshare.com" />
   <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet" />
@@ -119,8 +119,6 @@
     h3 { font-size: 1.1rem; }
 
     .sub { color: var(--color-text-muted); font-size: var(--text-sm); max-width: 60ch; }
-
-    .top-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
@@ -255,8 +253,8 @@
     @media (max-width: 900px) {
       .layout, .grid-2, .player-bet-row, .player-chip { grid-template-columns: 1fr; }
       .topbar, .bet-head { align-items: start; flex-direction: column; }
-      .top-actions, .small-actions { width: 100%; }
-      .top-actions .btn, .small-actions .btn { flex: 1 1 auto; }
+      .small-actions { width: 100%; }
+      .small-actions .btn { flex: 1 1 auto; }
       .app { padding: var(--space-3); }
     }
   </style>
@@ -268,15 +266,15 @@
   <div class="app">
     <header class="topbar">
       <div class="brand">
-        <svg class="logo" viewBox="0 0 64 64" fill="none" aria-label="Disney Line Bet logo">
+        <svg class="logo" viewBox="0 0 64 64" fill="none" aria-label="Disney Line Guess logo">
           <path d="M14 48c4-13 14-22 28-25-2 11-9 21-20 28" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
           <circle cx="22" cy="20" r="6" stroke="currentColor" stroke-width="4"/>
           <circle cx="40" cy="16" r="5" stroke="currentColor" stroke-width="4"/>
           <path d="M18 50h30" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
         </svg>
         <div>
-          <h1>Bibbidy Bobbity Bet</h1>
-          <p class="sub">Pass the time waiting in the queue line.</p>
+          <h1>Disney Line Guess</h1>
+          <p class="sub">Make “will happen / won’t happen” guesses while you wait and keep score with Pooh’s Hunny Pot.</p>
         </div>
       </div>
     </header>
@@ -289,76 +287,77 @@
         </article>
 
         <article class="panel">
-  <h2>Family setup</h2>
-  <div class="grid-2">
-    <div class="field">
-      <label for="playerName">Family member</label>
-      <input id="playerName" type="text" placeholder="Add a name" />
-    </div>
-    <div class="field">
-      <label for="playerPoints">Starting points</label>
-      <input id="playerPoints" type="number" min="0" step="1" value="10" />
-    </div>
-  </div>
-  <div class="small-actions" style="margin-top:1rem;">
-    <button class="btn btn-primary" type="button" id="addPlayerBtn">Add family member</button>
-    <button class="btn btn-secondary" type="button" id="resetDemoBtn">Load example</button>
-    <button class="btn btn-danger" type="button" id="clearAllBtn">Clear everything</button>
-  </div>
-  <p class="footer-note">Use different starting points for kids, adults, or bonus rounds if you want handicaps.</p>
-</article>
-
-        <article class="panel">
-          <h2>Players</h2>
-          <p class="hint" style="margin-bottom:.5rem;">
-            Stuck at zero? Use the pot to give someone a few points back so they can keep playing.
-          </p>
-          <div id="playersList" class="players"></div>
+          <h2>Family setup</h2>
+          <div class="grid-2">
+            <div class="field">
+              <label for="playerName">Family member</label>
+              <input id="playerName" type="text" placeholder="Add a name" />
+            </div>
+            <div class="field">
+              <label for="playerPoints">Starting points</label>
+              <input id="playerPoints" type="number" min="0" step="1" value="10" />
+            </div>
+          </div>
+          <div class="small-actions" style="margin-top:1rem;">
+            <button class="btn btn-primary" type="button" id="addPlayerBtn">Add family member</button>
+            <button class="btn btn-secondary" type="button" id="resetDemoBtn">Load example</button>
+            <button class="btn btn-danger" type="button" id="clearAllBtn">Clear everything</button>
+          </div>
+          <p class="footer-note">Use different starting points for kids, adults, or bonus rounds if you want handicaps.</p>
         </article>
       </section>
 
       <section class="stack">
         <article class="panel">
-          <h2>New bet</h2>
+          <h2>New guess</h2>
 
           <div class="field">
-            <label for="betDescription">Bet description</label>
-            <textarea id="betDescription" placeholder="Type your own bet or tap Random bet idea."></textarea>
+            <label for="betDescription">Guess description</label>
+            <textarea id="betDescription" placeholder="Type your own guess or tap Random guess idea."></textarea>
           </div>
 
           <div class="small-actions" style="margin-top:.5rem;">
-            <button class="btn btn-secondary" type="button" id="randomBetBtn">Random bet idea</button>
+            <button class="btn btn-secondary" type="button" id="randomBetBtn">Random guess idea</button>
           </div>
 
           <div id="starterHint" style="margin-top:.75rem;"></div>
 
           <div class="field" style="margin-top:1rem;">
             <label>Each player's pick</label>
-            <p class="hint">Choose yes or no, then enter a wager. Use 0 points if someone is sitting this one out.</p>
+            <p class="hint">Choose will happen or won’t happen, then enter a wager. Use 0 points if someone is sitting this one out.</p>
           </div>
           <div id="betPlayers" class="players" style="margin-top:.5rem;"></div>
 
           <div class="small-actions" style="margin-top:1rem;">
-            <button class="btn btn-primary" type="button" id="createBetBtn">Create open bet</button>
+            <button class="btn btn-primary" type="button" id="createBetBtn">Create open guess</button>
             <button class="btn btn-secondary" type="button" id="clearBetFormBtn">Clear</button>
           </div>
         </article>
 
         <article class="panel">
-          <h2>Open bets</h2>
+          <h2>Open guesses</h2>
           <div id="openBetMetrics" class="totals"></div>
           <div id="openBets" class="bet-list" style="margin-top:1rem;"></div>
         </article>
 
+        <!-- Players panel moved here -->
         <article class="panel">
-          <h2>Bet history</h2>
+          <h2>Players</h2>
+          <p class="hint" style="margin-bottom:.5rem;">
+            Stuck at zero? Use Pooh’s Hunny Pot to give someone a few points back so they can keep playing.
+          </p>
+          <div id="playersList" class="players"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Guess history</h2>
           <div id="historyList" class="history-list"></div>
         </article>
       </section>
     </main>
   </div>
 
-  <!-- Pot / refund modal -->
+  <!-- Hunny Pot / refund modal -->
   <div id="refundModalBackdrop" class="modal-backdrop" style="display:none;">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="refundModalTitle">
       <div>
@@ -366,19 +365,19 @@
         <p class="hint" id="refundModalText"></p>
       </div>
       <div class="field">
-        <label for="refundPotInput">Add extra points to this pot (optional)</label>
+        <label for="refundPotInput">Add extra points to Pooh’s Hunny Pot (optional)</label>
         <input id="refundPotInput" type="number" min="0" step="1" value="0" />
-        <p class="hint">Use this if you want to sweeten the pot before you decide what to do with it.</p>
+        <p class="hint">Use this if you want to sweeten the Hunny Pot before you decide what to do with it.</p>
       </div>
       <div class="modal-actions">
-        <button type="button" class="btn btn-secondary" id="refundRemoveBtn">Remove (let pot stay lost)</button>
-        <button type="button" class="btn btn-primary" id="refundRefundBtn">Refund (return pot to players)</button>
+        <button type="button" class="btn btn-secondary" id="refundRemoveBtn">Remove (let points stay in Pooh’s Hunny Pot)</button>
+        <button type="button" class="btn btn-primary" id="refundRefundBtn">Refund (return Hunny Pot to players)</button>
       </div>
     </div>
   </div>
 
   <script>
-    // Preset bet ideas
+    // Preset guess ideas
     const presetBets = [
       // Wait time
       'The posted wait time will be accurate within a few minutes.',
@@ -518,7 +517,6 @@
       openBets: document.getElementById('openBets'),
       historyList: document.getElementById('historyList'),
       openBetMetrics: document.getElementById('openBetMetrics'),
-      importFile: document.getElementById('importFile'),
       refundBackdrop: document.getElementById('refundModalBackdrop'),
       refundText: document.getElementById('refundModalText'),
       refundInput: document.getElementById('refundPotInput'),
@@ -648,13 +646,13 @@
     }
 
     function createBet() {
-      if (!state.players.length) return alertLike('Add family members before creating a bet.');
+      if (!state.players.length) return alertLike('Add family members before creating a guess.');
 
       let description = els.betDescription.value.trim();
       if (!description) {
         const random = getRandomPresetBet();
         if (!random) {
-          return alertLike('Write a bet description first.');
+          return alertLike('Write a guess description first.');
         }
         description = random;
         els.betDescription.value = random;
@@ -686,7 +684,7 @@
 
     function openRefundModal(bet, pot) {
       pendingRefundBetId = bet.id;
-      els.refundText.textContent = `This bet’s pot is ${pot} points. You can add extra points to this pot, then either refund everyone or remove it to keep those points in the central pot.`;
+      els.refundText.textContent = `This guess’s Pooh’s Hunny Pot total is ${pot} points. You can add extra points to the Hunny Pot, then either refund everyone or keep it in Pooh’s Hunny Pot.`;
       els.refundInput.value = 0;
       els.refundBackdrop.style.display = 'flex';
     }
@@ -719,6 +717,7 @@
           recalculateScores();
           saveState();
           render();
+          els.starterHint.textContent = '';
           cleanup();
         };
 
@@ -733,6 +732,7 @@
           recalculateScores();
           saveState();
           render();
+          els.starterHint.textContent = '';
           cleanup();
         };
 
@@ -754,6 +754,7 @@
       recalculateScores();
       saveState();
       render();
+      els.starterHint.textContent = '';
     }
 
     function reopenBet(betId) {
@@ -775,7 +776,7 @@
       renderBetPlayers(bet.entries);
       const starter = state.players.find(p => p.id === bet.starterPlayerId);
       els.starterHint.textContent = starter
-        ? `Starter: ${starter.name} started this bet last time.`
+        ? `Starter: ${starter.name} started this guess last time.`
         : '';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -785,38 +786,6 @@
       recalculateScores();
       saveState();
       render();
-    }
-
-    function exportGame() {
-      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `disney-line-bet-${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
-
-    function importGame(file) {
-      const reader = new FileReader();
-      reader.onload = event => {
-        try {
-          const parsed = JSON.parse(event.target.result);
-          if (!Array.isArray(parsed.players) || !Array.isArray(parsed.bets)) throw new Error('Invalid file');
-          state.players = parsed.players;
-          state.bets = parsed.bets.map(bet => ({
-            ...bet,
-            entries: bet.entries.map(entry => ({ ...entry, amount: Number(entry.amount || 0) })),
-            refunded: !!bet.refunded
-          }));
-          state.pot = Number(parsed.pot || 0);
-          recalculateScores();
-          saveState();
-          render();
-        } catch {
-          alertLike('That file could not be imported.');
-        }
-      };
-      reader.readAsText(file);
     }
 
     function alertLike(message) {
@@ -836,18 +805,18 @@
 
     function renderPlayers() {
       if (!state.players.length) {
-        els.playersList.innerHTML = '<div class="empty">No family members yet. Add names on the left to begin.</div>';
+        els.playersList.innerHTML = '<div class="empty">No family members yet. Add names above to begin.</div>';
         return;
       }
 
       const potHtml = `
         <div class="player-chip" style="margin-bottom:.5rem;">
           <div>
-            <strong>Central pot</strong>
+            <strong>Pooh’s Hunny Pot</strong>
             <div class="hint">Extra points you can give back to players.</div>
           </div>
-          <span class="pill pot-pill">Pot ${state.pot}</span>
-          <button class="btn btn-secondary" type="button" onclick="addToPot()">Add to pot</button>
+          <span class="pill pot-pill">Hunny Pot ${state.pot}</span>
+          <button class="btn btn-secondary" type="button" onclick="addToPot()">Add to Hunny Pot</button>
         </div>
       `;
 
@@ -860,7 +829,7 @@
           <span class="pill pill-open">${player.currentPoints} now</span>
           ${
             player.currentPoints === 0 && state.pot > 0
-              ? `<button class="btn btn-secondary" type="button" onclick="giveFromPot('${player.id}')">Give from pot</button>`
+              ? `<button class="btn btn-secondary" type="button" onclick="giveFromPot('${player.id}')">Give from Hunny Pot</button>`
               : `<button class="btn btn-danger" type="button" onclick="removePlayer('${player.id}')">Remove</button>`
           }
         </div>
@@ -887,7 +856,7 @@
 
     function renderBetPlayers(savedEntries = null) {
       if (!state.players.length) {
-        els.betPlayers.innerHTML = '<div class="empty">Add players to build betting rounds.</div>';
+        els.betPlayers.innerHTML = '<div class="empty">Add players to build guessing rounds.</div>';
         return;
       }
 
@@ -898,7 +867,7 @@
         if (available.length) {
           const starterId = available[Math.floor(Math.random() * available.length)].id;
           const starterPlayer = state.players.find(p => p.id === starterId);
-          els.starterHint.textContent = `Starter: ${starterPlayer.name} starts this bet.`;
+          els.starterHint.textContent = `Starter: ${starterPlayer.name} starts this guess.`;
           order.sort((a, b) => (a.id === starterId ? -1 : b.id === starterId ? 1 : 0));
         } else {
           els.starterHint.textContent = '';
@@ -921,8 +890,8 @@
             <div class="field">
               <label>Prediction</label>
               <select data-prediction>
-                <option value="yes" ${prediction === 'yes' ? 'selected' : ''}>Yes</option>
-                <option value="no" ${prediction === 'no' ? 'selected' : ''}>No</option>
+                <option value="yes" ${prediction === 'yes' ? 'selected' : ''}>Will happen</option>
+                <option value="no" ${prediction === 'no' ? 'selected' : ''}>Won’t happen</option>
               </select>
             </div>
             <div class="field">
@@ -944,17 +913,17 @@
       ).size;
 
       els.openBetMetrics.innerHTML = `
-        <div class="metric"><span class="muted">Open bets</span><span class="metric-value">${totalOpen}</span></div>
+        <div class="metric"><span class="muted">Open guesses</span><span class="metric-value">${totalOpen}</span></div>
         <div class="metric"><span class="muted">Points in play</span><span class="metric-value">${totalRisk}</span></div>
         <div class="metric"><span class="muted">Players active</span><span class="metric-value">${activePlayers}</span></div>
-        <div class="metric"><span class="muted">Central pot</span><span class="metric-value">${state.pot}</span></div>
+        <div class="metric"><span class="muted">Pooh’s Hunny Pot</span><span class="metric-value">${state.pot}</span></div>
       `;
     }
 
     function renderOpenBets() {
       const openBets = state.bets.filter(bet => bet.status === 'open');
       if (!openBets.length) {
-        els.openBets.innerHTML = '<div class="empty">No open bets. Create one above when the line gets interesting.</div>';
+        els.openBets.innerHTML = '<div class="empty">No open guesses. Create one above when the line gets interesting.</div>';
         return;
       }
       els.openBets.innerHTML = openBets.map(bet => {
@@ -966,8 +935,8 @@
               <div>
                 <h3>${escapeHtml(bet.description)}</h3>
                 <div class="bet-meta">
-                  <span class="pill pill-open">Open</span>
-                  <span class="pill">Pot ${pot}</span>
+                  <span class="pill pill-open">Open guess</span>
+                  <span class="pill">Hunny Pot ${pot}</span>
                   ${starter ? `<span class="pill">Starter: ${escapeHtml(starter.name)}</span>` : ''}
                 </div>
               </div>
@@ -981,7 +950,7 @@
                   <div class="player-chip">
                     <div>
                       <strong>${escapeHtml(player?.name || 'Unknown')}</strong>
-                      <div class="hint">Prediction: ${entry.prediction === 'yes' ? 'Yes' : 'No'}</div>
+                      <div class="hint">Prediction: ${entry.prediction === 'yes' ? 'Will happen' : 'Won’t happen'}</div>
                     </div>
                     <span class="pill ${sittingOut ? 'pill-lost' : 'pill-open'}">
                       ${sittingOut ? 'Sitting out' : `${entry.amount} pts`}
@@ -1005,7 +974,7 @@
     function renderHistory() {
       const resolved = state.bets.filter(bet => bet.status === 'resolved');
       if (!resolved.length) {
-        els.historyList.innerHTML = '<div class="empty">Resolved bets will stay here so you can repeat good prompts later.</div>';
+        els.historyList.innerHTML = '<div class="empty">Resolved guesses will stay here so you can repeat good prompts later.</div>';
         return;
       }
       els.historyList.innerHTML = resolved.map(bet => {
@@ -1017,7 +986,7 @@
           : activeEntries
               .filter(e => e.prediction === winningPrediction)
               .map(e => state.players.find(p => p.id === e.playerId)?.name || 'Unknown');
-        const refundText = bet.refunded ? ' (refunded)' : '';
+        const refundText = bet.refunded ? ' (refunded to players)' : '';
         const starter = state.players.find(p => p.id === bet.starterPlayerId);
 
         return `
@@ -1027,9 +996,9 @@
                 <h3>${escapeHtml(bet.description)}</h3>
                 <div class="bet-meta">
                   <span class="pill ${bet.outcome === 'won' ? 'pill-won' : 'pill-lost'}">
-                    ${bet.outcome === 'won' ? 'Came true' : 'Did not come true'}${refundText}
+                    ${bet.outcome === 'won' ? 'Guess came true' : 'Guess did not come true'}${refundText}
                   </span>
-                  <span class="pill">Pot ${pot}</span>
+                  <span class="pill">Hunny Pot ${pot}</span>
                   ${starter ? `<span class="pill">Starter: ${escapeHtml(starter.name)}</span>` : ''}
                 </div>
               </div>
@@ -1039,7 +1008,7 @@
               Winners: ${bet.refunded ? 'Refunded (no point changes)' : escapeHtml(winners.join(', ') || 'No winners')}
             </div>
             <div class="small-actions">
-              <button class="btn btn-secondary" type="button" onclick="cloneBet('${bet.id}')">Reuse bet</button>
+              <button class="btn btn-secondary" type="button" onclick="cloneBet('${bet.id}')">Reuse guess</button>
               <button class="btn btn-secondary" type="button" onclick="reopenBet('${bet.id}')">Reopen</button>
               <button class="btn btn-danger" type="button" onclick="deleteBet('${bet.id}')">Delete</button>
             </div>
@@ -1087,11 +1056,11 @@
       const player = state.players.find(p => p.id === playerId);
       if (!player) return;
       if (state.pot <= 0) {
-        alertLike('No points in the pot right now.');
+        alertLike('No points in Pooh’s Hunny Pot right now.');
         return;
       }
       const max = state.pot;
-      const amountStr = prompt(`How many points do you want to give to ${player.name}? (Max ${max})`, String(Math.min(3, max)));
+      const amountStr = prompt(`How many points do you want to give to ${player.name} from Pooh’s Hunny Pot? (Max ${max})`, String(Math.min(3, max)));
       if (amountStr === null) return;
       let amount = Number(amountStr);
       if (!Number.isFinite(amount) || amount <= 0) return;
@@ -1104,7 +1073,7 @@
 
     function addToPot() {
       const current = state.pot;
-      const input = prompt(`How many points do you want to add to the central pot? (Current: ${current})`, '5');
+      const input = prompt(`How many points do you want to add to Pooh’s Hunny Pot? (Current: ${current})`, '5');
       if (input === null) return;
       let amount = Number(input);
       if (!Number.isFinite(amount) || amount <= 0) {
@@ -1205,22 +1174,6 @@
 
       saveState();
       render();
-    });
-
-    document.getElementById('exportBtn').addEventListener('click', exportGame);
-    document.getElementById('importBtn').addEventListener('click', () => els.importFile.click());
-    els.importFile.addEventListener('change', event => {
-      const file = event.target.files[0];
-      if (file) importGame(file);
-      event.target.value = '';
-    });
-
-    document.querySelector('[data-theme-toggle]').addEventListener('click', function() {
-      const root = document.documentElement;
-      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      root.setAttribute('data-theme', next);
-      this.textContent = next === 'dark' ? '☀️ Theme' : '🌙 Theme';
-      this.setAttribute('aria-label', `Switch to ${next === 'dark' ? 'light' : 'dark'} mode`);
     });
 
     els.refundBackdrop.addEventListener('click', e => {
