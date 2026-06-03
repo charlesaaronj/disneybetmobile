@@ -627,7 +627,6 @@ function renderHistory() {
 
   els.historyList.innerHTML = resolved
     .map(bet => {
-      // Who was actually correct for this round
       const correctAuthors = (bet.correctAuthors && bet.correctAuthors.length
         ? bet.correctAuthors
         : (bet.correctAuthorId ? [bet.correctAuthorId] : [])) || [];
@@ -639,7 +638,6 @@ function renderHistory() {
         })
         .filter(Boolean);
 
-      // Winners: players who guessed one of the correct authors and wagered > 0
       const winners = (bet.guesses || [])
         .filter(g => correctAuthors.includes(g.guessedAuthorId) && g.wager > 0)
         .map(g => {
@@ -648,7 +646,6 @@ function renderHistory() {
         })
         .filter(Boolean);
 
-      // Attraction + land pill
       const metaParts = [];
       if (bet.attraction) metaParts.push(escapeHtml(bet.attraction));
       if (bet.land) metaParts.push(escapeHtml(bet.land));
@@ -660,16 +657,12 @@ function renderHistory() {
             <div>
               <h3>${escapeHtml(bet.description)}</h3>
               <div class="hint">
-                Resolved ${escapeHtml(bet.resolvedAt || '')}
-                ${
-                  metaText
-                    ? `<span class="pill" style="margin-left:0.35rem;">${metaText}</span>`
-                    : ''
-                }
+                ${escapeHtml(bet.resolvedAt || '')}
+                ${metaText ? ` · ${metaText}` : ''}
               </div>
             </div>
             <div class="bet-meta">
-              <span class="pill pill-won">Round finished</span>
+              <span class="pill pill-won">Finished</span>
               ${
                 authorNames.length
                   ? `<span class="pill">Author: ${escapeHtml(authorNames.join(', '))}</span>`
@@ -677,8 +670,10 @@ function renderHistory() {
               }
             </div>
           </div>
-          <div class="hint" style="margin-top:0.35rem;">
-            Winners: ${
+
+          <div class="hint" style="margin-top:0.4rem;">
+            <strong>Winners:</strong>
+            ${
               winners.length
                 ? escapeHtml(winners.join(', '))
                 : 'No winners'
