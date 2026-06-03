@@ -482,7 +482,7 @@ h3 {
   align-items: center;
   min-height: 28px;
   padding: 0.3rem 0.7rem;
-  color: var(--color-text-inverse);
+  color: var(--color-warning);
   padding: 0.6rem 1rem;
   border-radius: var(--radius-full);
   background: color-mix(in oklab, var(--color-gold) 24%, var(--color-surface));
