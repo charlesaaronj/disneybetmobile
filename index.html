@@ -812,10 +812,8 @@
         }
       });
 
-      const anyCorrect = winners.length > 0;
-      if (!anyCorrect && totalWagered > 0) {
-        state.pot += totalWagered;
-      }
+       const anyCorrect = winners.length > 0;
+  // Hunny Pot is handled only in recalculateScores now
 
       recalculateScores();
       saveState();
