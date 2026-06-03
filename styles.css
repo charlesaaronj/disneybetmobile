@@ -482,7 +482,10 @@ h3 {
   align-items: center;
   min-height: 28px;
   padding: 0.3rem 0.7rem;
+  color: var(--color-text-inverse);
+  padding: 0.6rem 1rem;
   border-radius: var(--radius-full);
+  background: var(--color-primary);
   font-size: var(--text-sm);
   font-weight: 700;
   margin: 15px
