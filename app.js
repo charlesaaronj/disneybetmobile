@@ -651,35 +651,27 @@ function renderHistory() {
       const metaText = metaParts.length ? metaParts.join(' • ') : '';
 
       return `
-        <article class="history-item">
-          <div class="bet-head">
-            <div>
-              <h3>${escapeHtml(bet.description)}</h3>
-              <div class="hint">
-                ${escapeHtml(bet.resolvedAt || '')}
-                ${metaText ? ` · ${metaText}` : ''}
-              </div>
-            </div>
-            <div class="bet-meta">
-              <span class="pill pill-won">Finished</span>
-              ${
-                authorNames.length
-                  ? `<span class="pill">Author: ${escapeHtml(authorNames.join(', '))}</span>`
-                  : ''
-              }
-            </div>
-          </div>
+  <article class="history-item">
+    <div class="bet-head">
+      <div>
+        <h3>${escapeHtml(bet.description)}</h3>
+        <div class="hint">
+          ${metaText ? `${metaText} · ` : ''}
+          ${escapeHtml(bet.resolvedAt || '')}
+        </div>
+      </div>
+    </div>
 
-          <div class="hint" style="margin-top:0.4rem;">
-            <strong>Winners:</strong>
-            ${
-              winners.length
-                ? escapeHtml(winners.join(', '))
-                : 'No winners'
-            }
-          </div>
-        </article>
-      `;
+    <div class="hint" style="margin-top:0.4rem;">
+      <strong>Winners:</strong>
+      ${
+        winners.length
+          ? escapeHtml(winners.join(', '))
+          : 'No winners'
+      }
+    </div>
+  </article>
+`;
     })
     .join('');
 }
