@@ -128,62 +128,12 @@ function hasPreviousCorrectInSameLand(playerId, land, currentBetIndex) {
 }
 
 function recalculateScores() {
-  // Keep currentPoints as baseline; adjust from there so Hunny Pot gifts stick
-  const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
-  state.pot = clampScore(state.pot || 0);
-
-  state.bets.forEach(bet => {
-    if (bet.status !== 'resolved') return;
-
-    const authorId = bet.correctAuthorId;
-    const correctAuthors = bet.correctAuthors || (authorId ? [authorId] : []);
-    const guesses = bet.guesses || [];
-    const land = bet.land;
-    const betIndex = bet.index || 0;
-
-    const wagers = guesses.map(g => ({
-      playerId: g.playerId,
-      guessedAuthorId: g.guessedAuthorId,
-      wager: Math.max(0, Number(g.wager) || 0)
-    }));
-
-    const potThisRound = wagers.reduce((sum, w) => sum + w.wager, 0);
-    const winners = wagers.filter(
-      w => w.wager > 0 && correctAuthors.includes(w.guessedAuthorId)
-    );
-    const anyCorrect = winners.length > 0;
-    const totalWinnerWager = winners.reduce((sum, w) => sum + w.wager, 0);
-
-    // Subtract wagers
-    wagers.forEach(w => {
-      const player = playerMap[w.playerId];
-      if (!player || w.wager <= 0) return;
-      player.currentPoints = clampScore(player.currentPoints - w.wager);
-    });
-
-    // Distribute winnings or send to Hunny Pot
-    if (anyCorrect && potThisRound > 0 && totalWinnerWager > 0) {
-      winners.forEach(w => {
-        const player = playerMap[w.playerId];
-        if (!player) return;
-        const share = (potThisRound * w.wager) / totalWinnerWager;
-        let newPoints = player.currentPoints + share;
-
-        if (hasPreviousCorrectInSameLand(w.playerId, land, betIndex)) {
-          newPoints += 1;
-        }
-
-        player.currentPoints = clampScore(newPoints);
-      });
-    } else if (!anyCorrect && potThisRound > 0) {
-      state.pot += potThisRound;
-    }
-  });
-
+  // Do NOT reset from startingPoints; keep whatever the player has now
   state.players = state.players.map(player => ({
     ...player,
     currentPoints: clampScore(player.currentPoints)
   }));
+  state.pot = clampScore(state.pot || 0);
 }
 
 function getAvailablePoints(playerId) {
