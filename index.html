@@ -253,25 +253,6 @@
       border: 1px solid color-mix(in oklab, var(--color-primary) 25%, transparent);
     }
 
-    .land-suggestions {
-      margin-top: 0.25rem;
-      display: grid;
-      gap: 0.25rem;
-    }
-    .land-suggestion {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.25rem 0.6rem;
-      border-radius: var(--radius-full);
-      background: var(--color-surface-offset);
-      font-size: var(--text-xs);
-      cursor: pointer;
-    }
-    .land-suggestion:hover {
-      background: color-mix(in oklab, var(--color-primary) 10%, var(--color-surface-offset));
-      color: var(--color-primary-hover);
-    }
-
     .reveal-section-title {
       font-weight: 700;
       margin-top: 0.5rem;
@@ -346,14 +327,13 @@
             </div>
             <div class="field">
               <label for="landName">Land / Area</label>
-              <input id="landName" type="text" placeholder="e.g., Tomorrowland" autocomplete="off" />
-              <div id="landSuggestions" class="land-suggestions"></div>
+              <input id="landName" type="text" placeholder="e.g., Tomorrowland" />
             </div>
           </div>
 
           <div class="field" style="margin-top:1rem;">
             <label for="betDescription">Question about this ride</label>
-            <textarea id="betDescription" placeholder="Type your own question or tap Random idea."></textarea>
+            <textarea id="betDescription" placeholder="Type your own question. All three fields are required."></textarea>
           </div>
 
           <div class="small-actions" style="margin-top:.75rem;">
@@ -446,8 +426,7 @@
     const state = {
       players: [],
       bets: [],
-      pot: 0,
-      landsUsed: []  // for land autocomplete
+      pot: 0
     };
 
     const els = {
@@ -459,7 +438,6 @@
       betDescription: document.getElementById('betDescription'),
       attractionName: document.getElementById('attractionName'),
       landName: document.getElementById('landName'),
-      landSuggestions: document.getElementById('landSuggestions'),
       starterHint: document.getElementById('starterHint'),
       openBets: document.getElementById('openBets'),
       historyList: document.getElementById('historyList'),
@@ -501,7 +479,6 @@
           refunded: !!bet.refunded
         }));
         state.pot = Number(parsed.pot || 0);
-        state.landsUsed = Array.isArray(parsed.landsUsed) ? parsed.landsUsed : [];
         recalculateScores();
         render();
       } catch (e) {
@@ -552,13 +529,19 @@
       const playerMap = Object.fromEntries(state.players.map(player => [player.id, player]));
 
       state.pot = Number(state.pot || 0);
-      let potFromMisses = 0;
 
       state.bets.forEach(bet => {
         if (bet.status !== 'resolved') return;
         const authorId = bet.authorPlayerId;
         const guesses = bet.guesses || [];
         const land = bet.land || '';
+
+        const correctGuesses = guesses.filter(g =>
+          g.guessedAuthorId === authorId && Number(g.wager || 0) > 0
+        );
+        const anyCorrect = correctGuesses.length > 0;
+
+        const totalWagered = guesses.reduce((sum, g) => sum + Math.max(0, Number(g.wager || 0)), 0);
 
         guesses.forEach(g => {
           const player = playerMap[g.playerId];
@@ -573,17 +556,17 @@
             if (hasPreviousCorrectInSameLand(g.playerId, land, bet.id)) {
               player.currentPoints += 1;
             }
-          } else {
-            potFromMisses += wager;
           }
         });
+
+        if (!anyCorrect && totalWagered > 0) {
+          state.pot += totalWagered;
+        }
 
         if (authorId && playerMap[authorId]) {
           playerMap[authorId].currentPoints += 2;
         }
       });
-
-      state.pot += potFromMisses;
     }
 
     function getAvailablePoints(playerId) {
@@ -657,17 +640,10 @@
       const attraction = els.attractionName.value.trim();
       const land = els.landName.value.trim();
       let question = els.betDescription.value.trim();
-      if (!question) {
-        const random = getRandomPresetBet();
-        if (!random) {
-          return alertLike('Write a question first.');
-        }
-        question = random;
-        els.betDescription.value = random;
-      }
 
-      if (land && !state.landsUsed.includes(land)) {
-        state.landsUsed.push(land);
+      if (!attraction || !land || !question) {
+        alertLike('Attraction, Land, and Question are all required.');
+        return;
       }
 
       const betId = uid();
@@ -713,8 +689,8 @@
 
     function renderGuessingRound(bet) {
       if (!bet) {
-        els.betPlayers.innerHTML = '<div class="empty">No round ready for guessing yet.</div>';
         els.starterHint.textContent = '';
+        renderBetRows(); // still show rows with current points
         return;
       }
 
@@ -724,6 +700,17 @@
       const attr = bet.attraction ? ` for ${bet.attraction}` : '';
       const land = bet.land ? ` (${bet.land})` : '';
       els.starterHint.textContent = `Answer to guess${attr}${land}: "${answerText}"`;
+
+      renderBetRows();
+    }
+
+    function renderBetRows() {
+      if (!state.players.length) {
+        els.betPlayers.innerHTML = '<div class="empty">Add players, then start a round.</div>';
+        return;
+      }
+
+      const guessingBet = getCurrentGuessingBet();
 
       els.betPlayers.innerHTML = state.players.map(player => {
         const available = getAvailablePoints(player.id);
@@ -735,7 +722,7 @@
             </div>
             <div class="field">
               <label>Who wrote it?</label>
-              <select data-guess-player>
+              <select data-guess-player ${guessingBet ? '' : 'disabled'}>
                 ${state.players.map(p => `
                   <option value="${p.id}">${escapeHtml(p.name)}</option>
                 `).join('')}
@@ -743,7 +730,7 @@
             </div>
             <div class="field">
               <label>Wager</label>
-              <input data-amount type="number" min="0" step="1" value="0" placeholder="0" />
+              <input data-amount type="number" min="0" step="1" value="0" placeholder="0" ${guessingBet ? '' : 'disabled'} />
             </div>
           </div>
         `;
@@ -756,8 +743,10 @@
       const rows = [...document.querySelectorAll('[data-bet-player-row]')];
       const guesses = rows.map(row => {
         const playerId = row.dataset.playerId;
-        const guessedAuthorId = row.querySelector('[data-guess-player]').value;
-        const wager = Number(row.querySelector('[data-amount]').value || 0);
+        const select = row.querySelector('[data-guess-player]');
+        const input = row.querySelector('[data-amount]');
+        const guessedAuthorId = select ? select.value : null;
+        const wager = Number(input ? input.value || 0 : 0);
         return { playerId, guessedAuthorId, wager };
       });
 
@@ -808,23 +797,25 @@
 
       const winners = [];
       const bonusWinners = [];
-      let roundPotFromMisses = 0;
+      let totalWagered = 0;
 
       guesses.forEach(g => {
         const player = state.players.find(p => p.id === g.playerId);
         const wager = Number(g.wager || 0);
         if (!player || wager <= 0) return;
+        totalWagered += wager;
         if (g.guessedAuthorId === bet.authorPlayerId) {
           winners.push({ player, wager });
           if (hasPreviousCorrectInSameLand(player.id, land, bet.id)) {
             bonusWinners.push(player.name);
           }
-        } else {
-          roundPotFromMisses += wager;
         }
       });
 
-      state.pot += roundPotFromMisses;
+      const anyCorrect = winners.length > 0;
+      if (!anyCorrect && totalWagered > 0) {
+        state.pot += totalWagered;
+      }
 
       recalculateScores();
       saveState();
@@ -873,7 +864,7 @@
       els.betDescription.value = bet.description;
       els.attractionName.value = bet.attraction || '';
       els.landName.value = bet.land || '';
-      renderBetPlayers();
+      renderBetRows();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -954,15 +945,10 @@
       const guessingBet = getCurrentGuessingBet();
       if (guessingBet) {
         renderGuessingRound(guessingBet);
-        return;
-      }
-      if (!state.players.length) {
-        els.betPlayers.innerHTML = '<div class="empty">Add players, then tap “Start question round” to begin.</div>';
+      } else {
         els.starterHint.textContent = '';
-        return;
+        renderBetRows();
       }
-      els.betPlayers.innerHTML = '';
-      els.starterHint.textContent = '';
     }
 
     function renderOpenMetrics() {
@@ -1059,6 +1045,7 @@
       rows.forEach(row => {
         const playerId = row.dataset.playerId;
         const input = row.querySelector('[data-amount]');
+        if (!input) return;
         const handler = () => {
           const available = getAvailablePoints(playerId);
           let value = Number(input.value || 0);
@@ -1081,7 +1068,6 @@
       renderOpenBets();
       renderHistory();
       attachWagerGuards();
-      renderLandSuggestions();
     }
 
     function escapeHtml(value) {
@@ -1123,45 +1109,6 @@
       render();
     }
 
-    // Land autocomplete
-    function renderLandSuggestions() {
-      const value = els.landName.value.trim().toLowerCase();
-      const container = els.landSuggestions;
-      container.innerHTML = '';
-      if (!value) {
-        const unique = [...new Set(state.landsUsed)];
-        unique.slice(0, 4).forEach(land => {
-          const chip = document.createElement('div');
-          chip.className = 'land-suggestion';
-          chip.textContent = land;
-          chip.addEventListener('click', () => {
-            els.landName.value = land;
-            container.innerHTML = '';
-          });
-          container.appendChild(chip);
-        });
-        return;
-      }
-      const matches = state.landsUsed.filter(l => l.toLowerCase().startsWith(value));
-      const unique = [...new Set(matches)];
-      unique.slice(0, 6).forEach(land => {
-        const chip = document.createElement('div');
-        chip.className = 'land-suggestion';
-        chip.textContent = land;
-        chip.addEventListener('click', () => {
-          els.landName.value = land;
-          container.innerHTML = '';
-        });
-        container.appendChild(chip);
-      });
-    }
-
-    els.landName.addEventListener('input', renderLandSuggestions);
-    els.landName.addEventListener('focus', renderLandSuggestions);
-    els.landName.addEventListener('blur', () => {
-      setTimeout(() => { els.landSuggestions.innerHTML = ''; }, 150);
-    });
-
     window.removePlayer = removePlayer;
     window.cloneBet = cloneBet;
     window.deleteBet = deleteBet;
@@ -1202,7 +1149,6 @@
       els.attractionName.value = '';
       els.landName.value = '';
       els.starterHint.textContent = '';
-      els.landSuggestions.innerHTML = '';
       renderBetPlayers();
       attachWagerGuards();
     });
@@ -1224,7 +1170,6 @@
       state.players = [];
       state.bets = [];
       state.pot = 0;
-      state.landsUsed = [];
       saveState();
       render();
     });
@@ -1269,8 +1214,6 @@
         refunded: false,
         resolvedAt: new Date().toLocaleString()
       });
-
-      if (!state.landsUsed.includes('Tomorrowland')) state.landsUsed.push('Tomorrowland');
 
       recalculateScores();
       saveState();
