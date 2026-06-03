@@ -298,8 +298,7 @@ function renderGuessingRound(bet) {
   const chosen = bet.answers.find(a => a.id === bet.chosenAnswerId);
   const answerText = chosen ? chosen.text : '';
   const meta = [bet.attraction, bet.land].filter(Boolean).join(' • ');
-  els.starterHint.textContent =
-    'Answer to guess ' + (meta ? '(' + meta + ') ' : '') + answerText;
+  els.starterHint.textContent = 'Who Answered: ' + answerText;
   renderBetRows();
 }
 
