@@ -512,6 +512,11 @@ h3 {
   gap: var(--space-2);
 }
 
+* Start hidden/neutral when empty */
+.starterHint:empty {
+  display: none;
+}
+
 /* Starter hint */
 
 .starterHint {
