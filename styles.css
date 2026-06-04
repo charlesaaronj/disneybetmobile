@@ -486,6 +486,16 @@ h3 {
   --background: color-mix(in oklab, var(--color-gold) 24%, var(--color-surface));
   color: var(--color-warning);
   --margin-left: 0.5rem;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.pot-pill-total {
+  --background: color-mix(in oklab, var(--color-gold) 24%, var(--color-surface));
+  color: var(--color-warning);
+  --margin-left: 0.5rem;
+  font-size: var(--text-sm);
+  font-weight: 700;
 }
 
 /* Modal */
