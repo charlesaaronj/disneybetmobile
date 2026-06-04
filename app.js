@@ -32,6 +32,13 @@ const els = {
   revealSub: document.getElementById('revealModalSub'),
   revealBody: document.getElementById('revealModalBody'),
   revealCloseBtn: document.getElementById('revealModalCloseBtn')
+  giveHunnyConfirm: document.getElementById('giveHunnyModalConfirm'),
+
+  // NEW: clear Hunny Pot modal
+  clearHunnyBackdrop: document.getElementById('clearHunnyModalBackdrop'),
+  clearHunnyMessage: document.getElementById('clearHunnyModalMessage'),
+  clearHunnyCancel: document.getElementById('clearHunnyModalCancel'),
+  clearHunnyConfirm: document.getElementById('clearHunnyModalConfirm')
 };
 
 // ---------- Small helpers ----------
@@ -153,11 +160,32 @@ function addToPot() {
 
 function clearPot() {
   if (!state.pot) return;
-  const ok = confirm(`Clear the Hunny Pot (${state.pot} points)?`);
-  if (!ok) return;
-  state.pot = 0;
-  saveState();
-  render();
+
+  // Setup modal text
+  els.clearHunnyMessage.textContent =
+    `Clear the Hunny Pot (${state.pot} points)?`;
+
+  const close = () => {
+    els.clearHunnyBackdrop.style.display = 'none';
+    els.clearHunnyConfirm.removeEventListener('click', onConfirm);
+    els.clearHunnyCancel.removeEventListener('click', onCancel);
+  };
+
+  const onConfirm = () => {
+    state.pot = 0;
+    saveState();
+    render();
+    close();
+  };
+
+  const onCancel = () => {
+    close();
+  };
+
+  els.clearHunnyConfirm.addEventListener('click', onConfirm);
+  els.clearHunnyCancel.addEventListener('click', onCancel);
+
+  els.clearHunnyBackdrop.style.display = 'flex';
 }
 
 // expose for onclick
