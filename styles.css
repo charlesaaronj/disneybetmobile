@@ -527,9 +527,8 @@ h3 {
   margin: 15px;
 }
 
-* Start hidden/neutral when empty */
-.starterHint:empty {
-  display: none;
+.starterHint.is-visible {
+  display: inline-flex;
 }
 
 .reveal-section-title {
