@@ -556,11 +556,8 @@ function renderPlayers() {
   const potHtml = `
     <div class="player-chip" style="margin-bottom:.5rem;">
       <div>
-        <strong>Hunny Pot</strong>
-      </div>
-      <div>
-        <span class="pill pot-pill">Hunny Pot ${state.pot}</span>
         <div class="small-actions-hunny" style="margin-top:.25rem;">
+        <span class="pill pot-pill">Hunny Pot ${state.pot}</span>
           <button class="btn btn-secondary" type="button" onclick="addToPot()">Add Pts</button>
           <button class="btn btn-danger" type="button" onclick="clearPot()">Clear</button>
         </div>
