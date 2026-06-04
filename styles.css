@@ -1,10 +1,11 @@
 :root,
 [data-theme="light"] {
-  --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
-  --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
-  --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
-  --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
-  --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+  /* Fluid, slightly larger, mobile-friendly typography */
+  --text-xs: clamp(0.8rem, 0.75rem + 0.25vw, 0.9rem);
+  --text-sm: clamp(0.9rem, 0.85rem + 0.4vw, 1.05rem);
+  --text-base: clamp(1.05rem, 1rem + 0.35vw, 1.2rem);
+  --text-lg: clamp(1.3rem, 1.1rem + 0.9vw, 1.7rem);
+  --text-xl: clamp(1.7rem, 1.4rem + 1.5vw, 2.5rem);
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -69,6 +70,8 @@
   --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.36);
 }
 
+/* Global resets and base */
+
 *,
 *::before,
 *::after {
@@ -78,8 +81,8 @@
 }
 
 html {
-  -webkit-text-size-adjust: none;
-  text-size-adjust: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   scroll-behavior: smooth;
 }
 
@@ -129,11 +132,15 @@ textarea {
   outline-offset: 2px;
 }
 
+/* App shell */
+
 .app {
   max-width: 1280px;
   margin: 0 auto;
   padding: var(--space-4);
 }
+
+/* Top bar / header */
 
 .topbar {
   display: flex;
@@ -161,6 +168,8 @@ textarea {
   color: var(--color-primary);
 }
 
+/* Typography */
+
 h1,
 h2,
 h3 {
@@ -186,6 +195,8 @@ h3 {
   font-size: var(--text-sm);
   max-width: 60ch;
 }
+
+/* Buttons */
 
 .btn {
   display: inline-flex;
@@ -229,6 +240,8 @@ h3 {
   border-color: color-mix(in oklab, var(--color-error) 30%, transparent);
 }
 
+/* Layout and panels */
+
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.6fr);
@@ -256,6 +269,8 @@ h3 {
   gap: var(--space-3);
 }
 
+/* Form fields */
+
 .field {
   display: grid;
   gap: 0.45rem;
@@ -270,6 +285,8 @@ h3 {
   color: var(--color-text-muted);
   font-size: var(--text-xs);
 }
+
+/* Players / scoreboard */
 
 .players {
   display: grid;
@@ -320,6 +337,8 @@ h3 {
   color: var(--color-text-muted);
 }
 
+/* Pills / chips */
+
 .pill {
   display: inline-flex;
   align-items: center;
@@ -328,7 +347,7 @@ h3 {
   border-radius: var(--radius-full);
   font-size: var(--text-xs);
   font-weight: 700;
-  margin: 10px
+  margin: 10px;
 }
 
 .pill-open {
@@ -340,6 +359,8 @@ h3 {
   background: color-mix(in oklab, var(--color-success) 18%, var(--color-surface));
   color: var(--color-success);
 }
+
+/* Bets / history */
 
 .bet-list,
 .history-list {
@@ -379,6 +400,8 @@ h3 {
   font-size: var(--text-sm);
 }
 
+/* Empty state */
+
 .empty {
   color: var(--color-text-muted);
   padding: var(--space-6);
@@ -387,20 +410,23 @@ h3 {
   border-radius: var(--radius-md);
 }
 
-/* Updated spacing for buttons, including Random / Start / Clear row */
+/* Small actions row (Random / Start / Clear) */
+
 .small-actions {
   display: flex;
-  gap: var(--space-3);       /* more space between buttons */
+  gap: var(--space-3);
   flex-wrap: wrap;
   align-items: center;
-  margin-top: var(--space-3); /* space above a row of buttons */
-  margin-bottom: var(--space-3); /* space above a row of buttons */
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
 .small-actions .btn {
   min-height: 38px;
   padding: 0.6rem 0.9rem;
 }
+
+/* Totals / metrics */
 
 .totals {
   display: flex;
@@ -422,6 +448,8 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
+/* Misc */
+
 .footer-note {
   margin-top: var(--space-4);
   font-size: var(--text-xs);
@@ -442,6 +470,8 @@ h3 {
   color: var(--color-warning);
   margin-left: 0.5rem;
 }
+
+/* Modal */
 
 .modal-backdrop {
   position: fixed;
@@ -469,26 +499,25 @@ h3 {
   font-size: var(--text-lg);
 }
 
-
-
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2);
 }
 
+/* Starter hint */
+
 .starterHint {
   display: inline-flex;
   align-items: center;
   min-height: 28px;
-  padding: 0.3rem 0.7rem;
-  color: var(--color-warning);
   padding: 0.6rem 1rem;
+  color: var(--color-warning);
   border-radius: var(--radius-full);
   background: color-mix(in oklab, var(--color-gold) 24%, var(--color-surface));
   font-size: var(--text-sm);
   font-weight: 700;
-  margin: 15px
+  margin: 15px;
 }
 
 .reveal-section-title {
@@ -497,6 +526,9 @@ h3 {
   margin-bottom: 0.25rem;
 }
 
+/* Responsive tweaks */
+
+/* Tablet and down */
 @media (max-width: 900px) {
   .layout,
   .grid-2,
@@ -522,5 +554,73 @@ h3 {
 
   .app {
     padding: var(--space-3);
+  }
+}
+
+/* Phone-focused tweaks */
+@media (max-width: 600px) {
+  .app {
+    padding: var(--space-2);
+    min-height: 100dvh;
+  }
+
+  .topbar {
+    padding: var(--space-3);
+  }
+
+  .panel {
+    padding: var(--space-3);
+  }
+
+  h1 {
+    font-size: var(--text-lg);
+  }
+
+  h2 {
+    font-size: var(--text-base);
+  }
+
+  .sub {
+    max-width: 100%;
+  }
+
+  .small-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .small-actions .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .bet-card,
+  .history-item {
+    padding: var(--space-3);
+  }
+
+  .bet-head {
+    gap: var(--space-2);
+  }
+
+  .bet-meta {
+    gap: 0.3rem;
+  }
+
+  .metric {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .score-points {
+    font-size: 1.35rem;
+  }
+
+  .pill,
+  .starterHint {
+    margin: 8px;
   }
 }
