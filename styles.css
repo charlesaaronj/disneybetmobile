@@ -285,6 +285,7 @@ h3 {
 .field label {
   font-size: var(--text-sm);
   font-weight: 700;
+  margin: 5px;
 }
 
 .hint {
