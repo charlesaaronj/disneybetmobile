@@ -433,6 +433,13 @@ h3 {
   padding: 0.6rem 0.9rem;
 }
 
+/* Only shrink buttons inside Hunny Pot + similar rows */
+.small-actions-hunny .btn {
+  min-height: 32px;
+  padding: 0.3rem 0.7rem;
+  font-size: var(--text-xs);
+}
+
 /* Totals / metrics */
 
 .totals {
@@ -627,6 +634,7 @@ h3 {
   .score-points {
     font-size: 1.35rem;
   }
+  
 
   .pill,
   .starterHint {
