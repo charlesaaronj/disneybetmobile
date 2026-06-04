@@ -544,7 +544,7 @@ function resolveGuessingBet(betId) {
   parts.push(`<div class="hint" style="margin-top:.75rem;">Hunny Pot is now ${state.pot} points.</div>`);
 
   els.revealTitle.textContent = 'Round result';
-  els.revealSub.textContent = 'Here is who wrote the answer and how the points changed.';
+  els.revealSub.textContent = 'Here is who said the answer and how the points changed.';
   els.revealBody.innerHTML = parts.join('');
   els.revealBackdrop.style.display = 'flex';
 }
