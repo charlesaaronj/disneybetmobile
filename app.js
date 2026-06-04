@@ -373,7 +373,7 @@ function renderBetRows() {
           <div class="hint">Available ${available} points</div>
         </div>
         <div class="field">
-          <label>Who wrote it?</label>
+          <label>Who said it?</label>
           <select data-guess-player ${guessingBet ? '' : 'disabled'}>
             ${
               guessingBet
