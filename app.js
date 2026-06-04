@@ -561,7 +561,7 @@ function renderPlayers() {
       </div>
       <div>
         <span class="pill pot-pill">Hunny Pot ${state.pot}</span>
-        <div class="small-actions" style="margin-top:.25rem;">
+        <div class="small-actions-hunny" style="margin-top:.25rem;">
           <button class="btn btn-secondary" type="button" onclick="addToPot()">Add to Hunny Pot</button>
           <button class="btn btn-danger" type="button" onclick="clearPot()">Clear Hunny Pot</button>
         </div>
