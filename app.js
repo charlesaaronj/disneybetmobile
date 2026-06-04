@@ -1,5 +1,4 @@
 // === Minimal Disney Line Guess logic with stable Hunny Pot ===
-v
 // ---------- State ----------
 const state = {
   players: [],
