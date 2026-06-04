@@ -557,7 +557,6 @@ function renderPlayers() {
     <div class="player-chip" style="margin-bottom:.5rem;">
       <div>
         <strong>Hunny Pot</strong>
-        <div class="hint">Extra points you can give back to players.</div>
       </div>
       <div>
         <span class="pill pot-pill">Hunny Pot ${state.pot}</span>
