@@ -483,7 +483,7 @@ h3 {
 }
 
 .pot-pill {
-  background: color-mix(in oklab, var(--color-gold) 24%, var(--color-surface));
+  --background: color-mix(in oklab, var(--color-gold) 24%, var(--color-surface));
   color: var(--color-warning);
   --margin-left: 0.5rem;
 }
