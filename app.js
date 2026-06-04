@@ -246,8 +246,17 @@ function nextAnswerPrompt() {
     startGuessPhase(bet.id);
     return;
   }
-  const player = players[currentAnswerIndex];
-  els.answerPrompt.textContent = `Hand the phone to ${player.name}. Only they should see this screen.`;
+    const player = players[currentAnswerIndex];
+
+  const metaParts = [];
+  if (bet.attraction) metaParts.push(bet.attraction);
+  if (bet.land) metaParts.push(bet.land);
+  const meta = metaParts.length ? `(${metaParts.join(' • ')})` : '';
+
+  els.answerPrompt.textContent =
+    `Hand the phone to ${player.name}. Only they should see this screen.\n\n` +
+    `Question: ${bet.description} ${meta}`;
+
   els.answerPlayerLabel.textContent = `${player.name}, type your answer`;
   els.answerInput.value = '';
   showAnswerModal();
