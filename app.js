@@ -22,19 +22,33 @@ const els = {
   openBets: document.getElementById('openBets'),
   historyList: document.getElementById('historyList'),
   openBetMetrics: document.getElementById('openBetMetrics'),
+
   answerBackdrop: document.getElementById('answerModalBackdrop'),
   answerPrompt: document.getElementById('answerModalPrompt'),
   answerPlayerLabel: document.getElementById('answerModalPlayerLabel'),
   answerInput: document.getElementById('answerModalInput'),
   answerSaveBtn: document.getElementById('answerModalSaveBtn'),
+
   revealBackdrop: document.getElementById('revealModalBackdrop'),
   revealTitle: document.getElementById('revealModalTitle'),
   revealSub: document.getElementById('revealModalSub'),
   revealBody: document.getElementById('revealModalBody'),
-  revealCloseBtn: document.getElementById('revealModalCloseBtn')
+  revealCloseBtn: document.getElementById('revealModalCloseBtn'),
+
+  // Add-to-Hunny modal
+  addHunnyBackdrop: document.getElementById('addHunnyModalBackdrop'),
+  addHunnyInput: document.getElementById('addHunnyModalInput'),
+  addHunnyCancel: document.getElementById('addHunnyModalCancel'),
+  addHunnyConfirm: document.getElementById('addHunnyModalConfirm'),
+
+  // Give-from-Hunny modal
+  giveHunnyBackdrop: document.getElementById('giveHunnyModalBackdrop'),
+  giveHunnyMessage: document.getElementById('giveHunnyModalMessage'),
+  giveHunnyInput: document.getElementById('giveHunnyModalInput'),
+  giveHunnyCancel: document.getElementById('giveHunnyModalCancel'),
   giveHunnyConfirm: document.getElementById('giveHunnyModalConfirm'),
 
-  // NEW: clear Hunny Pot modal
+  // Clear Hunny Pot modal
   clearHunnyBackdrop: document.getElementById('clearHunnyModalBackdrop'),
   clearHunnyMessage: document.getElementById('clearHunnyModalMessage'),
   clearHunnyCancel: document.getElementById('clearHunnyModalCancel'),
