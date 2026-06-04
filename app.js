@@ -119,10 +119,10 @@ function giveFromPot(playerId) {
     return;
   }
   const max = state.pot;
-  const amountStr = prompt(
-    `How many points do you want to give to ${player.name} from the Hunny Pot? (Max ${max})`,
-    String(Math.min(3, max))
-  );
+const amountStr = prompt(
+  `How many points do you want to give to ${player.name} from the Hunny Pot? (Max ${max})`,
+  String(max)
+);
   if (amountStr === null) return;
   let amount = Number(amountStr);
   if (!Number.isFinite(amount) || amount <= 0) return;
