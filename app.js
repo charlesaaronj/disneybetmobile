@@ -557,7 +557,7 @@ function renderPlayers() {
     <div class="player-chip" style="margin-bottom:.5rem;">
       <div>
         <div class="small-actions-hunny" style="margin-top:.25rem;">
-        <span class="pill pot-pill">Hunny Pot ${state.pot}</span>
+        <span class="pill pot-pill-total">Hunny Pot ${state.pot}</span>
           <button class="btn btn-secondary" type="button" onclick="addToPot()">Add Pts</button>
           <button class="btn btn-danger" type="button" onclick="clearPot()">Clear</button>
         </div>
