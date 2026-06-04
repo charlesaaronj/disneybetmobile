@@ -1,5 +1,5 @@
 // === Minimal Disney Line Guess logic with stable Hunny Pot ===
-
+v
 // ---------- State ----------
 const state = {
   players: [],
@@ -349,7 +349,13 @@ function renderGuessingRound(bet) {
   const chosen = bet.answers.find(a => a.id === bet.chosenAnswerId);
   const answerText = chosen ? chosen.text : '';
   const meta = [bet.attraction, bet.land].filter(Boolean).join(' • ');
-  els.starterHint.textContent = 'Who Answered: ' + answerText;
+  // When you want to show it
+els.starterHint.textContent = 'Who Answered: ' + answerText;
+els.starterHint.classList.add('is-visible');
+
+// When you want to hide it
+els.starterHint.textContent = '';
+els.starterHint.classList.remove('is-visible');
   renderBetRows();
 }
 
