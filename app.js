@@ -52,6 +52,8 @@ const els = {
   clearHunnyMessage: document.getElementById('clearHunnyModalMessage'),
   clearHunnyCancel: document.getElementById('clearHunnyModalCancel'),
   clearHunnyConfirm: document.getElementById('clearHunnyModalConfirm')
+    
+  selectedAnswerPanel: document.getElementById('selectedAnswerPanel'),
 };
 
 // ---------- Small helpers ----------
@@ -345,10 +347,6 @@ function renderGuessingRound(bet) {
     renderBetRows();
     return;
   }
-  const chosen = bet.answers.find(a => a.id === bet.chosenAnswerId);
-  const answerText = chosen ? chosen.text : '';
-  const meta = [bet.attraction, bet.land].filter(Boolean).join(' • ');
-els.starterHint.textContent = 'Answered Selected: ' + answerText;
   renderBetRows();
 }
 
@@ -736,9 +734,47 @@ function render() {
   renderPlayers();
   renderScoreboard();
   renderBetPlayers();
+  renderSelectedAnswerPanel();
   renderOpenMetrics();
   renderOpenBets();
   renderHistory();
+}
+
+function renderSelectedAnswerPanel() {
+  const bet = getCurrentGuessingBet();
+
+  if (!bet) {
+    els.selectedAnswerPanel.innerHTML =
+      '<div class="empty">The selected answer and question will appear here once a round reaches guessing.</div>';
+    return;
+  }
+
+  const chosen = bet.answers.find(a => a.id === bet.chosenAnswerId);
+  const answerText = chosen ? chosen.text : '';
+  const meta = [bet.attraction, bet.land].filter(Boolean).join(' • ');
+
+  els.selectedAnswerPanel.innerHTML = `
+    <div class="stack">
+      <div class="field">
+        <label>Question</label>
+        <div>${escapeHtml(bet.description || 'Unknown question')}</div>
+      </div>
+      <div class="field">
+        <label>Selected answer</label>
+        <div>${escapeHtml(answerText || 'No selected answer yet')}</div>
+      </div>
+      ${
+        meta
+          ? `
+            <div class="field">
+              <label>Attraction / Land</label>
+              <div class="hint">${escapeHtml(meta)}</div>
+            </div>
+          `
+          : ''
+      }
+    </div>
+  `;
 }
 
 // ---------- Events ----------
