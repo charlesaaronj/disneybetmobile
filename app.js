@@ -725,7 +725,6 @@ function renderBetPlayers() {
   if (guessingBet) {
     renderGuessingRound(guessingBet);
   } else {
-    els.starterHint.textContent = '';
     renderBetRows();
   }
 }
