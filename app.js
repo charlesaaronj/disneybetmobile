@@ -319,13 +319,26 @@ function nextAnswerPrompt() {
 
   const players = state.players;
   if (currentAnswerIndex >= players.length) {
-    bet.status = 'guessing';
-    saveState();
-    hideAnswerModal();
-    render();
-    startGuessPhase(bet.id);
-    return;
+  bet.status = 'guessing';
+
+  if (!bet.chosenAnswerId && bet.answers.length) {
+    const idx = Math.floor(Math.random() * bet.answers.length);
+    const chosen = bet.answers[idx];
+    bet.chosenAnswerId = chosen.id;
+
+    const sameTextAuthors = bet.answers
+      .filter(a => a.text === chosen.text)
+      .map(a => a.playerId);
+
+    bet.correctAuthors = sameTextAuthors;
+    bet.correctAuthorId = sameTextAuthors[0] || null;
   }
+
+  saveState();
+  hideAnswerModal();
+  render();
+  return;
+}
 
   const player = players[currentAnswerIndex];
   const metaParts = [];
