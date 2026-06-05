@@ -17,10 +17,10 @@ const els = {
   betDescription: document.getElementById('betDescription'),
   attractionName: document.getElementById('attractionName'),
   landName: document.getElementById('landName'),
-  starterHint: document.getElementById('starterHint'),
   openBets: document.getElementById('openBets'),
   historyList: document.getElementById('historyList'),
   openBetMetrics: document.getElementById('openBetMetrics'),
+  selectedAnswerPanel: document.getElementById('selectedAnswerPanel'),
 
   answerBackdrop: document.getElementById('answerModalBackdrop'),
   answerPrompt: document.getElementById('answerModalPrompt'),
@@ -34,26 +34,21 @@ const els = {
   revealBody: document.getElementById('revealModalBody'),
   revealCloseBtn: document.getElementById('revealModalCloseBtn'),
 
-  // Add-to-Hunny modal
   addHunnyBackdrop: document.getElementById('addHunnyModalBackdrop'),
   addHunnyInput: document.getElementById('addHunnyModalInput'),
   addHunnyCancel: document.getElementById('addHunnyModalCancel'),
   addHunnyConfirm: document.getElementById('addHunnyModalConfirm'),
 
-  // Give-from-Hunny modal
   giveHunnyBackdrop: document.getElementById('giveHunnyModalBackdrop'),
   giveHunnyMessage: document.getElementById('giveHunnyModalMessage'),
   giveHunnyInput: document.getElementById('giveHunnyModalInput'),
   giveHunnyCancel: document.getElementById('giveHunnyModalCancel'),
   giveHunnyConfirm: document.getElementById('giveHunnyModalConfirm'),
 
-  // Clear Hunny Pot modal
   clearHunnyBackdrop: document.getElementById('clearHunnyModalBackdrop'),
   clearHunnyMessage: document.getElementById('clearHunnyModalMessage'),
   clearHunnyCancel: document.getElementById('clearHunnyModalCancel'),
-  clearHunnyConfirm: document.getElementById('clearHunnyModalConfirm'),
-    
-  selectedAnswerPanel: document.getElementById('selectedAnswerPanel')
+  clearHunnyConfirm: document.getElementById('clearHunnyModalConfirm')
 };
 
 // ---------- Small helpers ----------
@@ -132,7 +127,7 @@ function removePlayer(playerId) {
   render();
 }
 
-// ---------- Hunny Pot (only touches pot + currentPoints) ----------
+// ---------- Hunny Pot ----------
 function giveFromPot(playerId) {
   const player = state.players.find(p => p.id === playerId);
   if (!player) return;
@@ -140,43 +135,84 @@ function giveFromPot(playerId) {
     alertLike('No points in the Hunny Pot right now.');
     return;
   }
-  const max = state.pot;
-const amountStr = prompt(
-  `How many points do you want to give to ${player.name} from the Hunny Pot? (Max ${max})`,
-  String(max)
-);
-  if (amountStr === null) return;
-  let amount = Number(amountStr);
-  if (!Number.isFinite(amount) || amount <= 0) return;
-  if (amount > max) amount = max;
 
-  state.pot -= amount;
-  player.currentPoints = clampScore(player.currentPoints + amount);
-  saveState();
-  render();
+  const max = state.pot;
+  els.giveHunnyMessage.textContent =
+    `How many points do you want to give to ${player.name} from the Hunny Pot? (Max ${max})`;
+  els.giveHunnyInput.value = String(max);
+  els.giveHunnyInput.min = '1';
+  els.giveHunnyInput.max = String(max);
+
+  const close = () => {
+    els.giveHunnyBackdrop.style.display = 'none';
+    els.giveHunnyConfirm.removeEventListener('click', onConfirm);
+    els.giveHunnyCancel.removeEventListener('click', onCancel);
+  };
+
+  const onConfirm = () => {
+    let amount = Number(els.giveHunnyInput.value);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alertLike('Enter a number greater than 0.');
+      return;
+    }
+    if (amount > max) amount = max;
+
+    state.pot -= amount;
+    player.currentPoints = clampScore(player.currentPoints + amount);
+    saveState();
+    render();
+    close();
+  };
+
+  const onCancel = () => {
+    close();
+  };
+
+  els.giveHunnyConfirm.addEventListener('click', onConfirm);
+  els.giveHunnyCancel.addEventListener('click', onCancel);
+
+  els.giveHunnyBackdrop.style.display = 'flex';
+  els.giveHunnyInput.focus();
 }
 
 function addToPot() {
   const current = state.pot;
-  const input = prompt(
-    `How many points do you want to add to the Hunny Pot? (Current: ${current})`,
-    '5'
-  );
-  if (input === null) return;
-  let amount = Number(input);
-  if (!Number.isFinite(amount) || amount <= 0) {
-    alertLike('Enter a number greater than 0.');
-    return;
-  }
-  state.pot += amount;
-  saveState();
-  render();
+  els.addHunnyInput.value = '5';
+  els.addHunnyInput.min = '1';
+
+  const close = () => {
+    els.addHunnyBackdrop.style.display = 'none';
+    els.addHunnyConfirm.removeEventListener('click', onConfirm);
+    els.addHunnyCancel.removeEventListener('click', onCancel);
+  };
+
+  const onConfirm = () => {
+    let amount = Number(els.addHunnyInput.value);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alertLike('Enter a number greater than 0.');
+      return;
+    }
+
+    state.pot += amount;
+    saveState();
+    render();
+    close();
+  };
+
+  const onCancel = () => {
+    close();
+  };
+
+  els.addHunnyConfirm.addEventListener('click', onConfirm);
+  els.addHunnyCancel.addEventListener('click', onCancel);
+
+  els.addHunnyBackdrop.style.display = 'flex';
+  els.addHunnyInput.focus();
 }
 
 function clearPot() {
   if (!state.pot) return;
 
-  // Setup modal text
   els.clearHunnyMessage.textContent =
     `Clear the Hunny Pot (${state.pot} points)?`;
 
@@ -203,7 +239,6 @@ function clearPot() {
   els.clearHunnyBackdrop.style.display = 'flex';
 }
 
-// expose for onclick
 window.addToPot = addToPot;
 window.clearPot = clearPot;
 window.giveFromPot = giveFromPot;
@@ -219,9 +254,11 @@ function createBet() {
     alertLike('Add family members before starting a round.');
     return;
   }
+
   const attraction = els.attractionName.value.trim();
   const land = els.landName.value.trim();
   const question = els.betDescription.value.trim();
+
   if (!attraction || !land || !question) {
     alertLike('Attraction, Land, and Question are all required.');
     return;
@@ -249,7 +286,6 @@ function createBet() {
 
   state.bets.unshift(bet);
   els.betDescription.value = '';
-  els.starterHint.textContent = '';
   saveState();
   render();
   startAnswerPhase(betId);
@@ -280,6 +316,7 @@ function startAnswerPhase(betId) {
 function nextAnswerPrompt() {
   const bet = state.bets.find(b => b.id === currentAnswerBetId);
   if (!bet) return;
+
   const players = state.players;
   if (currentAnswerIndex >= players.length) {
     bet.status = 'guessing';
@@ -289,16 +326,15 @@ function nextAnswerPrompt() {
     startGuessPhase(bet.id);
     return;
   }
-    const player = players[currentAnswerIndex];
 
+  const player = players[currentAnswerIndex];
   const metaParts = [];
   if (bet.attraction) metaParts.push(bet.attraction);
   if (bet.land) metaParts.push(bet.land);
   const meta = metaParts.length ? `(${metaParts.join(' • ')})` : '';
 
   els.answerPrompt.textContent =
-    `Hand the phone to ${player.name}. Only they should see this screen.\n\n` +
-    `Question: ${bet.description} ${meta}`;
+    `Hand the phone to ${player.name}. Only they should see this screen.\n\nQuestion: ${bet.description} ${meta}`;
 
   els.answerPlayerLabel.textContent = `${player.name}, type your answer`;
   els.answerInput.value = '';
@@ -308,17 +344,27 @@ function nextAnswerPrompt() {
 els.answerSaveBtn.addEventListener('click', () => {
   const bet = state.bets.find(b => b.id === currentAnswerBetId);
   if (!bet) return;
+
   const players = state.players;
   const player = players[currentAnswerIndex];
   const text = els.answerInput.value.trim();
+
   if (!text) {
     alertLike('Type an answer before saving.');
     return;
   }
+
   bet.answers.push({ id: uid(), playerId: player.id, text });
   saveState();
   currentAnswerIndex += 1;
   nextAnswerPrompt();
+});
+
+// click outside answer modal closes it
+els.answerBackdrop.addEventListener('click', event => {
+  if (event.target === els.answerBackdrop) {
+    hideAnswerModal();
+  }
 });
 
 // ---------- Guessing & wagering ----------
@@ -338,15 +384,11 @@ function startGuessPhase(betId) {
     bet.correctAuthorId = sameTextAuthors[0] || null;
     saveState();
   }
+
   renderGuessingRound(bet);
 }
 
-function renderGuessingRound(bet) {
-  if (!bet) {
-    els.starterHint.textContent = '';
-    renderBetRows();
-    return;
-  }
+function renderGuessingRound() {
   renderBetRows();
 }
 
@@ -355,6 +397,7 @@ function renderBetRows() {
     els.betPlayers.innerHTML = '<div class="empty">Add players, then start a round.</div>';
     return;
   }
+
   const guessingBet = getCurrentGuessingBet();
   els.betPlayers.innerHTML = state.players.map(player => {
     const available = getAvailablePoints(player.id);
@@ -370,10 +413,7 @@ function renderBetRows() {
             ${
               guessingBet
                 ? state.players
-                    .map(
-                      p =>
-                        `<option value="${p.id}">${escapeHtml(p.name)}</option>`
-                    )
+                    .map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`)
                     .join('')
                 : ''
             }
@@ -382,12 +422,13 @@ function renderBetRows() {
         <div class="field">
           <label>Wager</label>
           <input data-amount type="number" min="0" step="1" value="0" placeholder="0" inputmode="numeric" pattern="[0-9]*" ${
-  guessingBet ? '' : 'disabled'
-} />
+            guessingBet ? '' : 'disabled'
+          } />
         </div>
       </div>
     `;
   }).join('');
+
   attachWagerGuards();
 }
 
@@ -397,7 +438,8 @@ function attachWagerGuards() {
     const playerId = row.dataset.playerId;
     const input = row.querySelector('[data-amount]');
     if (!input) return;
-    input.addEventListener('change', () => {
+
+    input.addEventListener('input', () => {
       const available = getAvailablePoints(playerId);
       let value = Number(input.value) || 0;
       if (!Number.isFinite(value) || value < 0) value = 0;
@@ -406,7 +448,7 @@ function attachWagerGuards() {
         alertLike(`That's the max they can wager this round (${available} points).`);
       }
       input.value = value;
-    }, { once: true });
+    });
   });
 }
 
@@ -423,11 +465,13 @@ function buildGuessesForBet(bet) {
     if (wager > available) wager = available;
     return { playerId, guessedAuthorId, wager };
   });
+
   const active = guesses.filter(g => g.wager > 0);
   if (!active.length) {
     alertLike('At least one player must wager points.');
     return null;
   }
+
   for (const g of active) {
     const available = getAvailablePoints(g.playerId);
     if (g.wager > available) {
@@ -436,10 +480,11 @@ function buildGuessesForBet(bet) {
       return null;
     }
   }
+
   return guesses;
 }
 
-// ---------- Resolve one round (ONLY place where wagers affect scores) ----------
+// ---------- Resolve one round ----------
 function resolveGuessingBet(betId) {
   const bet = state.bets.find(b => b.id === betId);
   if (!bet) return;
@@ -466,17 +511,14 @@ function resolveGuessingBet(betId) {
   );
   const anyCorrect = winners.length > 0;
 
-  // Apply this round ON TOP of current points
   const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
 
-  // 1) subtract all wagers
   wagers.forEach(w => {
     const player = playerMap[w.playerId];
     if (!player || w.wager <= 0) return;
     player.currentPoints = clampScore(player.currentPoints - w.wager);
   });
 
-  // 2) either pay winners or send pot to Hunny Pot
   const totalWinnerWager = winners.reduce((s, w) => s + w.wager, 0);
   if (anyCorrect && potThisRound > 0 && totalWinnerWager > 0) {
     winners.forEach(w => {
@@ -494,7 +536,6 @@ function resolveGuessingBet(betId) {
   saveState();
   render();
 
-  // Reveal modal text
   const authorNames = correctAuthors
     .map(id => {
       const p = state.players.find(pl => pl.id === id);
@@ -545,23 +586,31 @@ els.revealCloseBtn.addEventListener('click', () => {
   els.revealBackdrop.style.display = 'none';
 });
 
+els.revealBackdrop.addEventListener('click', event => {
+  if (event.target === els.revealBackdrop) {
+    els.revealBackdrop.style.display = 'none';
+  }
+});
+
 // ---------- Rendering ----------
 function renderPlayers() {
   if (!state.players.length) {
     els.playersList.innerHTML = '<div class="empty">No family members yet. Add names above to begin.</div>';
     return;
   }
+
   const potHtml = `
     <div class="player-chip" style="margin-bottom:.5rem;">
       <div>
         <div class="small-actions-hunny" style="margin-top:.25rem;">
-        <span class="pill pot-pill-total">Hunny Pot ${state.pot}</span>
+          <span class="pill pot-pill-total">Hunny Pot ${state.pot}</span>
           <button class="btn btn-secondary" type="button" onclick="addToPot()">Add Pts</button>
           <button class="btn btn-danger" type="button" onclick="clearPot()">Clear</button>
         </div>
       </div>
     </div>
   `;
+
   const playersHtml = state.players.map(p => {
     const canReceive = clampScore(p.currentPoints) === 0 && state.pot > 0;
     return `
@@ -584,6 +633,7 @@ function renderPlayers() {
       </div>
     `;
   }).join('');
+
   els.playersList.innerHTML = potHtml + playersHtml;
 }
 
@@ -592,6 +642,7 @@ function renderScoreboard() {
     els.scoreboard.innerHTML = '<div class="empty">Scores will appear here once players are added.</div>';
     return;
   }
+
   const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
   els.scoreboard.innerHTML = ranked.map((p, i) => `
     <div class="score-card">
@@ -607,6 +658,7 @@ function renderOpenMetrics() {
   const answering = state.bets.filter(b => b.status === 'answering').length;
   const guessing = state.bets.filter(b => b.status === 'guessing').length;
   const resolved = state.bets.filter(b => b.status === 'resolved').length;
+
   els.openBetMetrics.innerHTML = `
     <div class="metric">
       <span class="hint">Answering rounds</span>
@@ -633,16 +685,19 @@ function renderOpenBets() {
     els.openBets.innerHTML = '<div class="empty">No active rounds. Start a new question above.</div>';
     return;
   }
+
   els.openBets.innerHTML = open.map(bet => {
     const statusLabel = bet.status === 'answering'
       ? 'Collecting answers'
       : bet.status === 'guessing'
       ? 'Guessing & wagering'
       : 'Round';
+
     const metaParts = [];
     if (bet.attraction) metaParts.push(escapeHtml(bet.attraction));
     if (bet.land) metaParts.push(escapeHtml(bet.land));
     const meta = metaParts.length ? metaParts.join(' • ') : '';
+
     return `
       <article class="bet-card">
         <div class="bet-head">
@@ -674,13 +729,6 @@ function renderHistory() {
         ? bet.correctAuthors
         : (bet.correctAuthorId ? [bet.correctAuthorId] : [])) || [];
 
-      const authorNames = correctAuthors
-        .map(id => {
-          const p = state.players.find(pl => pl.id === id);
-          return p ? p.name : null;
-        })
-        .filter(Boolean);
-
       const winners = (bet.guesses || [])
         .filter(g => correctAuthors.includes(g.guessedAuthorId) && g.wager > 0)
         .map(g => {
@@ -695,27 +743,23 @@ function renderHistory() {
       const metaText = metaParts.length ? metaParts.join(' • ') : '';
 
       return `
-  <article class="history-item">
-    <div class="bet-head">
-      <div>
-        <h3>${escapeHtml(bet.description)}</h3>
-        <div class="hint">
-          ${metaText ? `${metaText} · ` : ''}
-          ${escapeHtml(bet.resolvedAt || '')}
-        </div>
-      </div>
-    </div>
+        <article class="history-item">
+          <div class="bet-head">
+            <div>
+              <h3>${escapeHtml(bet.description)}</h3>
+              <div class="hint">
+                ${metaText ? `${metaText} · ` : ''}
+                ${escapeHtml(bet.resolvedAt || '')}
+              </div>
+            </div>
+          </div>
 
-    <div class="hint" style="margin-top:0.4rem;">
-      <strong>Winners:</strong>
-      ${
-        winners.length
-          ? escapeHtml(winners.join(', '))
-          : 'No winners'
-      }
-    </div>
-  </article>
-`;
+          <div class="hint" style="margin-top:0.4rem;">
+            <strong>Winners:</strong>
+            ${winners.length ? escapeHtml(winners.join(', ')) : 'No winners'}
+          </div>
+        </article>
+      `;
     })
     .join('');
 }
@@ -729,17 +773,9 @@ function renderBetPlayers() {
   }
 }
 
-function render() {
-  renderPlayers();
-  renderScoreboard();
-  renderBetPlayers();
-  renderSelectedAnswerPanel();
-  renderOpenMetrics();
-  renderOpenBets();
-  renderHistory();
-}
-
 function renderSelectedAnswerPanel() {
+  if (!els.selectedAnswerPanel) return;
+
   const bet = getCurrentGuessingBet();
 
   if (!bet) {
@@ -776,12 +812,24 @@ function renderSelectedAnswerPanel() {
   `;
 }
 
+function render() {
+  renderPlayers();
+  renderScoreboard();
+  renderBetPlayers();
+  renderSelectedAnswerPanel();
+  renderOpenMetrics();
+  renderOpenBets();
+  renderHistory();
+}
+
 // ---------- Events ----------
 document.getElementById('addPlayerBtn').addEventListener('click', () => {
   const name = els.playerName.value.trim();
   const points = Number(els.playerPoints.value || 0);
+
   if (!name) return alertLike('Enter a family member name.');
   if (points < 0) return alertLike('Starting points must be 0 or more.');
+
   addPlayer(name, points);
   els.playerName.value = '';
   els.playerPoints.value = 10;
@@ -813,9 +861,7 @@ document.getElementById('clearBetFormBtn').addEventListener('click', () => {
   els.betDescription.value = '';
   els.attractionName.value = '';
   els.landName.value = '';
-  els.starterHint.textContent = '';
   renderBetPlayers();
-  attachWagerGuards();
 });
 
 document.getElementById('lockGuessesBtn').addEventListener('click', () => {
@@ -824,8 +870,10 @@ document.getElementById('lockGuessesBtn').addEventListener('click', () => {
     alertLike('No round is ready for guessing right now.');
     return;
   }
+
   const guesses = buildGuessesForBet(bet);
   if (!guesses) return;
+
   bet.guesses = guesses;
   saveState();
   resolveGuessingBet(bet.id);
