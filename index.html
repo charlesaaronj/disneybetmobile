@@ -30,10 +30,20 @@
     </header>
 
     <main id="main" class="layout">
+      <!-- LEFT COLUMN -->
       <section class="stack">
         <article class="panel">
           <h2>Scores</h2>
           <div id="scoreboard" class="scoreboard"></div>
+        </article>
+
+        <!-- NEW: Bonus points recap -->
+        <article class="panel">
+          <h2>Bonus points</h2>
+          <p class="hint">
+            Recently awarded bonuses will show here.
+          </p>
+          <div id="qualifiedBonusPanel" class="bonus-earned-list"></div>
         </article>
 
         <article class="panel">
@@ -64,46 +74,47 @@
         </article>
       </section>
 
+      <!-- RIGHT COLUMN -->
       <section class="stack">
         <article class="panel">
-  <h2>Pick a question</h2>
-  <div class="grid-2">
-    <div class="field">
-      <label for="attractionName">Attraction</label>
-      <input id="attractionName" type="text" placeholder="e.g., Space Mountain" />
-    </div>
-    <div class="field">
-      <label for="landName">Land / Area</label>
-      <input id="landName" type="text" placeholder="e.g., Tomorrowland" />
-    </div>
-  </div>
-  <div class="field">
-    <label for="betDescription">Question about this ride</label>
-    <textarea id="betDescription" placeholder="Type your own question. All three fields are required."></textarea>
-  </div>
-  <div class="small-actions">
-    <button class="btn btn-secondary" type="button" id="randomBetBtn">Generate question</button>
-    <button class="btn btn-primary" type="button" id="createBetBtn">Enter Answers</button>
-    <button class="btn btn-secondary" type="button" id="clearBetFormBtn">Clear</button>
-  </div>
-</article>
+          <h2>Pick a question</h2>
+          <div class="grid-2">
+            <div class="field">
+              <label for="attractionName">Attraction</label>
+              <input id="attractionName" type="text" placeholder="e.g., Space Mountain" />
+            </div>
+            <div class="field">
+              <label for="landName">Land / Area</label>
+              <input id="landName" type="text" placeholder="e.g., Tomorrowland" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="betDescription">Question about this ride</label>
+            <textarea id="betDescription" placeholder="Type your own question. All three fields are required."></textarea>
+          </div>
+          <div class="small-actions">
+            <button class="btn btn-secondary" type="button" id="randomBetBtn">Generate question</button>
+            <button class="btn btn-primary" type="button" id="createBetBtn">Enter Answers</button>
+            <button class="btn btn-secondary" type="button" id="clearBetFormBtn">Clear</button>
+          </div>
+        </article>
 
-<article class="panel">
-  <h2>Selected answer</h2>
-  <div id="selectedAnswerPanel" class="stack">
-    <div class="empty">The selected answer and question will appear here once a round reaches guessing.</div>
-  </div>
-</article>
+        <article class="panel">
+          <h2>Selected answer</h2>
+          <div id="selectedAnswerPanel" class="stack">
+            <div class="empty">The selected answer and question will appear here once a round reaches guessing.</div>
+          </div>
+        </article>
 
-<article class="panel">
-  <h2>Wagers</h2>
-  <div id="betPlayers" class="players">
-    <div class="empty">Wager choices will appear here once a round reaches guessing.</div>
-  </div>
-  <div class="small-actions">
-    <button class="btn btn-primary" type="button" id="lockGuessesBtn">Lock Wagers</button>
-  </div>
-</article>
+        <article class="panel">
+          <h2>Wagers</h2>
+          <div id="betPlayers" class="players">
+            <div class="empty">Wager choices will appear here once a round reaches guessing.</div>
+          </div>
+          <div class="small-actions">
+            <button class="btn btn-primary" type="button" id="lockGuessesBtn">Lock Wagers</button>
+          </div>
+        </article>
 
         <article class="panel">
           <h2>Rounds</h2>
@@ -115,9 +126,19 @@
           <h2>Round history</h2>
           <div id="historyList" class="history-list"></div>
         </article>
+
+        <!-- NEW: Bonus library -->
+        <article class="panel">
+          <h2>Bonus library</h2>
+          <p class="hint">
+            Use these when someone qualifies for a bonus (for example, no one guessed the author).
+          </p>
+          <div id="bonusLibrary" class="bonus-list"></div>
+        </article>
       </section>
     </main>
   </div>
+
   <!-- Clear Hunny Pot modal -->
   <div id="clearHunnyModalBackdrop" class="modal-backdrop" style="display:none;">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="clearHunnyModalTitle">
@@ -129,6 +150,7 @@
       </div>
     </div>
   </div>
+
   <!-- Answer collection modal -->
   <div id="answerModalBackdrop" class="modal-backdrop" style="display:none;">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="answerModalTitle">
@@ -143,28 +165,29 @@
       </div>
     </div>
   </div>
-<!-- Add points modal -->
+
+  <!-- Add points modal -->
   <div id="addHunnyModalBackdrop" class="modal-backdrop" style="display:none;">
-  <div class="modal">
-    <h3>Add to Hunny Pot</h3>
-    <div class="field">
-      <label for="addHunnyModalInput">Points to add</label>
-      <input
-        id="addHunnyModalInput"
-        type="number"
-        min="1"
-        step="1"
-        inputmode="numeric"
-        pattern="[0-9]*"
-      />
-    </div>
-    <div class="small-actions">
-      <button class="btn btn-secondary" type="button" id="addHunnyModalCancel">Cancel</button>
-      <button class="btn btn-primary" type="button" id="addHunnyModalConfirm">Add Points</button>
+    <div class="modal">
+      <h3>Add to Hunny Pot</h3>
+      <div class="field">
+        <label for="addHunnyModalInput">Points to add</label>
+        <input
+          id="addHunnyModalInput"
+          type="number"
+          min="1"
+          step="1"
+          inputmode="numeric"
+          pattern="[0-9]*"
+        />
+      </div>
+      <div class="small-actions">
+        <button class="btn btn-secondary" type="button" id="addHunnyModalCancel">Cancel</button>
+        <button class="btn btn-primary" type="button" id="addHunnyModalConfirm">Add Points</button>
+      </div>
     </div>
   </div>
-</div>
-  
+
   <!-- Reveal modal -->
   <div id="revealModalBackdrop" class="modal-backdrop" style="display:none;">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="revealModalTitle">
@@ -179,7 +202,8 @@
     </div>
   </div>
 
-  <!-- Load your JS -->
+  <!-- Load your JS: parks data, questions, app -->
+  <script src="parks-data.js"></script>
   <script src="questions.js"></script>
   <script src="app.js"></script>
 </body>
