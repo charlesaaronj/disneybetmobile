@@ -143,7 +143,28 @@
       </div>
     </div>
   </div>
-
+<!-- Add points modal -->
+  <div id="addHunnyModalBackdrop" class="modal-backdrop" style="display:none;">
+  <div class="modal-card">
+    <h3>Add to Hunny Pot</h3>
+    <div class="field">
+      <label for="addHunnyModalInput">Points to add</label>
+      <input
+        id="addHunnyModalInput"
+        type="number"
+        min="1"
+        step="1"
+        inputmode="numeric"
+        pattern="[0-9]*"
+      />
+    </div>
+    <div class="small-actions">
+      <button class="btn btn-secondary" type="button" id="addHunnyModalCancel">Cancel</button>
+      <button class="btn btn-primary" type="button" id="addHunnyModalConfirm">Add Points</button>
+    </div>
+  </div>
+</div>
+  
   <!-- Reveal modal -->
   <div id="revealModalBackdrop" class="modal-backdrop" style="display:none;">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="revealModalTitle">
