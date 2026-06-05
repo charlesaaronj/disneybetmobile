@@ -53,7 +53,7 @@ const els = {
   clearHunnyCancel: document.getElementById('clearHunnyModalCancel'),
   clearHunnyConfirm: document.getElementById('clearHunnyModalConfirm')
     
-  selectedAnswerPanel: document.getElementById('selectedAnswerPanel'),
+  selectedAnswerPanel: document.getElementById('selectedAnswerPanel')
 };
 
 // ---------- Small helpers ----------
