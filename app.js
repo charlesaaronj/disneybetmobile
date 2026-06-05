@@ -51,7 +51,7 @@ const els = {
   clearHunnyBackdrop: document.getElementById('clearHunnyModalBackdrop'),
   clearHunnyMessage: document.getElementById('clearHunnyModalMessage'),
   clearHunnyCancel: document.getElementById('clearHunnyModalCancel'),
-  clearHunnyConfirm: document.getElementById('clearHunnyModalConfirm')
+  clearHunnyConfirm: document.getElementById('clearHunnyModalConfirm'),
     
   selectedAnswerPanel: document.getElementById('selectedAnswerPanel')
 };
