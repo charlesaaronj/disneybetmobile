@@ -20,32 +20,32 @@
 
   /* Light theme colors */
   --color-bg: #f7f6f2;
-  --color-surface: #f9f8f5;
-  --color-surface-2: #fbfbf9;
+  --color-surface: #ffffff;
+  --color-surface-2: #fbfaf7;
   --color-surface-offset: #f3f0ec;
-  --color-border: #d4d1ca;
+  --color-border: #ddd6ca;
 
-  --color-text: #28251d;
+  --color-text: #1f1d18;
   --color-text-muted: #6f6d67;
   --color-text-faint: #9d9a92;
   --color-text-inverse: #f9f8f4;
 
-  --color-primary: #01696f;
-  --color-primary-hover: #0c4e54;
-  --color-success: #437a22;
-  --color-warning: #964219;
-  --color-error: #a12c7b;
-  --color-gold: #d4a017;
+  --color-primary: #0f766e;
+  --color-primary-hover: #115e59;
+  --color-success: #166534;
+  --color-warning: #b45309;
+  --color-error: #b42318;
+  --color-gold: #a16207;
 
   /* Radii */
   --radius-sm: 0.5rem;
-  --radius-md: 0.8rem;
-  --radius-lg: 1.1rem;
+  --radius-md: 0.85rem;
+  --radius-lg: 1.25rem;
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(40, 37, 29, 0.06);
-  --shadow-md: 0 8px 24px rgba(40, 37, 29, 0.09);
+  --shadow-sm: 0 1px 2px rgba(24, 24, 24, 0.05);
+  --shadow-md: 0 10px 30px rgba(24, 24, 24, 0.09);
 
   /* Fonts */
   --font-display: 'Cabinet Grotesk', 'Inter', sans-serif;
@@ -53,7 +53,6 @@
 }
 
 [data-theme="dark"] {
-  /* Dark theme colors override */
   --color-bg: #171614;
   --color-surface: #1c1b19;
   --color-surface-2: #201f1d;
@@ -76,7 +75,7 @@
   --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.36);
 }
 
-/* Global resets and base */
+/* ---------- Global resets ---------- */
 
 *,
 *::before,
@@ -99,8 +98,8 @@ body {
   line-height: 1.55;
   color: var(--color-text);
   background:
-    radial-gradient(circle at top left, color-mix(in oklab, var(--color-gold) 10%, transparent), transparent 28%),
-    radial-gradient(circle at top right, color-mix(in oklab, var(--color-primary) 12%, transparent), transparent 30%),
+    radial-gradient(circle at top left, color-mix(in oklab, var(--color-gold) 12%, transparent), transparent 32%),
+    radial-gradient(circle at top right, color-mix(in oklab, var(--color-primary) 14%, transparent), transparent 36%),
     var(--color-bg);
 }
 
@@ -122,8 +121,8 @@ input,
 textarea,
 select {
   width: 100%;
-  border: 1px solid color-mix(in oklab, var(--color-text) 14%, transparent);
-  background: var(--color-surface-2);
+  border: 1px solid color-mix(in oklab, var(--color-text) 12%, transparent);
+  background: #fff;
   border-radius: var(--radius-md);
   padding: 0.85rem 0.95rem;
 }
@@ -138,15 +137,15 @@ textarea {
   outline-offset: 2px;
 }
 
-/* App shell */
+/* ---------- App shell ---------- */
 
 .app {
-  max-width: 1280px;
+  max-width: 1300px;
   margin: 0 auto;
   padding: var(--space-4);
 }
 
-/* Top bar / header */
+/* Topbar */
 
 .topbar {
   display: flex;
@@ -155,11 +154,11 @@ textarea {
   justify-content: space-between;
   margin-bottom: var(--space-4);
   padding: var(--space-4);
-  background: color-mix(in oklab, var(--color-surface) 84%, transparent);
-  border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(10px);
+  background: color-mix(in oklab, var(--color-surface) 94%, transparent);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(14px);
 }
 
 .brand {
@@ -169,8 +168,8 @@ textarea {
 }
 
 .logo {
-  width: 42px;
-  height: 42px;
+  width: 56px;
+  height: 56px;
   color: var(--color-primary);
 }
 
@@ -202,7 +201,7 @@ h3 {
   max-width: 60ch;
 }
 
-/* Buttons */
+/* ---------- Buttons ---------- */
 
 .btn {
   display: inline-flex;
@@ -237,7 +236,7 @@ h3 {
 
 .btn-secondary {
   background: var(--color-surface-offset);
-  border-color: color-mix(in oklab, var(--color-text) 10%, transparent);
+  border-color: color-mix(in oklab, var(--color-text) 12%, transparent);
 }
 
 .btn-danger {
@@ -246,7 +245,7 @@ h3 {
   border-color: color-mix(in oklab, var(--color-error) 30%, transparent);
 }
 
-/* Layout and panels */
+/* ---------- Layout & panels ---------- */
 
 .layout {
   display: grid;
@@ -261,13 +260,14 @@ h3 {
 }
 
 .panel {
-  background: color-mix(in oklab, var(--color-surface) 90%, transparent);
-  border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
-  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, #ffffff, #fbfaf7);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
   padding: var(--space-4);
-  box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-md);
 }
+
+/* Grid helpers */
 
 .grid-2 {
   display: grid;
@@ -275,7 +275,7 @@ h3 {
   gap: var(--space-3);
 }
 
-/* Form fields */
+/* ---------- Form fields ---------- */
 
 .field {
   display: grid;
@@ -285,7 +285,7 @@ h3 {
 .field label {
   font-size: var(--text-sm);
   font-weight: 700;
-  margin-top: 10px;
+  margin-top: 4px;
 }
 
 .hint {
@@ -293,7 +293,7 @@ h3 {
   font-size: var(--text-xs);
 }
 
-/* Players / scoreboard */
+/* ---------- Players & scoreboard ---------- */
 
 .players {
   display: grid;
@@ -303,10 +303,12 @@ h3 {
 .player-chip,
 .score-card,
 .history-item,
-.player-bet-row {
-  border: 1px solid color-mix(in oklab, var(--color-text) 10%, transparent);
-  background: var(--color-surface-2);
-  border-radius: var(--radius-md);
+.player-bet-row,
+.bonus-card,
+.earned-card {
+  border: 1px solid var(--color-border);
+  background: linear-gradient(180deg, #ffffff, #fbfaf7);
+  border-radius: 16px;
 }
 
 .player-chip {
@@ -334,17 +336,13 @@ h3 {
 }
 
 .score-points {
-  font-size: 1.55rem;
+  font-size: 1.7rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--color-primary);
 }
 
-.muted {
-  color: var(--color-text-muted);
-}
-
-/* Pills / chips */
+/* ---------- Pills / chips ---------- */
 
 .pill {
   display: inline-flex;
@@ -354,12 +352,13 @@ h3 {
   border-radius: var(--radius-full);
   font-size: var(--text-xs);
   font-weight: 700;
-  margin: 10px;
+  background: var(--color-surface-offset);
+  color: var(--color-text-muted);
 }
 
 .pill-open {
-  background: color-mix(in oklab, var(--color-gold) 18%, var(--color-surface));
-  color: var(--color-warning);
+  background: #dff7ef;
+  color: var(--color-success);
 }
 
 .pill-won {
@@ -367,7 +366,12 @@ h3 {
   color: var(--color-success);
 }
 
-/* Bets / history */
+.pot-pill-total {
+  background: #fff4d6;
+  color: var(--color-warning);
+}
+
+/* ---------- Bets / history ---------- */
 
 .bet-list,
 .history-list {
@@ -377,7 +381,7 @@ h3 {
 
 .bet-card,
 .history-item {
-  padding: var(--space-4);
+  padding: var(--space-3);
   display: grid;
   gap: var(--space-3);
 }
@@ -386,7 +390,7 @@ h3 {
   display: flex;
   justify-content: space-between;
   gap: var(--space-3);
-  align-items: start;
+  align-items: flex-start;
 }
 
 .bet-meta {
@@ -407,17 +411,45 @@ h3 {
   font-size: var(--text-sm);
 }
 
-/* Empty state */
+/* ---------- Bonus panels ---------- */
+
+.bonus-list,
+.bonus-earned-list {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.bonus-card,
+.earned-card {
+  padding: var(--space-3);
+}
+
+.bonus-head,
+.earned-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.bonus-points {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-gold);
+}
+
+/* ---------- Empty state ---------- */
 
 .empty {
   color: var(--color-text-muted);
   padding: var(--space-6);
   text-align: center;
-  border: 1px dashed color-mix(in oklab, var(--color-text) 18%, transparent);
-  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-border);
+  border-radius: 16px;
 }
 
-/* Small actions row (Random / Start / Clear) */
+/* ---------- Small actions row ---------- */
 
 .small-actions {
   display: flex;
@@ -425,7 +457,6 @@ h3 {
   flex-wrap: wrap;
   align-items: center;
   margin-top: var(--space-3);
-  margin-bottom: var(--space-3);
 }
 
 .small-actions .btn {
@@ -433,20 +464,18 @@ h3 {
   padding: 0.6rem 0.9rem;
 }
 
-/* Only shrink buttons inside Hunny Pot + similar rows */
+/* Smaller buttons in Hunny Pot row */
 .small-actions-hunny .btn {
   min-height: 32px;
   padding: 0.3rem 0.7rem;
   font-size: var(--text-xs);
-  margin-top: var(--space-2);
-  margin-bottom: var(--space-2);
 }
 
-/* Totals / metrics */
+/* ---------- Totals / metrics ---------- */
 
 .totals {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-3);
 }
 
@@ -454,7 +483,7 @@ h3 {
   padding: var(--space-3);
   background: var(--color-surface-offset);
   border-radius: var(--radius-md);
-  min-width: 140px;
+  min-width: 0;
 }
 
 .metric-value {
@@ -464,7 +493,7 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
-/* Misc */
+/* Misc text */
 
 .footer-note {
   margin-top: var(--space-4);
@@ -481,43 +510,35 @@ h3 {
   white-space: nowrap;
 }
 
-.pot-pill {
-  --background: color-mix(in oklab, var(--color-gold) 24%, var(--color-surface));
-  color: var(--color-warning);
-  --margin-left: 0.5rem;
-  font-size: var(--text-md);
+.reveal-section-title {
   font-weight: 700;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
-.pot-pill-total {
-  --background: color-mix(in oklab, var(--color-gold) 24%, var(--color-surface));
-  --color: var(--color-warning);
-  --margin-left: 0.5rem;
-  font-size: var(--text-md);
-  font-weight: 700;
-}
-
-/* Modal */
+/* ---------- Modal ---------- */
 
 .modal-backdrop {
-   position: fixed;
+  position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  display: flex;
+  background: rgba(0, 0, 0, 0.45);
+  display: none;
   align-items: center;
   justify-content: center;
+  padding: var(--space-4);
   z-index: 1000;
 }
 
 .modal {
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
+  background: #ffffff;
+  border-radius: 18px;
   padding: var(--space-4);
   box-shadow: var(--shadow-md);
-  max-width: 400px;
-  width: calc(100vw - 2rem);
+  max-width: 420px;
+  width: min(100%, 420px);
   display: grid;
   gap: var(--space-3);
+  border: 1px solid var(--color-border);
 }
 
 .modal-title {
@@ -525,50 +546,21 @@ h3 {
   font-size: var(--text-lg);
 }
 
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
-}
+/* ---------- Responsive ---------- */
 
-.starterHint {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0.6rem 1rem;
-  color: var(--color-warning);
-  border-radius: var(--radius-full);
-  background: color-mix(in oklab, var(--color-gold) 24%, var(--color-surface));
-  font-size: var(--text-sm);
-  font-weight: 700;
-  margin: 15px;
-}
-
-.starterHint:empty {
-  display: none;
-}
-
-.reveal-section-title {
-  font-weight: 700;
-  margin-top: 0.5rem;
-  margin-bottom: 0.25rem;
-}
-
-/* Responsive tweaks */
-
-/* Tablet and down */
 @media (max-width: 900px) {
   .layout,
   .grid-2,
   .player-bet-row,
-  .player-chip {
+  .player-chip,
+  .totals {
     grid-template-columns: 1fr;
   }
 
   .topbar,
   .bet-head {
-    align-items: flex-start;
     flex-direction: column;
+    align-items: flex-start;
   }
 
   .small-actions {
@@ -585,7 +577,6 @@ h3 {
   }
 }
 
-/* Phone-focused tweaks */
 @media (max-width: 600px) {
   .app {
     padding: var(--space-2);
@@ -630,26 +621,11 @@ h3 {
     padding: var(--space-3);
   }
 
-  .bet-head {
-    gap: var(--space-2);
-  }
-
-  .bet-meta {
-    gap: 0.3rem;
-  }
-
   .metric {
-    min-width: 0;
     width: 100%;
   }
 
   .score-points {
-    font-size: 1.35rem;
-  }
-  
-
-  .pill,
-  .starterHint {
-    margin: 8px;
+    font-size: 1.45rem;
   }
 }
