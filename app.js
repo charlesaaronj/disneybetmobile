@@ -1,9 +1,36 @@
-// === Minimal Disney Line Guess logic with stable Hunny Pot ===
+// === Who Said Diz with bonus panel ===
+
 // ---------- State ----------
 const state = {
   players: [],
   bets: [],
-  pot: 0
+  pot: 0,
+
+  // Built‑in bonus rules (manual award via buttons)
+  bonuses: [
+    {
+      id: 'noGuessAuthor',
+      name: 'No one guessed the author',
+      points: 1,
+      active: true,
+      description: 'If nobody guesses correctly, the real author gets +1 point.'
+    },
+    {
+      id: 'streak3',
+      name: '3 wins in a row',
+      points: 1,
+      active: true,
+      description: 'Award when a player has won 3 resolved rounds in a row.'
+    },
+    {
+      id: 'multiLand',
+      name: 'Multiple wins in a single land',
+      points: 1,
+      active: true,
+      description: 'Award when a player has multiple wins in the same land.'
+    }
+  ],
+  awardedBonuses: []
 };
 
 const STORAGE_KEY = 'disney-line-bet-v1';
@@ -48,7 +75,11 @@ const els = {
   clearHunnyBackdrop: document.getElementById('clearHunnyModalBackdrop'),
   clearHunnyMessage: document.getElementById('clearHunnyModalMessage'),
   clearHunnyCancel: document.getElementById('clearHunnyModalCancel'),
-  clearHunnyConfirm: document.getElementById('clearHunnyModalConfirm')
+  clearHunnyConfirm: document.getElementById('clearHunnyModalConfirm'),
+
+  // Bonus-related panels
+  qualifiedBonusPanel: document.getElementById('qualifiedBonusPanel'),
+  bonusLibrary: document.getElementById('bonusLibrary')
 };
 
 // ---------- Small helpers ----------
@@ -87,7 +118,9 @@ function alertLike(message) {
 }
 
 function saveState() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {}
 }
 function loadState() {
   try {
@@ -98,12 +131,18 @@ function loadState() {
     state.players = parsed.players;
     state.bets = parsed.bets;
     state.pot = Number(parsed.pot) || 0;
+    state.bonuses = parsed.bonuses || state.bonuses || [];
+    state.awardedBonuses = parsed.awardedBonuses || [];
   } catch {}
 }
 
 function getAvailablePoints(playerId) {
   const p = state.players.find(x => x.id === playerId);
   return p ? clampScore(p.currentPoints) : 0;
+}
+function getPlayerName(id) {
+  const p = state.players.find(x => x.id === id);
+  return p ? p.name : 'Unknown';
 }
 
 // ---------- Players ----------
@@ -176,7 +215,6 @@ function giveFromPot(playerId) {
 }
 
 function addToPot() {
-  const current = state.pot;
   els.addHunnyInput.value = '5';
   els.addHunnyInput.min = '1';
 
@@ -281,7 +319,9 @@ function createBet() {
     chosenAnswerId: null,
     correctAuthorId: null,
     correctAuthors: [],
-    guesses: []
+    guesses: [],
+    roundWinners: [],
+    bonusAwards: []
   };
 
   state.bets.unshift(bet);
@@ -319,26 +359,26 @@ function nextAnswerPrompt() {
 
   const players = state.players;
   if (currentAnswerIndex >= players.length) {
-  bet.status = 'guessing';
+    bet.status = 'guessing';
 
-  if (!bet.chosenAnswerId && bet.answers.length) {
-    const idx = Math.floor(Math.random() * bet.answers.length);
-    const chosen = bet.answers[idx];
-    bet.chosenAnswerId = chosen.id;
+    if (!bet.chosenAnswerId && bet.answers.length) {
+      const idx = Math.floor(Math.random() * bet.answers.length);
+      const chosen = bet.answers[idx];
+      bet.chosenAnswerId = chosen.id;
 
-    const sameTextAuthors = bet.answers
-      .filter(a => a.text === chosen.text)
-      .map(a => a.playerId);
+      const sameTextAuthors = bet.answers
+        .filter(a => a.text === chosen.text)
+        .map(a => a.playerId);
 
-    bet.correctAuthors = sameTextAuthors;
-    bet.correctAuthorId = sameTextAuthors[0] || null;
+      bet.correctAuthors = sameTextAuthors;
+      bet.correctAuthorId = sameTextAuthors[0] || null;
+    }
+
+    saveState();
+    hideAnswerModal();
+    render();
+    return;
   }
-
-  saveState();
-  hideAnswerModal();
-  render();
-  return;
-}
 
   const player = players[currentAnswerIndex];
   const metaParts = [];
@@ -497,6 +537,40 @@ function buildGuessesForBet(bet) {
   return guesses;
 }
 
+// ---------- Bonus helpers ----------
+function getResolvedWinsForPlayer(playerId) {
+  return state.bets
+    .filter(b => b.status === 'resolved' && (b.roundWinners || []).includes(playerId))
+    .sort((a, b) => new Date(a.resolvedAt) - new Date(b.resolvedAt));
+}
+
+function awardBonus(bonusId, playerId) {
+  const bonus = state.bonuses.find(b => b.id === bonusId);
+  const player = state.players.find(p => p.id === playerId);
+  if (!bonus || !player) return;
+
+  player.currentPoints = clampScore(player.currentPoints + bonus.points);
+
+  const latest = state.bets.find(b => b.status === 'resolved');
+  const record = {
+    id: uid(),
+    bonusId: bonus.id,
+    bonusName: bonus.name,
+    points: bonus.points,
+    playerId: player.id,
+    playerName: player.name,
+    roundId: latest?.id || null,
+    reason: bonus.name
+  };
+
+  state.awardedBonuses.unshift(record);
+  saveState();
+  render();
+  alertLike(`+${bonus.points} to ${player.name} for "${bonus.name}".`);
+}
+
+window.awardBonus = awardBonus;
+
 // ---------- Resolve one round ----------
 function resolveGuessingBet(betId) {
   const bet = state.bets.find(b => b.id === betId);
@@ -546,6 +620,8 @@ function resolveGuessingBet(betId) {
 
   bet.status = 'resolved';
   bet.resolvedAt = new Date().toLocaleString();
+  bet.roundWinners = winners.map(w => w.playerId);
+
   saveState();
   render();
 
@@ -771,6 +847,16 @@ function renderHistory() {
             <strong>Winners:</strong>
             ${winners.length ? escapeHtml(winners.join(', ')) : 'No winners'}
           </div>
+
+          <div class="small-actions" style="margin-top:0.5rem;">
+            <button
+              class="btn btn-secondary"
+              type="button"
+              onclick="reuseQuestion('${bet.id}')"
+            >
+              Reuse this question
+            </button>
+          </div>
         </article>
       `;
     })
@@ -825,6 +911,83 @@ function renderSelectedAnswerPanel() {
   `;
 }
 
+// Bonus recap
+function renderQualifiedBonuses() {
+  if (!els.qualifiedBonusPanel) return;
+
+  if (!state.awardedBonuses.length) {
+    els.qualifiedBonusPanel.innerHTML =
+      '<div class="empty">No bonuses awarded yet.</div>';
+    return;
+  }
+
+  els.qualifiedBonusPanel.innerHTML = state.awardedBonuses
+    .slice(0, 6)
+    .map(award => `
+      <div class="earned-card">
+        <div class="earned-head">
+          <div>
+            <strong>${escapeHtml(award.playerName)}</strong>
+            <div class="hint">${escapeHtml(award.reason)}</div>
+          </div>
+          <div class="bonus-points">+${award.points}</div>
+        </div>
+      </div>
+    `)
+    .join('');
+}
+
+// Bonus library
+function renderBonusLibrary() {
+  if (!els.bonusLibrary) return;
+  if (!state.bonuses || !state.bonuses.length) {
+    els.bonusLibrary.innerHTML =
+      '<div class="empty">No bonus rules defined.</div>';
+    return;
+  }
+
+  const latest = state.bets.find(b => b.status === 'resolved');
+  const latestLand = latest?.land || '';
+
+  els.bonusLibrary.innerHTML = state.bonuses.map(bonus => {
+    let qualificationHint = '';
+
+    if (bonus.id === 'noGuessAuthor') {
+      qualificationHint = 'Use after a round where nobody guessed correctly.';
+    } else if (bonus.id === 'streak3') {
+      qualificationHint = 'Use for a player with 3 wins in a row.';
+    } else if (bonus.id === 'multiLand') {
+      qualificationHint = latestLand
+        ? `Use for a player with multiple wins in ${latestLand}.`
+        : 'Use for a player with multiple wins in the same land.';
+    }
+
+    return `
+      <div class="bonus-card">
+        <div class="bonus-head">
+          <div>
+            <h3>${escapeHtml(bonus.name)}</h3>
+            <div class="hint">${escapeHtml(bonus.description || '')}</div>
+            <div class="hint">${escapeHtml(qualificationHint)}</div>
+          </div>
+          <div class="bonus-points">+${bonus.points}</div>
+        </div>
+        <div class="small-actions">
+          ${state.players.map(p => `
+            <button
+              class="btn btn-secondary"
+              type="button"
+              onclick="awardBonus('${bonus.id}','${p.id}')"
+            >
+              Give to ${escapeHtml(p.name)}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
 function render() {
   renderPlayers();
   renderScoreboard();
@@ -833,6 +996,46 @@ function render() {
   renderOpenMetrics();
   renderOpenBets();
   renderHistory();
+  renderQualifiedBonuses();
+  renderBonusLibrary();
+}
+
+// ---------- Reuse question ----------
+function reuseQuestion(betId) {
+  const bet = state.bets.find(b => b.id === betId);
+  if (!bet) return;
+
+  els.attractionName.value = bet.attraction || '';
+  els.landName.value = bet.land || '';
+  els.betDescription.value = bet.description || '';
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+window.reuseQuestion = reuseQuestion;
+
+// ---------- Attraction / land prefill ----------
+function setupAttractionSuggestions() {
+  if (!window.PARKS) return;
+  const { attractions } = window.PARKS;
+
+  els.attractionName.addEventListener('blur', () => {
+    const name = els.attractionName.value.trim().toLowerCase();
+    if (!name) return;
+    const match = attractions.find(a => a.name.toLowerCase() === name);
+    if (match && !els.landName.value.trim()) {
+      els.landName.value = match.land;
+    }
+  });
+
+  els.landName.addEventListener('blur', () => {
+    if (els.landName.value.trim()) return;
+    const name = els.attractionName.value.trim().toLowerCase();
+    if (!name) return;
+    const match = attractions.find(a => a.name.toLowerCase() === name);
+    if (match) {
+      els.landName.value = match.land;
+    }
+  });
 }
 
 // ---------- Events ----------
@@ -859,6 +1062,7 @@ window.addEventListener('load', () => {
   els.playerName.focus();
   loadState();
   render();
+  setupAttractionSuggestions();
 });
 
 document.getElementById('createBetBtn').addEventListener('click', createBet);
@@ -896,6 +1100,7 @@ document.getElementById('clearAllBtn').addEventListener('click', () => {
   state.players = [];
   state.bets = [];
   state.pot = 0;
+  state.awardedBonuses = [];
   saveState();
   render();
 });
