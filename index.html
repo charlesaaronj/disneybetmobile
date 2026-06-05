@@ -66,36 +66,43 @@
 
       <section class="stack">
         <article class="panel">
-          <h2>Pick a question</h2>
-          <div class="grid-2">
-            <div class="field">
-              <label for="attractionName">Attraction</label>
-              <input id="attractionName" type="text" placeholder="e.g., Space Mountain" />
-            </div>
-            <div class="field">
-              <label for="landName">Land / Area</label>
-              <input id="landName" type="text" placeholder="e.g., Tomorrowland" />
-            </div>
-          </div>
-          <div class="field">
-            <label for="betDescription">Question about this ride</label>
-            <textarea id="betDescription" placeholder="Type your own question. All three fields are required."></textarea>
-          </div>
-          <div class="small-actions">
-            <button class="btn btn-secondary" type="button" id="randomBetBtn">Generate question</button>
-            <button class="btn btn-primary" type="button" id="createBetBtn">Enter Answers</button>
-            <button class="btn btn-secondary" type="button" id="clearBetFormBtn">Clear</button>
-          </div>
-          
-          <div id="betPlayers" class="players"></div>
-          <div class="small-actions">
-            <button class="btn btn-primary" type="button" id="lockGuessesBtn">Lock Wagers</button>
-          </div>
-        </article>
+  <h2>Pick a question</h2>
+  <div class="grid-2">
+    <div class="field">
+      <label for="attractionName">Attraction</label>
+      <input id="attractionName" type="text" placeholder="e.g., Space Mountain" />
+    </div>
+    <div class="field">
+      <label for="landName">Land / Area</label>
+      <input id="landName" type="text" placeholder="e.g., Tomorrowland" />
+    </div>
+  </div>
+  <div class="field">
+    <label for="betDescription">Question about this ride</label>
+    <textarea id="betDescription" placeholder="Type your own question. All three fields are required."></textarea>
+  </div>
+  <div class="small-actions">
+    <button class="btn btn-secondary" type="button" id="randomBetBtn">Generate question</button>
+    <button class="btn btn-primary" type="button" id="createBetBtn">Enter Answers</button>
+    <button class="btn btn-secondary" type="button" id="clearBetFormBtn">Clear</button>
+  </div>
+</article>
 
-        <article class="panel">
+<article class="panel">
   <h2>Selected answer</h2>
-  <div id="selectedAnswerPanel" class="stack"></div>
+  <div id="selectedAnswerPanel" class="stack">
+    <div class="empty">The selected answer and question will appear here once a round reaches guessing.</div>
+  </div>
+</article>
+
+<article class="panel">
+  <h2>Wagers</h2>
+  <div id="betPlayers" class="players">
+    <div class="empty">Wager choices will appear here once a round reaches guessing.</div>
+  </div>
+  <div class="small-actions">
+    <button class="btn btn-primary" type="button" id="lockGuessesBtn">Lock Wagers</button>
+  </div>
 </article>
 
         <article class="panel">
