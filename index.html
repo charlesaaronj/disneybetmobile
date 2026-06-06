@@ -176,6 +176,30 @@
       </div>
     </div>
   </div>
+ <!-- Give points modal -->
+  <div id="giveHunnyModalBackdrop" class="modal-backdrop" style="display:none;">
+  <div class="modal-card">
+    <h3>Give from Hunny Pot</h3>
+    <p id="giveHunnyModalMessage" class="hint">
+      <!-- JS will fill this with "How many points do you want to give to X..." -->
+    </p>
+    <div class="field">
+      <label for="giveHunnyModalInput">Points to give</label>
+      <input
+        id="giveHunnyModalInput"
+        type="number"
+        min="1"
+        step="1"
+        inputmode="numeric"
+        pattern="[0-9]*"
+      />
+    </div>
+    <div class="small-actions">
+      <button class="btn btn-secondary" type="button" id="giveHunnyModalCancel">Cancel</button>
+      <button class="btn btn-primary" type="button" id="giveHunnyModalConfirm">Give points</button>
+    </div>
+  </div>
+</div>
 
   <!-- Add points modal -->
   <div id="addHunnyModalBackdrop" class="modal-backdrop" style="display:none;">
