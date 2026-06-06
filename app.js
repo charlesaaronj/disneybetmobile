@@ -1101,8 +1101,6 @@ function renderBonusLibrary() {
           </div>
           <div class="bonus-points">+${bonus.points}</div>
         </div>
-          `).join('')}
-        </div>
       </div>
     `;
   }).join('');
