@@ -571,6 +571,79 @@ function awardBonus(bonusId, playerId) {
 
 window.awardBonus = awardBonus;
 
+function computeBonusPointsForRound(betId) {
+  const bet = state.bets.find(b => b.id === betId);
+  if (!bet || bet.status !== 'resolved') return [];
+
+  const correctAuthors = (bet.correctAuthors && bet.correctAuthors.length
+    ? bet.correctAuthors
+    : (bet.correctAuthorId ? [bet.correctAuthorId] : [])) || [];
+
+  const guesses = bet.guesses || [];
+
+  const bonuses = [];
+
+  // 1) Hidden author bonus: chosen author and nobody guessed them
+  if (correctAuthors.length) {
+    const guessedIds = new Set(guesses.map(g => g.guessedAuthorId).filter(Boolean));
+    correctAuthors.forEach(authorId => {
+      if (!guessedIds.has(authorId)) {
+        bonuses.push({ playerId: authorId, amount: 1, reason: 'Hidden author (no one guessed them)' });
+      }
+    });
+  }
+
+  // 2) Three-in-a-row streak bonus
+  // Look at last 3 resolved rounds in time order
+  const resolved = state.bets
+    .filter(b => b.status === 'resolved')
+    .sort((a, b2) => new Date(a.resolvedAt || a.createdAt) - new Date(b2.resolvedAt || b2.createdAt));
+
+  const idx = resolved.findIndex(b => b.id === betId);
+  if (idx >= 2) {
+    const lastThree = resolved.slice(idx - 2, idx + 1);
+    // For each player, check if they were correct in all three
+    const playerIds = state.players.map(p => p.id);
+    playerIds.forEach(pid => {
+      const allThreeCorrect = lastThree.every(round => {
+        const rCorrect = (round.correctAuthors && round.correctAuthors.length
+          ? round.correctAuthors
+          : (round.correctAuthorId ? [round.correctAuthorId] : [])) || [];
+        return (round.guesses || []).some(g => g.playerId === pid && rCorrect.includes(g.guessedAuthorId));
+      });
+      if (allThreeCorrect) {
+        bonuses.push({ playerId: pid, amount: 3, reason: 'Three wins in a row' });
+      }
+    });
+  }
+
+  // 3) Land streak bonus: more than two wins in the same land
+  if (bet.land) {
+    const land = bet.land;
+    const resolvedInLand = state.bets.filter(b => b.status === 'resolved' && b.land === land);
+    const playerIds = state.players.map(p => p.id);
+
+    playerIds.forEach(pid => {
+      // Count wins for this player in this land
+      let winsInLand = 0;
+      resolvedInLand.forEach(round => {
+        const rCorrect = (round.correctAuthors && round.correctAuthors.length
+          ? round.correctAuthors
+          : (round.correctAuthorId ? [round.correctAuthorId] : [])) || [];
+        const guessedCorrect = (round.guesses || []).some(
+          g => g.playerId === pid && rCorrect.includes(g.guessedAuthorId)
+        );
+        if (guessedCorrect) winsInLand += 1;
+      });
+      if (winsInLand > 2) {
+        bonuses.push({ playerId: pid, amount: 2, reason: `Multiple wins in ${land}` });
+      }
+    });
+  }
+
+  return bonuses;
+}
+
 // ---------- Resolve one round ----------
 function resolveGuessingBet(betId) {
   const bet = state.bets.find(b => b.id === betId);
@@ -600,12 +673,14 @@ function resolveGuessingBet(betId) {
 
   const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
 
+  // 1) subtract all wagers
   wagers.forEach(w => {
     const player = playerMap[w.playerId];
     if (!player || w.wager <= 0) return;
     player.currentPoints = clampScore(player.currentPoints - w.wager);
   });
 
+  // 2) either pay winners or send pot to Hunny Pot
   const totalWinnerWager = winners.reduce((s, w) => s + w.wager, 0);
   if (anyCorrect && potThisRound > 0 && totalWinnerWager > 0) {
     winners.forEach(w => {
@@ -618,9 +693,35 @@ function resolveGuessingBet(betId) {
     state.pot += potThisRound;
   }
 
+  // Mark round winners for history
   bet.status = 'resolved';
   bet.resolvedAt = new Date().toLocaleString();
   bet.roundWinners = winners.map(w => w.playerId);
+
+  // ---------- AUTOMATIC BONUS POINTS ----------
+  // Compute per-round bonuses:
+  // - +3 for three wins in a row
+  // - +2 for >2 wins in the same land
+  // - +1 for chosen author when nobody guesses them
+  const roundBonuses = computeBonusPointsForRound(betId);
+
+  if (roundBonuses.length) {
+    roundBonuses.forEach(bonus => {
+      const player = playerMap[bonus.playerId];
+      if (!player) return;
+      player.currentPoints = clampScore(player.currentPoints + bonus.amount);
+    });
+
+    // Also store a simple text summary on the bet so we can show it later if needed
+    bet.bonusAwards = roundBonuses.map(b => ({
+      playerId: b.playerId,
+      amount: b.amount,
+      reason: b.reason
+    }));
+  } else {
+    bet.bonusAwards = [];
+  }
+  // ---------- END AUTOMATIC BONUS POINTS ----------
 
   saveState();
   render();
