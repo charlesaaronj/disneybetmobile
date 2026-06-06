@@ -706,21 +706,37 @@ function resolveGuessingBet(betId) {
   const roundBonuses = computeBonusPointsForRound(betId);
 
   if (roundBonuses.length) {
-    roundBonuses.forEach(bonus => {
-      const player = playerMap[bonus.playerId];
-      if (!player) return;
-      player.currentPoints = clampScore(player.currentPoints + bonus.amount);
-    });
+  roundBonuses.forEach(bonus => {
+    const player = playerMap[bonus.playerId];
+    if (!player) return;
+    player.currentPoints = clampScore(player.currentPoints + bonus.amount);
+  });
 
-    // Also store a simple text summary on the bet so we can show it later if needed
-    bet.bonusAwards = roundBonuses.map(b => ({
+  const records = roundBonuses.map(b => {
+    const p = state.players.find(pl => pl.id === b.playerId);
+    return {
+      id: uid(),
+      bonusId: 'auto',
+      bonusName: 'Automatic bonus',
+      points: b.amount,
       playerId: b.playerId,
-      amount: b.amount,
+      playerName: p ? p.name : 'Unknown',
+      roundId: bet.id,
       reason: b.reason
-    }));
-  } else {
-    bet.bonusAwards = [];
-  }
+    };
+  });
+
+  bet.bonusAwards = roundBonuses.map(b => ({
+    playerId: b.playerId,
+    amount: b.amount,
+    reason: b.reason
+  }));
+
+  // Add automatic bonuses into the shared history list
+  state.awardedBonuses.unshift(...records);
+} else {
+  bet.bonusAwards = [];
+}
   // ---------- END AUTOMATIC BONUS POINTS ----------
 
   saveState();
