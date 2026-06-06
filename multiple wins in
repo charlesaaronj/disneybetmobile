@@ -635,7 +635,7 @@ function computeBonusPointsForRound(betId) {
         );
         if (guessedCorrect) winsInLand += 1;
       });
-      if (winsInLand > 2) {
+      if (winsInLand >= 2) {
         bonuses.push({ playerId: pid, amount: 2, reason: `Multiple wins in ${land}` });
       }
     });
