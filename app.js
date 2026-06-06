@@ -1,4 +1,4 @@
-// === Who Said Diz with bonus panel ===
+// === Who Said Diz with bonus panel  ===
 
 // ---------- State ----------
 const state = {
