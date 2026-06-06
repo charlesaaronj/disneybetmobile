@@ -1,4 +1,8 @@
 window.DISNEY_LINE_QUESTIONS = [
+  "What is your favorite piece of trivia about this attraction?",
+  "How does this compare to the last attraction you rode?",
+  "How would Universal do this attraction?",
+  "How would Six Flags do this sttraction?",
   "Which character should not be here at all?",
   "Which character deserves way more time?",
   "Which character would you spin off into their own ride?",
