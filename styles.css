@@ -469,6 +469,7 @@ h3 {
   min-height: 32px;
   padding: 0.3rem 0.7rem;
   font-size: var(--text-xs);
+  margin-top: 10px;
 }
 
 /* ---------- Totals / metrics ---------- */
