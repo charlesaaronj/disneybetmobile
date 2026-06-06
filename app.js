@@ -1040,6 +1040,74 @@ function renderSelectedAnswerPanel() {
   `;
 }
 
+function getUsedSpecificQuestionsForAttraction(attractionName) {
+  const parks = window.PARKS;
+  if (!parks || !Array.isArray(parks.attractions)) return new Set();
+
+  const attraction = parks.attractions.find(
+    a => a.name.toLowerCase() === attractionName.toLowerCase()
+  );
+  if (!attraction || !Array.isArray(attraction.questions)) return new Set();
+
+  const specificQuestions = new Set(attraction.questions);
+  const used = new Set();
+
+  state.bets
+    .filter(b => b.status === 'resolved' && b.attraction)
+    .forEach(bet => {
+      if (
+        bet.attraction &&
+        bet.attraction.toLowerCase() === attractionName.toLowerCase() &&
+        specificQuestions.has(bet.description)
+      ) {
+        used.add(bet.description);
+      }
+    });
+
+  return used;
+}
+
+function getRandomQuestionForAttractionWithFallback() {
+  const attractionName = els.attractionName.value.trim();
+
+  // If no attraction selected, just use the global pool
+  if (!attractionName) {
+    const pool = window.DISNEY_LINE_QUESTIONS || [];
+    if (!pool.length) return '';
+    const idx = Math.floor(Math.random() * pool.length);
+    return pool[idx];
+  }
+
+  const parks = window.PARKS;
+  const attractions = parks && Array.isArray(parks.attractions)
+    ? parks.attractions
+    : [];
+
+  const attraction = attractions.find(
+    a => a.name.toLowerCase() === attractionName.toLowerCase()
+  );
+
+  const specific = attraction && Array.isArray(attraction.questions)
+    ? attraction.questions
+    : [];
+
+  const usedSpecific = getUsedSpecificQuestionsForAttraction(attractionName);
+  const unusedSpecific = specific.filter(q => !usedSpecific.has(q));
+
+  // 1) Prefer unused attraction-specific questions
+  if (unusedSpecific.length > 0) {
+    const idx = Math.floor(Math.random() * unusedSpecific.length);
+    return unusedSpecific[idx];
+  }
+
+  // 2) Fall back to your global list
+  const globalPool = window.DISNEY_LINE_QUESTIONS || [];
+  if (!globalPool.length) return '';
+
+  const idx = Math.floor(Math.random() * globalPool.length);
+  return globalPool[idx];
+}
+
 // Bonus recap
 function renderQualifiedBonuses() {
   if (!els.qualifiedBonusPanel) return;
@@ -1204,10 +1272,12 @@ window.addEventListener('load', () => {
 document.getElementById('createBetBtn').addEventListener('click', createBet);
 
 document.getElementById('randomBetBtn').addEventListener('click', () => {
-  const ideas = window.DISNEY_LINE_QUESTIONS || [];
-  if (!ideas.length) return;
-  const idx = Math.floor(Math.random() * ideas.length);
-  els.betDescription.value = ideas[idx];
+  const q = getRandomQuestionForAttractionWithFallback();
+  if (!q) {
+    alertLike('No question ideas are available yet.');
+    return;
+  }
+  els.betDescription.value = q;
 });
 
 document.getElementById('clearBetFormBtn').addEventListener('click', () => {
