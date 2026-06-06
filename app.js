@@ -18,14 +18,14 @@ const state = {
     {
       id: 'streak3',
       name: '3 wins in a row',
-      points: 1,
+      points: 3,
       active: true,
       description: 'Award when a player has won 3 resolved rounds in a row.'
     },
     {
       id: 'multiLand',
       name: 'Multiple wins in a single land',
-      points: 1,
+      points: 2,
       active: true,
       description: 'Award when a player has multiple wins in the same land.'
     }
