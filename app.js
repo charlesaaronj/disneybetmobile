@@ -941,38 +941,6 @@ function renderHistory() {
     return;
   }
 
-  const maxHistory = 10; // change this number as you like
-  const recentResolved = resolved.slice(0, maxHistory); // first 10 from your current order[file:518][web:498]
-
-  els.historyList.innerHTML = recentResolved
-    .map(bet => {
-      // existing HTML building code unchanged
-      const correctAuthors = (bet.correctAuthors && bet.correctAuthors.length
-        ? bet.correctAuthors
-        : (bet.correctAuthorId ? [bet.correctAuthorId] : [])) || [];
-
-      const winners = (bet.guesses || [])
-        .filter(g => correctAuthors.includes(g.guessedAuthorId) && g.wager > 0)
-        .map(g => {
-          const player = state.players.find(p => p.id === g.playerId);
-          return player ? `${player.name} (wagered ${g.wager})` : null;
-        })
-        .filter(Boolean);
-
-      const metaParts = [];
-      if (bet.attraction) metaParts.push(escapeHtml(bet.attraction));
-      if (bet.land) metaParts.push(escapeHtml(bet.land));
-      const metaText = metaParts.length ? metaParts.join(' • ') : '';
-
-      return `
-        <article class="history-item">
-          ...
-        </article>
-      `;
-    })
-    .join('');
-}
-
   els.historyList.innerHTML = resolved
     .map(bet => {
       const correctAuthors = (bet.correctAuthors && bet.correctAuthors.length
