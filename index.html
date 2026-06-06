@@ -80,14 +80,25 @@
           <h2>Pick a question</h2>
           <div class="grid-2">
             <div class="field">
-              <label for="attractionName">Attraction</label>
-              <input id="attractionName" type="text" placeholder="e.g., Space Mountain" />
-            </div>
+  <label for="attractionName">Attraction</label>
+  <input
+    id="attractionName"
+    type="text"
+    placeholder="e.g., Space Mountain"
+    list="attractionSuggestions"
+  />
+  <datalist id="attractionSuggestions"></datalist>
+</div>
             <div class="field">
-              <label for="landName">Land / Area</label>
-              <input id="landName" type="text" placeholder="e.g., Tomorrowland" />
-            </div>
-          </div>
+  <label for="landName">Land / Area</label>
+  <input
+    id="landName"
+    type="text"
+    placeholder="e.g., Tomorrowland"
+    list="landSuggestions"
+  />
+  <datalist id="landSuggestions"></datalist>
+</div>
           <div class="field">
             <label for="betDescription">Question about this ride</label>
             <textarea id="betDescription" placeholder="Type your own question. All three fields are required."></textarea>
