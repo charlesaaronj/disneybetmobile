@@ -1101,15 +1101,6 @@ function renderBonusLibrary() {
           </div>
           <div class="bonus-points">+${bonus.points}</div>
         </div>
-        <div class="small-actions">
-          ${state.players.map(p => `
-            <button
-              class="btn btn-secondary"
-              type="button"
-              onclick="awardBonus('${bonus.id}','${p.id}')"
-            >
-              Give to ${escapeHtml(p.name)}
-            </button>
           `).join('')}
         </div>
       </div>
