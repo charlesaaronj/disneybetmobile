@@ -766,6 +766,18 @@ function resolveGuessingBet(betId) {
   );
   parts.push(`<div class="hint" style="margin-top:.75rem;">Hunny Pot is now ${state.pot} points.</div>`);
 
+  // Show automatic bonuses in the modal
+if (roundBonuses && roundBonuses.length) {
+  const bonusLines = roundBonuses
+    .map(b => {
+      const p = state.players.find(pl => pl.id === b.playerId);
+      return p ? `${p.name}: +${b.amount} (${b.reason})` : null;
+    })
+    .filter(Boolean);
+
+  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Bonus points this round</div>`);
+  parts.push(`<div>${bonusLines.map(escapeHtml).join('<br>')}</div>`);
+}
   els.revealTitle.textContent = 'Round result';
   els.revealSub.textContent = 'Here is who said the answer and how the points changed.';
   els.revealBody.innerHTML = parts.join('');
