@@ -1136,16 +1136,34 @@ function setupAttractionSuggestions() {
   if (!window.PARKS) return;
   const { attractions } = window.PARKS;
 
-  els.attractionName.addEventListener('blur', () => {
+  // 1) Attraction datalist
+  const dlAttractions = document.getElementById('attractionSuggestions');
+  if (dlAttractions) {
+    dlAttractions.innerHTML = attractions
+      .map(a => `<option value="${escapeHtml(a.name)}"></option>`)
+      .join('');
+  }
+
+  // 2) Land datalist (unique land names)
+  const dlLands = document.getElementById('landSuggestions');
+  if (dlLands) {
+    const lands = Array.from(new Set(attractions.map(a => a.land))).sort();
+    dlLands.innerHTML = lands
+      .map(land => `<option value="${escapeHtml(land)}"></option>`)
+      .join('');
+  }
+
+  // 3) When attraction changes, auto-fill land
+  els.attractionName.addEventListener('input', () => {
     const name = els.attractionName.value.trim().toLowerCase();
     if (!name) return;
     const match = attractions.find(a => a.name.toLowerCase() === name);
-    if (match && !els.landName.value.trim()) {
+    if (match) {
       els.landName.value = match.land;
     }
   });
 
-  els.landName.addEventListener('blur', () => {
+  els.attractionName.addEventListener('blur', () => {
     if (els.landName.value.trim()) return;
     const name = els.attractionName.value.trim().toLowerCase();
     if (!name) return;
