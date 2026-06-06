@@ -35,7 +35,7 @@ window.DISNEY_LINE_QUESTIONS = [
 "Which effect you wish they would improve?",
 "Which effect you wish they would remove?",
 "Which broken effect or scene do you wish they would fix?",
-"What hidden mickeys are your favorite on this attraction?
+"What hidden mickeys are your favorite on this attraction?",
 "Which describe this attraction's smell in three works or less?",
 "What is the coolest setpiece?",
 "What is the least cool setpience?".
