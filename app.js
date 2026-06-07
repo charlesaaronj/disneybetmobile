@@ -767,6 +767,14 @@ function resolveGuessingBet(betId) {
       `<div class="hint">Attraction: ${escapeHtml(bet.attraction || 'Unknown')} ${bet.land ? '(' + escapeHtml(bet.land) + ')' : ''}</div>`
     );
   }
+
+  // New: attraction fact
+const fact = getFactForBet(bet);
+if (fact) {
+  parts.push(
+    `<div class="hint" style="margin-top:.5rem;"><strong>Fun fact:</strong> ${escapeHtml(fact)}</div>`
+  );
+}
   parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Winners</div>`);
   if (anyCorrect && winnerLines.length) {
     parts.push(`<div>${winnerLines.map(escapeHtml).join('<br>')}</div>`);
@@ -1080,6 +1088,22 @@ function getRandomQuestionForAttractionWithFallback() {
     const idx = Math.floor(Math.random() * pool.length);
     return pool[idx];
   }
+
+  function getFactForBet(bet) {
+  if (!bet || !bet.attraction) return '';
+
+  const parks = window.PARKS;
+  const attractions = parks && Array.isArray(parks.attractions)
+    ? parks.attractions
+    : [];
+
+  const attraction = attractions.find(
+    a => a.name.toLowerCase() === bet.attraction.toLowerCase()
+  );
+
+  if (!attraction || !attraction.fact) return '';
+  return attraction.fact;
+}
 
   const parks = window.PARKS;
   const attractions = parks && Array.isArray(parks.attractions)
