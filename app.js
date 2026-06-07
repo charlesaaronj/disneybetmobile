@@ -1387,3 +1387,9 @@ document.getElementById('clearAllBtn').addEventListener('click', () => {
   saveState();
   render();
 });
+
+if (els.answerCancelBtn) {
+  els.answerCancelBtn.addEventListener('click', () => {
+    hideAnswerModal();
+  });
+}
