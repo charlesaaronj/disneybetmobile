@@ -122,6 +122,16 @@ function alertLike(message) {
   setTimeout(() => toast.remove(), 2000);
 }
 
+// Fisher–Yates shuffle
+function shuffle(array) {
+  const arr = array.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -326,7 +336,10 @@ function createBet() {
     correctAuthors: [],
     guesses: [],
     roundWinners: [],
-    bonusAwards: []
+    bonusAwards: [],
+    // New per-round random orders
+    answerOrder: shuffle(state.players.map(p => p.id)),
+    wagerOrder: []
   };
 
   state.bets.unshift(bet);
@@ -354,6 +367,10 @@ function startAnswerPhase(betId) {
   if (!bet) return;
   bet.answers = [];
   bet.status = 'answering';
+  // Ensure answerOrder exists (for older saved state)
+  if (!Array.isArray(bet.answerOrder) || !bet.answerOrder.length) {
+    bet.answerOrder = shuffle(state.players.map(p => p.id));
+  }
   saveState();
   nextAnswerPrompt();
 }
@@ -362,8 +379,11 @@ function nextAnswerPrompt() {
   const bet = state.bets.find(b => b.id === currentAnswerBetId);
   if (!bet) return;
 
-  const players = state.players;
-  if (currentAnswerIndex >= players.length) {
+  const order = Array.isArray(bet.answerOrder) && bet.answerOrder.length
+    ? bet.answerOrder
+    : state.players.map(p => p.id);
+
+  if (currentAnswerIndex >= order.length) {
     bet.status = 'guessing';
 
     if (!bet.chosenAnswerId && bet.answers.length) {
@@ -379,13 +399,22 @@ function nextAnswerPrompt() {
       bet.correctAuthorId = sameTextAuthors[0] || null;
     }
 
+    // When we move to guessing, create a random wager order for this round
+    bet.wagerOrder = shuffle(state.players.map(p => p.id));
     saveState();
     hideAnswerModal();
     render();
     return;
   }
 
-  const player = players[currentAnswerIndex];
+  const playerId = order[currentAnswerIndex];
+  const player = state.players.find(p => p.id === playerId);
+  if (!player) {
+    currentAnswerIndex += 1;
+    nextAnswerPrompt();
+    return;
+  }
+
   const metaParts = [];
   if (bet.attraction) metaParts.push(bet.attraction);
   if (bet.land) metaParts.push(bet.land);
@@ -403,12 +432,22 @@ els.answerSaveBtn.addEventListener('click', () => {
   const bet = state.bets.find(b => b.id === currentAnswerBetId);
   if (!bet) return;
 
-  const players = state.players;
-  const player = players[currentAnswerIndex];
+  const order = Array.isArray(bet.answerOrder) && bet.answerOrder.length
+    ? bet.answerOrder
+    : state.players.map(p => p.id);
+
+  const playerId = order[currentAnswerIndex];
+  const player = state.players.find(p => p.id === playerId);
   const text = els.answerInput.value.trim();
 
   if (!text) {
     alertLike('Type an answer before saving.');
+    return;
+  }
+
+  if (!player) {
+    currentAnswerIndex += 1;
+    nextAnswerPrompt();
     return;
   }
 
@@ -418,7 +457,7 @@ els.answerSaveBtn.addEventListener('click', () => {
   nextAnswerPrompt();
 });
 
-// click outside answer modal closes it (currently disabled)
+// click outside answer modal closes it (disabled)
 /*
 els.answerBackdrop.addEventListener('click', event => {
   if (event.target === els.answerBackdrop) {
@@ -442,9 +481,14 @@ function startGuessPhase(betId) {
       .map(a => a.playerId);
     bet.correctAuthors = sameTextAuthors;
     bet.correctAuthorId = sameTextAuthors[0] || null;
-    saveState();
   }
 
+  // Ensure we have a random wager order for this guessing round
+  if (!Array.isArray(bet.wagerOrder) || !bet.wagerOrder.length) {
+    bet.wagerOrder = shuffle(state.players.map(p => p.id));
+  }
+
+  saveState();
   renderGuessingRound(bet);
 }
 
@@ -459,7 +503,14 @@ function renderBetRows() {
   }
 
   const guessingBet = getCurrentGuessingBet();
-  els.betPlayers.innerHTML = state.players.map(player => {
+  const bet = guessingBet;
+  const order = bet && Array.isArray(bet.wagerOrder) && bet.wagerOrder.length
+    ? bet.wagerOrder
+    : state.players.map(p => p.id);
+
+  els.betPlayers.innerHTML = order.map(playerId => {
+    const player = state.players.find(p => p.id === playerId);
+    if (!player) return '';
     const available = getAvailablePoints(player.id);
     return `
       <div class="player-bet-row" data-bet-player-row data-player-id="${player.id}">
@@ -682,7 +733,6 @@ function resolveGuessingBet(betId) {
     const player = playerMap[w.playerId];
     if (!player || w.wager <= 0) return;
 
-    // If this player is one of the correct authors, skip changes (no loss)
     if (correctAuthors.includes(w.playerId)) {
       return;
     }
@@ -697,7 +747,6 @@ function resolveGuessingBet(betId) {
       const player = playerMap[w.playerId];
       if (!player) return;
 
-      // If this player is one of the correct authors, skip changes (no gain)
       if (correctAuthors.includes(w.playerId)) {
         return;
       }
@@ -709,12 +758,10 @@ function resolveGuessingBet(betId) {
     state.pot += potThisRound;
   }
 
-  // Mark round winners for history
   bet.status = 'resolved';
   bet.resolvedAt = new Date().toLocaleString();
   bet.roundWinners = winners.map(w => w.playerId);
 
-  // ---------- AUTOMATIC BONUS POINTS ----------
   const roundBonuses = computeBonusPointsForRound(betId);
 
   if (roundBonuses.length) {
@@ -748,7 +795,6 @@ function resolveGuessingBet(betId) {
   } else {
     bet.bonusAwards = [];
   }
-  // ---------- END AUTOMATIC BONUS POINTS ----------
 
   saveState();
   render();
@@ -776,7 +822,6 @@ function resolveGuessingBet(betId) {
     );
   }
 
-  // New: attraction fact
   const fact = getFactForBet(bet);
   if (fact) {
     parts.push(
@@ -1106,7 +1151,6 @@ function getFactForBet(bet) {
 function getRandomQuestionForAttractionWithFallback() {
   const attractionName = els.attractionName.value.trim();
 
-  // If no attraction selected, just use the global pool
   if (!attractionName) {
     const pool = window.DISNEY_LINE_QUESTIONS || [];
     if (!pool.length) return '';
@@ -1130,13 +1174,11 @@ function getRandomQuestionForAttractionWithFallback() {
   const usedSpecific = getUsedSpecificQuestionsForAttraction(attractionName);
   const unusedSpecific = specific.filter(q => !usedSpecific.has(q));
 
-  // 1) Prefer unused attraction-specific questions
   if (unusedSpecific.length > 0) {
     const idx = Math.floor(Math.random() * unusedSpecific.length);
     return unusedSpecific[idx];
   }
 
-  // 2) Fall back to your global list
   const globalPool = window.DISNEY_LINE_QUESTIONS || [];
   if (!globalPool.length) return '';
 
@@ -1240,7 +1282,6 @@ function setupAttractionSuggestions() {
   if (!window.PARKS) return;
   const { attractions } = window.PARKS;
 
-  // 1) Attraction datalist
   const dlAttractions = document.getElementById('attractionSuggestions');
   if (dlAttractions) {
     dlAttractions.innerHTML = attractions
@@ -1248,7 +1289,6 @@ function setupAttractionSuggestions() {
       .join('');
   }
 
-  // 2) Land datalist (unique land names)
   const dlLands = document.getElementById('landSuggestions');
   if (dlLands) {
     const lands = Array.from(new Set(attractions.map(a => a.land))).sort();
@@ -1257,7 +1297,6 @@ function setupAttractionSuggestions() {
       .join('');
   }
 
-  // 3) When attraction changes, auto-fill land
   els.attractionName.addEventListener('input', () => {
     const name = els.attractionName.value.trim().toLowerCase();
     if (!name) return;
