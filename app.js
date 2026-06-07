@@ -1,4 +1,4 @@
-// === Who Said Diz with bonus  panel  ===
+// === Who Said Diz with bonus panel ===
 
 // ---------- State ----------
 const state = {
@@ -56,7 +56,6 @@ const els = {
   answerSaveBtn: document.getElementById('answerModalSaveBtn'),
   answerCancelBtn: document.getElementById('answerModalCancelBtn'),
 
-
   revealBackdrop: document.getElementById('revealModalBackdrop'),
   revealTitle: document.getElementById('revealModalTitle'),
   revealSub: document.getElementById('revealModalSub'),
@@ -93,7 +92,11 @@ function clampScore(x) {
 }
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
   })[c]);
 }
 function alertLike(message) {
@@ -415,14 +418,20 @@ els.answerSaveBtn.addEventListener('click', () => {
   nextAnswerPrompt();
 });
 
-// click outside answer modal closes it
-/*
-els.answerBackdrop.addEventListener('click', event => {
-  if (event.target === els.answerBackdrop) {
+// Cancel button: just hide the modal (do not abandon the round)
+if (els.answerCancelBtn) {
+  els.answerCancelBtn.addEventListener('click', () => {
     hideAnswerModal();
-  }
-});
-*/
+  });
+}
+
+// click outside answer modal closes it (disabled)
+// els.answerBackdrop.addEventListener('click', event => {
+//   if (event.target === els.answerBackdrop) {
+//     hideAnswerModal();
+//   }
+// });
+
 // ---------- Guessing & wagering ----------
 function startGuessPhase(betId) {
   const bet = state.bets.find(b => b.id === betId);
@@ -709,37 +718,37 @@ function resolveGuessingBet(betId) {
   const roundBonuses = computeBonusPointsForRound(betId);
 
   if (roundBonuses.length) {
-  roundBonuses.forEach(bonus => {
-    const player = playerMap[bonus.playerId];
-    if (!player) return;
-    player.currentPoints = clampScore(player.currentPoints + bonus.amount);
-  });
+    roundBonuses.forEach(bonus => {
+      const player = playerMap[bonus.playerId];
+      if (!player) return;
+      player.currentPoints = clampScore(player.currentPoints + bonus.amount);
+    });
 
-  const records = roundBonuses.map(b => {
-    const p = state.players.find(pl => pl.id === b.playerId);
-    return {
-      id: uid(),
-      bonusId: 'auto',
-      bonusName: 'Automatic bonus',
-      points: b.amount,
+    const records = roundBonuses.map(b => {
+      const p = state.players.find(pl => pl.id === b.playerId);
+      return {
+        id: uid(),
+        bonusId: 'auto',
+        bonusName: 'Automatic bonus',
+        points: b.amount,
+        playerId: b.playerId,
+        playerName: p ? p.name : 'Unknown',
+        roundId: bet.id,
+        reason: b.reason
+      };
+    });
+
+    bet.bonusAwards = roundBonuses.map(b => ({
       playerId: b.playerId,
-      playerName: p ? p.name : 'Unknown',
-      roundId: bet.id,
+      amount: b.amount,
       reason: b.reason
-    };
-  });
+    }));
 
-  bet.bonusAwards = roundBonuses.map(b => ({
-    playerId: b.playerId,
-    amount: b.amount,
-    reason: b.reason
-  }));
-
-  // Add automatic bonuses into the shared history list
-  state.awardedBonuses.unshift(...records);
-} else {
-  bet.bonusAwards = [];
-}
+    // Add automatic bonuses into the shared history list
+    state.awardedBonuses.unshift(...records);
+  } else {
+    bet.bonusAwards = [];
+  }
   // ---------- END AUTOMATIC BONUS POINTS ----------
 
   saveState();
@@ -768,13 +777,14 @@ function resolveGuessingBet(betId) {
     );
   }
 
-  // New: attraction fact
-const fact = getFactForBet(bet);
-if (fact) {
-  parts.push(
-    `<div class="hint" style="margin-top:.5rem;"><strong>Fun fact:</strong> ${escapeHtml(fact)}</div>`
-  );
-}
+  // Fun fact from parks-data
+  const fact = getFactForBet(bet);
+  if (fact) {
+    parts.push(
+      `<div class="hint" style="margin-top:.5rem;"><strong>Fun fact:</strong> ${escapeHtml(fact)}</div>`
+    );
+  }
+
   parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Winners</div>`);
   if (anyCorrect && winnerLines.length) {
     parts.push(`<div>${winnerLines.map(escapeHtml).join('<br>')}</div>`);
@@ -794,17 +804,17 @@ if (fact) {
   parts.push(`<div class="hint" style="margin-top:.75rem;">Hunny Pot is now ${state.pot} points.</div>`);
 
   // Show automatic bonuses in the modal
-if (roundBonuses && roundBonuses.length) {
-  const bonusLines = roundBonuses
-    .map(b => {
-      const p = state.players.find(pl => pl.id === b.playerId);
-      return p ? `${p.name}: +${b.amount} (${b.reason})` : null;
-    })
-    .filter(Boolean);
+  if (roundBonuses && roundBonuses.length) {
+    const bonusLines = roundBonuses
+      .map(b => {
+        const p = state.players.find(pl => pl.id === b.playerId);
+        return p ? `${p.name}: +${b.amount} (${b.reason})` : null;
+      })
+      .filter(Boolean);
 
-  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Bonus points this round</div>`);
-  parts.push(`<div>${bonusLines.map(escapeHtml).join('<br>')}</div>`);
-}
+    parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Bonus points this round</div>`);
+    parts.push(`<div>${bonusLines.map(escapeHtml).join('<br>')}</div>`);
+  }
   els.revealTitle.textContent = 'Round result';
   els.revealSub.textContent = 'Here is who said the answer and how the points changed.';
   els.revealBody.innerHTML = parts.join('');
@@ -1078,18 +1088,8 @@ function getUsedSpecificQuestionsForAttraction(attractionName) {
   return used;
 }
 
-function getRandomQuestionForAttractionWithFallback() {
-  const attractionName = els.attractionName.value.trim();
-
-  // If no attraction selected, just use the global pool
-  if (!attractionName) {
-    const pool = window.DISNEY_LINE_QUESTIONS || [];
-    if (!pool.length) return '';
-    const idx = Math.floor(Math.random() * pool.length);
-    return pool[idx];
-  }
-
-  function getFactForBet(bet) {
+// Fun fact helper
+function getFactForBet(bet) {
   if (!bet || !bet.attraction) return '';
 
   const parks = window.PARKS;
@@ -1104,6 +1104,17 @@ function getRandomQuestionForAttractionWithFallback() {
   if (!attraction || !attraction.fact) return '';
   return attraction.fact;
 }
+
+function getRandomQuestionForAttractionWithFallback() {
+  const attractionName = els.attractionName.value.trim();
+
+  // If no attraction selected, just use the global pool
+  if (!attractionName) {
+    const pool = window.DISNEY_LINE_QUESTIONS || [];
+    if (!pool.length) return '';
+    const idx = Math.floor(Math.random() * pool.length);
+    return pool[idx];
+  }
 
   const parks = window.PARKS;
   const attractions = parks && Array.isArray(parks.attractions)
@@ -1269,37 +1280,6 @@ function setupAttractionSuggestions() {
   });
 }
 
-els.answerSaveBtn.addEventListener('click', () => {
-  const bet = state.bets.find(b => b.id === currentAnswerBetId);
-  if (!bet) return;
-
-  const players = state.players;
-  const player = players[currentAnswerIndex];
-  const text = els.answerInput.value.trim();
-
-  if (!text) {
-    alertLike('Type an answer before saving.');
-    return;
-  }
-
-  bet.answers.push({ id: uid(), playerId: player.id, text });
-  saveState();
-  currentAnswerIndex += 1;
-  nextAnswerPrompt();
-});
-
-if (els.answerCancelBtn) {
-  els.answerCancelBtn.addEventListener('click', () => {
-    // Option A: just close the modal but keep current round
-    hideAnswerModal();
-
-    // If you want to truly abandon the round, instead do:
-    // currentAnswerBetId = null;
-    // currentAnswerIndex = 0;
-    // hideAnswerModal();
-  });
-}
-
 // ---------- Events ----------
 document.getElementById('addPlayerBtn').addEventListener('click', () => {
   const name = els.playerName.value.trim();
@@ -1327,7 +1307,9 @@ window.addEventListener('load', () => {
   setupAttractionSuggestions();
 });
 
-document.getElementById('createBetBtn').addEventListener('click', createBet);
+document.getElementById('createBetBtn').addEventListener('click', () => {
+  createBet();
+});
 
 document.getElementById('randomBetBtn').addEventListener('click', () => {
   const q = getRandomQuestionForAttractionWithFallback();
