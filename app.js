@@ -414,12 +414,13 @@ els.answerSaveBtn.addEventListener('click', () => {
 });
 
 // click outside answer modal closes it
+/*
 els.answerBackdrop.addEventListener('click', event => {
   if (event.target === els.answerBackdrop) {
     hideAnswerModal();
   }
 });
-
+*/
 // ---------- Guessing & wagering ----------
 function startGuessPhase(betId) {
   const bet = state.bets.find(b => b.id === betId);
