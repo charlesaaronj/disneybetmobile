@@ -164,18 +164,32 @@
 
   <!-- Answer collection modal -->
   <div id="answerModalBackdrop" class="modal-backdrop" style="display:none;">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="answerModalTitle">
-      <h3 id="answerModalTitle" class="modal-title">Pass the phone</h3>
-      <p class="hint" id="answerModalPrompt"></p>
-      <div class="field">
-        <label id="answerModalPlayerLabel"></label>
-        <textarea id="answerModalInput"></textarea>
-      </div>
-      <div class="small-actions">
-        <button type="button" class="btn btn-primary" id="answerModalSaveBtn">Save and pass</button>
-      </div>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="answerModalTitle">
+    <h3 id="answerModalTitle" class="modal-title">Pass the phone</h3>
+    <p class="hint" id="answerModalPrompt"></p>
+    <div class="field">
+      <label id="answerModalPlayerLabel"></label>
+      <textarea id="answerModalInput"></textarea>
+    </div>
+    <div class="small-actions">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        id="answerModalCancelBtn"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        id="answerModalSaveBtn"
+      >
+        Save and pass
+      </button>
     </div>
   </div>
+</div>
+  
  <!-- Give points modal -->
   <div id="giveHunnyModalBackdrop" class="modal-backdrop" style="display:none;">
   <div class="modal">
