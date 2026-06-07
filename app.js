@@ -330,9 +330,12 @@ function createBet() {
   };
 
   state.bets.unshift(bet);
+
+  // Clear question + attraction + land after this ride’s round is created
   els.betDescription.value = '';
   els.attractionName.value = '';
   els.landName.value = '';
+
   saveState();
   render();
   startAnswerPhase(betId);
