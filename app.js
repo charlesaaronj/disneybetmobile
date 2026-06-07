@@ -331,6 +331,8 @@ function createBet() {
 
   state.bets.unshift(bet);
   els.betDescription.value = '';
+  els.attractionName.value = '';
+  els.landName.value = '';
   saveState();
   render();
   startAnswerPhase(betId);
