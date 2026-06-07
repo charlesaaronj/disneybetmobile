@@ -128,7 +128,7 @@ select {
 }
 
 textarea {
-  min-height: 88px;
+  min-height: 120px;
   resize: vertical;
 }
 
