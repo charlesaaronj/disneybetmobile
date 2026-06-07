@@ -11,9 +11,9 @@ const state = {
     {
       id: 'noGuessAuthor',
       name: 'No one guessed the author',
-      points: 1,
+      points: 3,
       active: true,
-      description: 'If nobody guesses correctly, the real author gets +1 point.'
+      description: 'If nobody guesses correctly, the real author gets +3 points.'
     },
     {
       id: 'streak3',
