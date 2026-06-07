@@ -54,6 +54,8 @@ const els = {
   answerPlayerLabel: document.getElementById('answerModalPlayerLabel'),
   answerInput: document.getElementById('answerModalInput'),
   answerSaveBtn: document.getElementById('answerModalSaveBtn'),
+  answerCancelBtn: document.getElementById('answerModalCancelBtn'),
+
 
   revealBackdrop: document.getElementById('revealModalBackdrop'),
   revealTitle: document.getElementById('revealModalTitle'),
@@ -1240,6 +1242,37 @@ function setupAttractionSuggestions() {
     if (match) {
       els.landName.value = match.land;
     }
+  });
+}
+
+els.answerSaveBtn.addEventListener('click', () => {
+  const bet = state.bets.find(b => b.id === currentAnswerBetId);
+  if (!bet) return;
+
+  const players = state.players;
+  const player = players[currentAnswerIndex];
+  const text = els.answerInput.value.trim();
+
+  if (!text) {
+    alertLike('Type an answer before saving.');
+    return;
+  }
+
+  bet.answers.push({ id: uid(), playerId: player.id, text });
+  saveState();
+  currentAnswerIndex += 1;
+  nextAnswerPrompt();
+});
+
+if (els.answerCancelBtn) {
+  els.answerCancelBtn.addEventListener('click', () => {
+    // Option A: just close the modal but keep current round
+    hideAnswerModal();
+
+    // If you want to truly abandon the round, instead do:
+    // currentAnswerBetId = null;
+    // currentAnswerIndex = 0;
+    // hideAnswerModal();
   });
 }
 
