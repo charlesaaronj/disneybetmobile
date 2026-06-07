@@ -330,12 +330,7 @@ function createBet() {
   };
 
   state.bets.unshift(bet);
-
-  // Clear question + attraction + land after this ride’s round is created
   els.betDescription.value = '';
-  els.attractionName.value = '';
-  els.landName.value = '';
-
   saveState();
   render();
   startAnswerPhase(betId);
@@ -423,19 +418,14 @@ els.answerSaveBtn.addEventListener('click', () => {
   nextAnswerPrompt();
 });
 
-// Cancel button: just hide the modal (do not abandon the round)
-if (els.answerCancelBtn) {
-  els.answerCancelBtn.addEventListener('click', () => {
+// click outside answer modal closes it (currently disabled)
+/*
+els.answerBackdrop.addEventListener('click', event => {
+  if (event.target === els.answerBackdrop) {
     hideAnswerModal();
-  });
-}
-
-// click outside answer modal closes it (disabled)
-// els.answerBackdrop.addEventListener('click', event => {
-//   if (event.target === els.answerBackdrop) {
-//     hideAnswerModal();
-//   }
-// });
+  }
+});
+*/
 
 // ---------- Guessing & wagering ----------
 function startGuessPhase(betId) {
@@ -611,7 +601,6 @@ function computeBonusPointsForRound(betId) {
   }
 
   // 2) Three-in-a-row streak bonus
-  // Look at last 3 resolved rounds in time order
   const resolved = state.bets
     .filter(b => b.status === 'resolved')
     .sort((a, b2) => new Date(a.resolvedAt || a.createdAt) - new Date(b2.resolvedAt || b2.createdAt));
@@ -619,7 +608,6 @@ function computeBonusPointsForRound(betId) {
   const idx = resolved.findIndex(b => b.id === betId);
   if (idx >= 2) {
     const lastThree = resolved.slice(idx - 2, idx + 1);
-    // For each player, check if they were correct in all three
     const playerIds = state.players.map(p => p.id);
     playerIds.forEach(pid => {
       const allThreeCorrect = lastThree.every(round => {
@@ -641,7 +629,6 @@ function computeBonusPointsForRound(betId) {
     const playerIds = state.players.map(p => p.id);
 
     playerIds.forEach(pid => {
-      // Count wins for this player in this land
       let winsInLand = 0;
       resolvedInLand.forEach(round => {
         const rCorrect = (round.correctAuthors && round.correctAuthors.length
@@ -690,10 +677,16 @@ function resolveGuessingBet(betId) {
 
   const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
 
-  // 1) subtract all wagers
+  // 1) subtract all wagers EXCEPT from the author(s)
   wagers.forEach(w => {
     const player = playerMap[w.playerId];
     if (!player || w.wager <= 0) return;
+
+    // If this player is one of the correct authors, skip changes (no loss)
+    if (correctAuthors.includes(w.playerId)) {
+      return;
+    }
+
     player.currentPoints = clampScore(player.currentPoints - w.wager);
   });
 
@@ -703,6 +696,12 @@ function resolveGuessingBet(betId) {
     winners.forEach(w => {
       const player = playerMap[w.playerId];
       if (!player) return;
+
+      // If this player is one of the correct authors, skip changes (no gain)
+      if (correctAuthors.includes(w.playerId)) {
+        return;
+      }
+
       const share = (potThisRound * w.wager) / totalWinnerWager;
       player.currentPoints = clampScore(player.currentPoints + share);
     });
@@ -716,10 +715,6 @@ function resolveGuessingBet(betId) {
   bet.roundWinners = winners.map(w => w.playerId);
 
   // ---------- AUTOMATIC BONUS POINTS ----------
-  // Compute per-round bonuses:
-  // - +3 for three wins in a row
-  // - +2 for >2 wins in the same land
-  // - +1 for chosen author when nobody guesses them
   const roundBonuses = computeBonusPointsForRound(betId);
 
   if (roundBonuses.length) {
@@ -749,7 +744,6 @@ function resolveGuessingBet(betId) {
       reason: b.reason
     }));
 
-    // Add automatic bonuses into the shared history list
     state.awardedBonuses.unshift(...records);
   } else {
     bet.bonusAwards = [];
@@ -782,7 +776,7 @@ function resolveGuessingBet(betId) {
     );
   }
 
-  // Fun fact from parks-data
+  // New: attraction fact
   const fact = getFactForBet(bet);
   if (fact) {
     parts.push(
@@ -808,7 +802,6 @@ function resolveGuessingBet(betId) {
   );
   parts.push(`<div class="hint" style="margin-top:.75rem;">Hunny Pot is now ${state.pot} points.</div>`);
 
-  // Show automatic bonuses in the modal
   if (roundBonuses && roundBonuses.length) {
     const bonusLines = roundBonuses
       .map(b => {
