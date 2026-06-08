@@ -1,4 +1,7 @@
 window.DISNEY_LINE_QUESTIONS = [
+  "What outlandish activity would you like to do on this attraction?",
+  "Where would you like to pick up and move this attraction to?",
+  "What favorite memory do you associate with this attraction?",
   "What is your favorite piece of trivia about this attraction?",
   "How does this compare to the last attraction you rode?",
   "How would Universal do this attraction?",
