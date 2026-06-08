@@ -1,13 +1,13 @@
 :root,
 [data-theme="light"] {
-  /* Typography scale */
+  /* Typography scale (unchanged) */
   --text-xs: clamp(0.8rem, 0.75rem + 0.25vw, 0.9rem);
   --text-sm: clamp(0.9rem, 0.85rem + 0.4vw, 1.05rem);
   --text-base: clamp(1.05rem, 1rem + 0.35vw, 1.2rem);
   --text-lg: clamp(1.3rem, 1.1rem + 0.9vw, 1.7rem);
   --text-xl: clamp(1.7rem, 1.4rem + 1.5vw, 2.5rem);
 
-  /* Spacing scale */
+  /* Spacing scale (unchanged) */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -18,79 +18,68 @@
   --space-10: 2.5rem;
   --space-12: 3rem;
 
-  /* Light theme colors */
-  --color-bg: #f7f6f2;
+  /* Light theme backgrounds: neutral to let the rainbow pop */
+  --color-bg: #f5f5f7;          /* soft neutral */
   --color-surface: #ffffff;
-  --color-surface-2: #fbfaf7;
-  --color-surface-offset: #f3f0ec;
-  --color-border: #ddd6ca;
+  --color-surface-2: #fafafa;
+  --color-surface-offset: #ededf2; /* very light cool gray */
+  --color-border: #d4d4dd;
 
-  --color-text: #1f1d18;
-  --color-text-muted: #6f6d67;
-  --color-text-faint: #9d9a92;
-  --color-text-inverse: #f9f8f4;
+  /* Text */
+  --color-text: #111827;
+  --color-text-muted: #6b7280;
+  --color-text-faint: #9ca3af;
+  --color-text-inverse: #f9fafb;
 
-  --color-primary: #0f766e;
-  --color-primary-hover: #115e59;
-  --color-success: #166534;
-  --color-warning: #b45309;
-  --color-error: #b42318;
-  --color-gold: #a16207;
+  /* Rainbow core (pulled from mural bands) */
+  --color-primary: #f97316;        /* bright orange Mickey */
+  --color-primary-hover: #ea580c;  /* deeper orange */
+  --color-success: #22c55e;        /* vivid green band */
+  --color-warning: #eab308;        /* yellow band */
+  --color-error: #ef4444;          /* red band */
+  --color-gold: #fbbf24;           /* warm yellow‑orange */
 
-  /* Radii */
+  /* Radii (unchanged) */
   --radius-sm: 0.5rem;
   --radius-md: 0.85rem;
   --radius-lg: 1.25rem;
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(24, 24, 24, 0.05);
-  --shadow-md: 0 10px 30px rgba(24, 24, 24, 0.09);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 14px 34px rgba(15, 23, 42, 0.14);
 
-  /* Fonts */
+  /* Fonts (unchanged) */
   --font-display: 'Cabinet Grotesk', 'Inter', sans-serif;
   --font-body: 'Satoshi', 'Inter', sans-serif;
 }
 
 [data-theme="dark"] {
-  --color-bg: #171614;
-  --color-surface: #1c1b19;
-  --color-surface-2: #201f1d;
-  --color-surface-offset: #22211f;
-  --color-border: #393836;
+  /* Dark: let the rainbow sit on deep charcoal/indigo */
+  --color-bg: #020617;
+  --color-surface: #020617;
+  --color-surface-2: #020818;
+  --color-surface-offset: #020a1f;
+  --color-border: #1f2937;
 
-  --color-text: #e2dfd8;
-  --color-text-muted: #b1aea7;
-  --color-text-faint: #7d7a73;
-  --color-text-inverse: #211f1c;
+  --color-text: #e5e7eb;
+  --color-text-muted: #9ca3af;
+  --color-text-faint: #6b7280;
+  --color-text-inverse: #020617;
 
-  --color-primary: #4f98a3;
-  --color-primary-hover: #227f8b;
-  --color-success: #6daa45;
-  --color-warning: #bb653b;
-  --color-error: #d163a7;
-  --color-gold: #e8af34;
+  /* Same rainbow hues, slightly brightened for dark bg */
+  --color-primary: #fb923c;        /* orange highlight */
+  --color-primary-hover: #f97316;
+  --color-success: #4ade80;        /* neon-ish green */
+  --color-warning: #facc15;        /* bright yellow */
+  --color-error: #f97373;          /* softer red */
+  --color-gold: #fbbf24;           /* warm yellow‑orange */
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.36);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.55);
+  --shadow-md: 0 22px 48px rgba(15, 23, 42, 0.75);
 }
 
-/* ---------- Global resets ---------- */
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-  scroll-behavior: smooth;
-}
-
+/* Background gradient echoing the mural bands */
 body {
   min-height: 100dvh;
   font-family: var(--font-body);
@@ -98,535 +87,15 @@ body {
   line-height: 1.55;
   color: var(--color-text);
   background:
-    radial-gradient(circle at top left, color-mix(in oklab, var(--color-gold) 12%, transparent), transparent 32%),
-    radial-gradient(circle at top right, color-mix(in oklab, var(--color-primary) 14%, transparent), transparent 36%),
-    var(--color-bg);
-}
-
-button,
-input,
-textarea,
-select {
-  font: inherit;
-  color: inherit;
-}
-
-button {
-  cursor: pointer;
-  border: none;
-  background: none;
-}
-
-input,
-textarea,
-select {
-  width: 100%;
-  border: 1px solid color-mix(in oklab, var(--color-text) 12%, transparent);
-  background: #fff;
-  border-radius: var(--radius-md);
-  padding: 0.85rem 0.95rem;
-}
-
-textarea {
-  min-height: 120px;
-  resize: vertical;
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-/* ---------- App shell ---------- */
-
-.app {
-  max-width: 1300px;
-  margin: 0 auto;
-  padding: var(--space-4);
-}
-
-/* Topbar */
-
-.topbar {
-  display: flex;
-  gap: var(--space-3);
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-4);
-  padding: var(--space-4);
-  background: color-mix(in oklab, var(--color-surface) 94%, transparent);
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  box-shadow: var(--shadow-md);
-  backdrop-filter: blur(14px);
-}
-
-.brand {
-  display: flex;
-  gap: var(--space-3);
-  align-items: center;
-}
-
-.logo {
-  width: 56px;
-  height: 56px;
-  color: var(--color-primary);
-}
-
-/* Typography */
-
-h1,
-h2,
-h3 {
-  font-family: var(--font-display);
-  line-height: 1.08;
-}
-
-h1 {
-  font-size: var(--text-xl);
-}
-
-h2 {
-  font-size: var(--text-lg);
-  margin-bottom: var(--space-3);
-}
-
-h3 {
-  font-size: 1.1rem;
-}
-
-.sub {
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-  max-width: 60ch;
-}
-
-/* ---------- Buttons ---------- */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 44px;
-  padding: 0.8rem 1rem;
-  border-radius: var(--radius-full);
-  border: 1px solid transparent;
-  font-weight: 700;
-  font-size: var(--text-sm);
-  transition:
-    background-color 180ms ease,
-    color 180ms ease,
-    border-color 180ms ease,
-    transform 180ms ease;
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-}
-
-.btn-primary {
-  background: var(--color-primary);
-  color: var(--color-text-inverse);
-}
-
-.btn-primary:hover {
-  background: var(--color-primary-hover);
-}
-
-.btn-secondary {
-  background: var(--color-surface-offset);
-  border-color: color-mix(in oklab, var(--color-text) 12%, transparent);
-}
-
-.btn-danger {
-  background: color-mix(in oklab, var(--color-error) 14%, var(--color-surface));
-  color: var(--color-error);
-  border-color: color-mix(in oklab, var(--color-error) 30%, transparent);
-}
-
-/* ---------- Layout & panels ---------- */
-
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.6fr);
-  gap: var(--space-4);
-  align-items: start;
-}
-
-.stack {
-  display: grid;
-  gap: var(--space-3);
-}
-
-.panel {
-  background: linear-gradient(180deg, #ffffff, #fbfaf7);
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  padding: var(--space-4);
-  box-shadow: var(--shadow-md);
-}
-
-/* Grid helpers */
-
-.grid-2 {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3);
-}
-
-/* ---------- Form fields ---------- */
-
-.field {
-  display: grid;
-  gap: 0.45rem;
-}
-
-.field label {
-  font-size: var(--text-sm);
-  font-weight: 700;
-  margin-top: 4px;
-}
-
-.hint {
-  color: var(--color-text-muted);
-  font-size: var(--text-xs);
-}
-
-/* ---------- Players & scoreboard ---------- */
-
-.players {
-  display: grid;
-  gap: var(--space-3);
-}
-
-.player-chip,
-.score-card,
-.history-item,
-.player-bet-row,
-.bonus-card,
-.earned-card {
-  border: 1px solid var(--color-border);
-  background: linear-gradient(180deg, #ffffff, #fbfaf7);
-  border-radius: 16px;
-}
-
-.player-chip {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  align-items: center;
-}
-
-.scoreboard {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: var(--space-3);
-}
-
-.score-card {
-  padding: var(--space-3);
-  display: grid;
-  gap: 0.35rem;
-}
-
-.score-name {
-  font-weight: 700;
-}
-
-.score-points {
-  font-size: 1.7rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-primary);
-}
-
-/* ---------- Pills / chips ---------- */
-
-.pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0.3rem 0.7rem;
-  border-radius: var(--radius-full);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  background: var(--color-surface-offset);
-  color: var(--color-text-muted);
-}
-
-.pill-open {
-  background: #dff7ef;
-  color: var(--color-success);
-}
-
-.pill-won {
-  background: color-mix(in oklab, var(--color-success) 18%, var(--color-surface));
-  color: var(--color-success);
-}
-
-.pot-pill-total {
-  background: #fff4d6;
-  color: var(--color-warning);
-}
-
-/* ---------- Bets / history ---------- */
-
-.bet-list,
-.history-list {
-  display: grid;
-  gap: var(--space-3);
-}
-
-.bet-card,
-.history-item {
-  padding: var(--space-3);
-  display: grid;
-  gap: var(--space-3);
-}
-
-.bet-head {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-3);
-  align-items: flex-start;
-}
-
-.bet-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-}
-
-.player-bet-row {
-  padding: 0.85rem;
-  display: grid;
-  grid-template-columns: 1.2fr 0.9fr 0.8fr;
-  gap: var(--space-3);
-  align-items: center;
-}
-
-.player-bet-row strong {
-  font-size: var(--text-sm);
-}
-
-/* ---------- Bonus panels ---------- */
-
-.bonus-list,
-.bonus-earned-list {
-  display: grid;
-  gap: var(--space-3);
-}
-
-.bonus-card,
-.earned-card {
-  padding: var(--space-3);
-}
-
-.bonus-head,
-.earned-head {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-3);
-  align-items: flex-start;
-}
-
-.bonus-points {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-gold);
-}
-
-/* ---------- Empty state ---------- */
-
-.empty {
-  color: var(--color-text-muted);
-  padding: var(--space-6);
-  text-align: center;
-  border: 1px dashed var(--color-border);
-  border-radius: 16px;
-}
-
-/* ---------- Small actions row ---------- */
-
-.small-actions {
-  display: flex;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-  align-items: center;
-  margin-top: var(--space-3);
-}
-
-.small-actions .btn {
-  min-height: 38px;
-  padding: 0.6rem 0.9rem;
-}
-
-/* Smaller buttons in Hunny Pot row */
-.small-actions-hunny .btn {
-  min-height: 32px;
-  padding: 0.3rem 0.7rem;
-  font-size: var(--text-xs);
-  margin-top: 10px;
-}
-
-/* ---------- Totals / metrics ---------- */
-
-.totals {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-3);
-}
-
-.metric {
-  padding: var(--space-3);
-  background: var(--color-surface-offset);
-  border-radius: var(--radius-md);
-  min-width: 0;
-}
-
-.metric-value {
-  display: block;
-  font-size: 1.2rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Misc text */
-
-.footer-note {
-  margin-top: var(--space-4);
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-}
-
-.reveal-section-title {
-  font-weight: 700;
-  margin-top: 0.5rem;
-  margin-bottom: 0.25rem;
-}
-
-/* ---------- Modal ---------- */
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-4);
-  z-index: 1000;
-}
-
-.modal {
-  background: #ffffff;
-  border-radius: 18px;
-  padding: var(--space-4);
-  box-shadow: var(--shadow-md);
-  max-width: 420px;
-  width: min(100%, 420px);
-  display: grid;
-  gap: var(--space-3);
-  border: 1px solid var(--color-border);
-}
-
-.modal-title {
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-}
-
-/* ---------- Responsive ---------- */
-
-@media (max-width: 900px) {
-  .layout,
-  .grid-2,
-  .player-bet-row,
-  .player-chip,
-  .totals {
-    grid-template-columns: 1fr;
-  }
-
-  .topbar,
-  .bet-head {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .small-actions {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-
-  .small-actions .btn {
-    flex: 1 1 auto;
-  }
-
-  .app {
-    padding: var(--space-3);
-  }
-}
-
-@media (max-width: 600px) {
-  .app {
-    padding: var(--space-2);
-    min-height: 100dvh;
-  }
-
-  .topbar {
-    padding: var(--space-3);
-  }
-
-  .panel {
-    padding: var(--space-3);
-  }
-
-  h1 {
-    font-size: var(--text-lg);
-  }
-
-  h2 {
-    font-size: var(--text-base);
-  }
-
-  .sub {
-    max-width: 100%;
-  }
-
-  .small-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .small-actions .btn,
-  .btn-primary,
-  .btn-secondary,
-  .btn-danger {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .bet-card,
-  .history-item {
-    padding: var(--space-3);
-  }
-
-  .metric {
-    width: 100%;
-  }
-
-  .score-points {
-    font-size: 1.45rem;
-  }
+    linear-gradient(90deg,
+      #22c1c3 0%,   /* teal/blue */
+      #2563eb 12%,  /* blue */
+      #22c55e 24%,  /* green */
+      #eab308 36%,  /* yellow */
+      #f97316 50%,  /* orange */
+      #ef4444 64%,  /* red */
+      #ec4899 78%,  /* pink */
+      #a855f7 90%   /* violet */
+    );
+  background-attachment: fixed;
 }
