@@ -1,5 +1,13 @@
 window.PARKS = {
   attractions: [
+     {
+      name: 'Epcot',
+      land: 'Epcot',
+      questions: [
+        "Enter your own question. Good luck!"
+      ],
+      fact: "Epcot opened in 1982!"
+    },
     // Magic Kingdom – rides
     {
       name: 'Seven Dwarfs Mine Train',
