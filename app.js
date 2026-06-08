@@ -11,7 +11,7 @@ const state = {
     {
       id: 'noGuessAuthor',
       name: 'No one guessed the author',
-      points: 3,
+      points: 3, // updated from 1 to 3
       active: true,
       description: 'If nobody guesses correctly, the real author gets +3 points.'
     },
@@ -337,7 +337,6 @@ function createBet() {
     guesses: [],
     roundWinners: [],
     bonusAwards: [],
-    // New per-round random orders
     answerOrder: shuffle(state.players.map(p => p.id)),
     wagerOrder: []
   };
@@ -367,7 +366,6 @@ function startAnswerPhase(betId) {
   if (!bet) return;
   bet.answers = [];
   bet.status = 'answering';
-  // Ensure answerOrder exists (for older saved state)
   if (!Array.isArray(bet.answerOrder) || !bet.answerOrder.length) {
     bet.answerOrder = shuffle(state.players.map(p => p.id));
   }
@@ -399,7 +397,6 @@ function nextAnswerPrompt() {
       bet.correctAuthorId = sameTextAuthors[0] || null;
     }
 
-    // When we move to guessing, create a random wager order for this round
     bet.wagerOrder = shuffle(state.players.map(p => p.id));
     saveState();
     hideAnswerModal();
@@ -457,14 +454,12 @@ els.answerSaveBtn.addEventListener('click', () => {
   nextAnswerPrompt();
 });
 
-// click outside answer modal closes it (disabled)
-/*
-els.answerBackdrop.addEventListener('click', event => {
-  if (event.target === els.answerBackdrop) {
+// Cancel button for answer modal
+if (els.answerCancelBtn) {
+  els.answerCancelBtn.addEventListener('click', () => {
     hideAnswerModal();
-  }
-});
-*/
+  });
+}
 
 // ---------- Guessing & wagering ----------
 function startGuessPhase(betId) {
@@ -483,7 +478,6 @@ function startGuessPhase(betId) {
     bet.correctAuthorId = sameTextAuthors[0] || null;
   }
 
-  // Ensure we have a random wager order for this guessing round
   if (!Array.isArray(bet.wagerOrder) || !bet.wagerOrder.length) {
     bet.wagerOrder = shuffle(state.players.map(p => p.id));
   }
@@ -838,10 +832,44 @@ function resolveGuessingBet(betId) {
     parts.push(`<div>No one placed a wager this round.</div>`);
   }
 
+  // Automatic catch-up using Hunny Pot without leapfrogging
   const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
+  if (state.pot > 0 && ranked.length >= 2) {
+    const leader = ranked[0];
+    const last = ranked[ranked.length - 1];
+    const gap = leader.currentPoints - last.currentPoints;
+
+    if (gap >= 10) {
+      const secondLast = ranked[ranked.length - 2];
+
+      const maxToSecondLast = secondLast
+        ? Math.max(0, secondLast.currentPoints - last.currentPoints)
+        : gap;
+
+      const maxToLeaderMinusOne = Math.max(0, leader.currentPoints - 1 - last.currentPoints);
+
+      const hardCap = Math.min(
+        3,
+        state.pot,
+        maxToSecondLast,
+        maxToLeaderMinusOne
+      );
+
+      if (hardCap > 0) {
+        last.currentPoints = clampScore(last.currentPoints + hardCap);
+        state.pot -= hardCap;
+
+        parts.push(
+          `<div class="hint" style="margin-top:.5rem;">Catch-up: Gave ${hardCap} points from the Hunny Pot to ${escapeHtml(last.name)} (without passing anyone).</div>`
+        );
+      }
+    }
+  }
+
+  const rankedAfter = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
   parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Scores after this round</div>`);
   parts.push(
-    `<div>${ranked
+    `<div>${rankedAfter
       .map(p => `${escapeHtml(p.name)}: ${clampScore(p.currentPoints)}`)
       .join('<br>')}</div>`
   );
@@ -1387,9 +1415,3 @@ document.getElementById('clearAllBtn').addEventListener('click', () => {
   saveState();
   render();
 });
-
-if (els.answerCancelBtn) {
-  els.answerCancelBtn.addEventListener('click', () => {
-    hideAnswerModal();
-  });
-}
