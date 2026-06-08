@@ -849,7 +849,7 @@ function resolveGuessingBet(betId) {
       const maxToLeaderMinusOne = Math.max(0, leader.currentPoints - 1 - last.currentPoints);
 
       const hardCap = Math.min(
-        3,
+        5,
         state.pot,
         maxToSecondLast,
         maxToLeaderMinusOne
