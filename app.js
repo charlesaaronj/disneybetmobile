@@ -640,7 +640,7 @@ function computeBonusPointsForRound(betId) {
     const guessedIds = new Set(guesses.map(g => g.guessedAuthorId).filter(Boolean));
     correctAuthors.forEach(authorId => {
       if (!guessedIds.has(authorId)) {
-        bonuses.push({ playerId: authorId, amount: 1, reason: 'Hidden author (no one guessed them)' });
+        bonuses.push({ playerId: authorId, amount: 3, reason: 'Hidden author (no one guessed them)' });
       }
     });
   }
