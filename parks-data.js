@@ -4,6 +4,14 @@ window.PARKS = {
       name: 'Epcot',
       land: 'Epcot'
     },
+    {
+      name: 'Magic Kingdom',
+      land: 'Magic Kingdom'
+    },
+    {
+      name: 'Hollywood Studios',
+      land: 'Hollywood Studios'
+    },
     // Magic Kingdom – rides
     {
       name: 'Seven Dwarfs Mine Train',
