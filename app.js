@@ -630,7 +630,7 @@ function renderBetRows() {
         </div>
         <div class="field">
           <label>Wager</label>
-          <input data-amount type="number" min="0" step="1" value="0" placeholder="1" inputmode="numeric" pattern="[0-9]*" ${
+          <input data-amount type="number" min="0" step="1" value="1" placeholder="1" inputmode="numeric" pattern="[0-9]*" ${
             guessingBet ? '' : 'disabled'
           } />
         </div>
