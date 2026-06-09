@@ -85,7 +85,10 @@ const els = {
 
   // Scores / bonuses on Scores screen (if present)
   scoreboardScoresScreen: document.getElementById('scoreboardScoresScreen'),
-  qualifiedBonusPanelScores: document.getElementById('qualifiedBonusPanelScores')
+  qualifiedBonusPanelScores: document.getElementById('qualifiedBonusPanelScores'),
+
+  // Round result panel
+  revealSummary: document.getElementById('revealSummary')
 };
 
 // ---------- Screen elements (app flow) ----------
@@ -100,7 +103,8 @@ const navEls = {
   toScoresBtn: document.getElementById('toScoresBtn'),
   nextRoundBtn: document.getElementById('nextRoundBtn'),
   viewHistoryBtn: document.getElementById('viewHistoryBtn'),
-  backToScoresBtn: document.getElementById('backToScoresBtn')
+  backToScoresBtn: document.getElementById('backToScoresBtn'),
+  restartGameBtn: document.getElementById('restartGameBtn')
 };
 
 // ---------- Small helpers ----------
@@ -186,6 +190,23 @@ function enforceMinPot() {
   if (state.pot < minPot) {
     state.pot = minPot;
   }
+}
+
+// Reset helpers
+function resetGame({ keepPlayers } = { keepPlayers: true }) {
+  if (keepPlayers) {
+    state.players.forEach(p => {
+      p.currentPoints = clampScore(p.startingPoints);
+    });
+  } else {
+    state.players = [];
+  }
+  state.bets = [];
+  state.pot = 0;
+  state.awardedBonuses = [];
+  enforceMinPot();
+  saveState();
+  render();
 }
 
 // ---------- Screen routing ----------
@@ -532,7 +553,7 @@ if (els.answerCancelBtn) {
   });
 }
 
-// Ghost/Random ride fragment answer button
+// Ghost/Random ride fragment answer button (hidden answer)
 if (els.answerGhostBtn) {
   els.answerGhostBtn.addEventListener('click', () => {
     if (typeof window.getRandomRideFragment !== 'function') {
@@ -557,7 +578,7 @@ if (els.answerGhostBtn) {
 
     const text = window.getRandomRideFragment();
 
-    // Save ghost answer WITHOUT showing it in the textarea
+    // Save ghost answer WITHOUT showing it
     bet.answers.push({ id: uid(), playerId: player.id, text });
     saveState();
     currentAnswerIndex += 1;
@@ -639,6 +660,15 @@ function renderBetRows() {
   }).join('');
 
   attachWagerGuards();
+
+  // Ensure default is at least 1 on fresh render
+  const inputs = els.betPlayers.querySelectorAll('[data-amount]');
+  inputs.forEach(input => {
+    const val = Number(input.value);
+    if (!Number.isFinite(val) || val <= 0) {
+      input.value = '1';
+    }
+  });
 }
 
 function attachWagerGuards() {
@@ -647,10 +677,22 @@ function attachWagerGuards() {
     const playerId = row.dataset.playerId;
     const input = row.querySelector('[data-amount]');
     if (!input) return;
+
     input.addEventListener('input', () => {
       const available = getAvailablePoints(playerId);
-      let value = Number(input.value) || 0;
-      if (!Number.isFinite(value) || value < 0) value = 0;
+      let raw = input.value.trim();
+
+      // Explicit "0" allowed as sit-out
+      if (raw === '0') {
+        input.value = '0';
+        return;
+      }
+
+      let value = Number(raw);
+      if (!Number.isFinite(value) || value <= 0) {
+        value = 1;
+      }
+
       if (value > available) {
         value = available;
         alertLike(`That's the max they can wager this round (${available} points).`);
@@ -990,14 +1032,21 @@ function resolveGuessingBet(betId) {
     parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Bonus points this round</div>`);
     parts.push(`<div>${bonusLines.map(escapeHtml).join('<br>')}</div>`);
   }
+
+  // Put summary into the Round result panel instead of showing modal
+  if (els.revealSummary) {
+    els.revealSummary.innerHTML = parts.join('');
+  }
+
   els.revealTitle.textContent = 'Round result';
   els.revealSub.textContent = 'Here is who said the answer and how the points changed.';
   els.revealBody.innerHTML = parts.join('');
-  els.revealBackdrop.style.display = 'flex';
+  els.revealBackdrop.style.display = 'none';
 
   goToReveal();
 }
 
+// You can keep these modal close handlers in case you still want full-screen view
 els.revealCloseBtn.addEventListener('click', () => {
   els.revealBackdrop.style.display = 'none';
 });
@@ -1461,7 +1510,6 @@ function setupAttractionSuggestions() {
     if (match) {
       els.landName.value = match.land;
 
-      // Show a parks-data/global question when selecting an attraction
       const q = getRandomQuestionForAttractionWithFallback();
       if (q) {
         els.betDescription.value = q;
@@ -1526,7 +1574,7 @@ document.getElementById('createBetBtn').addEventListener('click', () => {
   createBet();
   const afterCount = state.bets.length;
   if (afterCount > beforeCount) {
-    // Answers phase starts automatically
+    // Answer phase starts automatically
   }
 });
 
@@ -1565,13 +1613,7 @@ document.getElementById('lockGuessesBtn').addEventListener('click', () => {
 });
 
 document.getElementById('clearAllBtn').addEventListener('click', () => {
-  state.players = [];
-  state.bets = [];
-  state.pot = 0;
-  state.awardedBonuses = [];
-  enforceMinPot();
-  saveState();
-  render();
+  resetGame({ keepPlayers: false });
   goToSetup();
 });
 
@@ -1594,6 +1636,10 @@ if (navEls.toScoresBtn) {
 
 if (navEls.nextRoundBtn) {
   navEls.nextRoundBtn.addEventListener('click', () => {
+    // Clear attraction and land for the next round
+    els.attractionName.value = '';
+    els.landName.value = '';
+    els.betDescription.value = '';
     goToQuestion();
   });
 }
@@ -1607,5 +1653,13 @@ if (navEls.viewHistoryBtn) {
 if (navEls.backToScoresBtn) {
   navEls.backToScoresBtn.addEventListener('click', () => {
     goToScores();
+  });
+}
+
+if (navEls.restartGameBtn) {
+  navEls.restartGameBtn.addEventListener('click', () => {
+    // Restart but keep players; reset scores & history
+    resetGame({ keepPlayers: true });
+    goToQuestion();
   });
 }
