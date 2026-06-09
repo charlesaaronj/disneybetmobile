@@ -192,23 +192,6 @@ function enforceMinPot() {
   }
 }
 
-// Reset helpers
-function resetGame({ keepPlayers } = { keepPlayers: true }) {
-  if (keepPlayers) {
-    state.players.forEach(p => {
-      p.currentPoints = clampScore(p.startingPoints);
-    });
-  } else {
-    state.players = [];
-  }
-  state.bets = [];
-  state.pot = 0;
-  state.awardedBonuses = [];
-  enforceMinPot();
-  saveState();
-  render();
-}
-
 // ---------- Screen routing ----------
 function showScreen(id) {
   screenIds.forEach(name => {
@@ -661,7 +644,6 @@ function renderBetRows() {
 
   attachWagerGuards();
 
-  // Ensure default is at least 1 on fresh render
   const inputs = els.betPlayers.querySelectorAll('[data-amount]');
   inputs.forEach(input => {
     const val = Number(input.value);
@@ -780,7 +762,7 @@ function computeBonusPointsForRound(betId) {
 
   const bonuses = [];
 
-  // 1) Hidden author bonus: chosen author and nobody guessed them
+  // 1) Hidden author bonus
   if (correctAuthors.length) {
     const guessedIds = new Set(guesses.map(g => g.guessedAuthorId).filter(Boolean));
     correctAuthors.forEach(authorId => {
@@ -812,7 +794,7 @@ function computeBonusPointsForRound(betId) {
     });
   }
 
-  // 3) Land streak bonus: more than two wins in the same land
+  // 3) Land streak bonus
   if (bet.land) {
     const land = bet.land;
     const resolvedInLand = state.bets.filter(b => b.status === 'resolved' && b.land === land);
@@ -1046,7 +1028,6 @@ function resolveGuessingBet(betId) {
   goToReveal();
 }
 
-// You can keep these modal close handlers in case you still want full-screen view
 els.revealCloseBtn.addEventListener('click', () => {
   els.revealBackdrop.style.display = 'none';
 });
@@ -1613,7 +1594,16 @@ document.getElementById('lockGuessesBtn').addEventListener('click', () => {
 });
 
 document.getElementById('clearAllBtn').addEventListener('click', () => {
-  resetGame({ keepPlayers: false });
+  state.players = [];
+  state.bets = [];
+  state.pot = 0;
+  state.awardedBonuses = [];
+  enforceMinPot();
+  saveState();
+  render();
+  currentAnswerBetId = null;
+  currentAnswerIndex = 0;
+  if (els.revealSummary) els.revealSummary.innerHTML = '';
   goToSetup();
 });
 
@@ -1636,7 +1626,7 @@ if (navEls.toScoresBtn) {
 
 if (navEls.nextRoundBtn) {
   navEls.nextRoundBtn.addEventListener('click', () => {
-    // Clear attraction and land for the next round
+    // Clear attraction, land, and question for the next round
     els.attractionName.value = '';
     els.landName.value = '';
     els.betDescription.value = '';
@@ -1658,8 +1648,28 @@ if (navEls.backToScoresBtn) {
 
 if (navEls.restartGameBtn) {
   navEls.restartGameBtn.addEventListener('click', () => {
-    // Restart but keep players; reset scores & history
-    resetGame({ keepPlayers: true });
-    goToQuestion();
+    // Keep players, reset their points to starting values
+    state.players = (state.players || []).map(p => ({
+      ...p,
+      currentPoints: clampScore(p.startingPoints)
+    }));
+
+    // Wipe rounds, pot, and bonuses
+    state.bets = [];
+    state.pot = 0;
+    state.awardedBonuses = [];
+    enforceMinPot();
+    saveState();
+    render();
+
+    // Clear any in-progress round / summary
+    currentAnswerBetId = null;
+    currentAnswerIndex = 0;
+    if (els.revealSummary) {
+      els.revealSummary.innerHTML = '';
+    }
+
+    // Go back to setup screen
+    goToSetup();
   });
 }
