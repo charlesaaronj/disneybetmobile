@@ -535,12 +535,33 @@ if (els.answerCancelBtn) {
 // Ghost/Random ride fragment answer button
 if (els.answerGhostBtn) {
   els.answerGhostBtn.addEventListener('click', () => {
-    if (typeof window.getRandomRideFragment === 'function') {
-      const text = window.getRandomRideFragment();
-      els.answerInput.value = text;
-    } else {
+    if (typeof window.getRandomRideFragment !== 'function') {
       alertLike('No ride fragments are available right now.');
+      return;
     }
+
+    const bet = state.bets.find(b => b.id === currentAnswerBetId);
+    if (!bet) return;
+
+    const order = Array.isArray(bet.answerOrder) && bet.answerOrder.length
+      ? bet.answerOrder
+      : state.players.map(p => p.id);
+
+    const playerId = order[currentAnswerIndex];
+    const player = state.players.find(p => p.id === playerId);
+    if (!player) {
+      currentAnswerIndex += 1;
+      nextAnswerPrompt();
+      return;
+    }
+
+    const text = window.getRandomRideFragment();
+
+    // Save ghost answer WITHOUT showing it in the textarea
+    bet.answers.push({ id: uid(), playerId: player.id, text });
+    saveState();
+    currentAnswerIndex += 1;
+    nextAnswerPrompt();
   });
 }
 
