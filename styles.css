@@ -143,6 +143,40 @@ textarea {
   max-width: 1300px;
   margin: 0 auto;
   padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Each screen is a vertical stack that fills the width.
+   Only one is visible at a time via .screen--active. */
+.screen {
+  display: none;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.screen--active {
+  display: flex;
+}
+
+/* For things like Start game / Next round buttons at the bottom of a screen */
+.primary-actions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.primary-actions .btn {
+  width: 100%;
 }
 
 /* Topbar */
@@ -245,14 +279,7 @@ h3 {
   border-color: color-mix(in oklab, var(--color-error) 30%, transparent);
 }
 
-/* ---------- Layout & panels ---------- */
-
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.6fr);
-  gap: var(--space-4);
-  align-items: start;
-}
+/* ---------- Panels & simple stacks ---------- */
 
 .stack {
   display: grid;
@@ -550,7 +577,6 @@ h3 {
 /* ---------- Responsive ---------- */
 
 @media (max-width: 900px) {
-  .layout,
   .grid-2,
   .player-bet-row,
   .player-chip,
