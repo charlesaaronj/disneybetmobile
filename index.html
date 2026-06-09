@@ -37,7 +37,7 @@
           <div id="scoreboard" class="scoreboard"></div>
         </article>
 
-        <!-- Bonus points recap -->
+        <!-- NEW: Bonus points recap -->
         <article class="panel">
           <h2>Bonus points</h2>
           <p class="hint">
@@ -80,26 +80,25 @@
           <h2>Pick a question</h2>
           <div class="grid-2">
             <div class="field">
-              <label for="attractionName">Attraction</label>
-              <input
-                id="attractionName"
-                type="text"
-                placeholder="e.g., Space Mountain"
-                list="attractionSuggestions"
-              />
-              <datalist id="attractionSuggestions"></datalist>
-            </div>
+  <label for="attractionName">Attraction</label>
+  <input
+    id="attractionName"
+    type="text"
+    placeholder="e.g., Space Mountain"
+    list="attractionSuggestions"
+  />
+  <datalist id="attractionSuggestions"></datalist>
+</div>
             <div class="field">
-              <label for="landName">Land / Area</label>
-              <input
-                id="landName"
-                type="text"
-                placeholder="e.g., Tomorrowland"
-                list="landSuggestions"
-              />
-              <datalist id="landSuggestions"></datalist>
-            </div>
-          </div>
+  <label for="landName">Land / Area</label>
+  <input
+    id="landName"
+    type="text"
+    placeholder="e.g., Tomorrowland"
+    list="landSuggestions"
+  />
+  <datalist id="landSuggestions"></datalist>
+</div>
           <div class="field">
             <label for="betDescription">Question about this ride</label>
             <textarea id="betDescription" placeholder="Type your own question. All three fields are required."></textarea>
@@ -130,7 +129,7 @@
 
         <article class="panel">
           <h2>Rounds</h2>
-          <div id="openBetMetrics" class="totals"></div>
+          <div id="openBetMetrics"l class="totals"></div>
           <div id="openBets" class="bet-list"></div>
         </article>
 
@@ -139,7 +138,7 @@
           <div id="historyList" class="history-list"></div>
         </article>
 
-        <!-- Bonus library -->
+        <!-- NEW: Bonus library -->
         <article class="panel">
           <h2>Bonus library</h2>
           <p class="hint">
@@ -165,61 +164,56 @@
 
   <!-- Answer collection modal -->
   <div id="answerModalBackdrop" class="modal-backdrop" style="display:none;">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="answerModalTitle">
-      <h3 id="answerModalTitle" class="modal-title">Pass the phone</h3>
-      <p class="hint" id="answerModalPrompt"></p>
-      <div class="field">
-        <label id="answerModalPlayerLabel"></label>
-        <textarea id="answerModalInput"></textarea>
-      </div>
-      <div class="small-actions">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          id="answerGhostBtn"
-        >
-          Use random ride fragment
-        </button>
-        <button
-          type="button"
-          class="btn btn-primary"
-          id="answerModalSaveBtn"
-        >
-          Save and pass
-        </button>
-        <button
-          type="button"
-          class="btn btn-secondary"
-          id="answerModalCancelBtn"
-        >
-          Cancel
-        </button>
-      </div>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="answerModalTitle">
+    <h3 id="answerModalTitle" class="modal-title">Pass the phone</h3>
+    <p class="hint" id="answerModalPrompt"></p>
+    <div class="field">
+      <label id="answerModalPlayerLabel"></label>
+      <textarea id="answerModalInput"></textarea>
+    </div>
+    <div class="small-actions">
+      <button
+        type="button"
+        class="btn btn-primary"
+        id="answerModalSaveBtn"
+      >
+        Save and pass
+      </button>
+      <button
+        type="button"
+        class="btn btn-secondary"
+        id="answerModalCancelBtn"
+      >
+        Cancel
+      </button>
     </div>
   </div>
-
-  <!-- Give points modal -->
+</div>
+  
+ <!-- Give points modal -->
   <div id="giveHunnyModalBackdrop" class="modal-backdrop" style="display:none;">
-    <div class="modal">
-      <h3>Give from Hunny Pot</h3>
-      <p id="giveHunnyModalMessage" class="hint"></p>
-      <div class="field">
-        <label for="giveHunnyModalInput">Points to give</label>
-        <input
-          id="giveHunnyModalInput"
-          type="number"
-          min="1"
-          step="1"
-          inputmode="numeric"
-          pattern="[0-9]*"
-        />
-      </div>
-      <div class="small-actions">
-        <button class="btn btn-secondary" type="button" id="giveHunnyModalCancel">Cancel</button>
-        <button class="btn btn-primary" type="button" id="giveHunnyModalConfirm">Give points</button>
-      </div>
+  <div class="modal">
+    <h3>Give from Hunny Pot</h3>
+    <p id="giveHunnyModalMessage" class="hint">
+      <!-- JS will fill this with "How many points do you want to give to X..." -->
+    </p>
+    <div class="field">
+      <label for="giveHunnyModalInput">Points to give</label>
+      <input
+        id="giveHunnyModalInput"
+        type="number"
+        min="1"
+        step="1"
+        inputmode="numeric"
+        pattern="[0-9]*"
+      />
+    </div>
+    <div class="small-actions">
+      <button class="btn btn-secondary" type="button" id="giveHunnyModalCancel">Cancel</button>
+      <button class="btn btn-primary" type="button" id="giveHunnyModalConfirm">Give points</button>
     </div>
   </div>
+</div>
 
   <!-- Add points modal -->
   <div id="addHunnyModalBackdrop" class="modal-backdrop" style="display:none;">
@@ -257,10 +251,9 @@
     </div>
   </div>
 
-  <!-- Load your JS: parks data, questions, ghost fragments, app -->
+  <!-- Load your JS: parks data, questions, app -->
   <script src="parks-data.js"></script>
   <script src="questions.js"></script>
-  <script src="ghostRideFragments.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
