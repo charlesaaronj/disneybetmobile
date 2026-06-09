@@ -184,7 +184,7 @@
               type="button"
               id="randomBetBtn"
             >
-              Generate new question
+              Generate question
             </button>
             <button
               class="btn btn-primary"
@@ -260,7 +260,6 @@
       <section id="screen-scores" class="screen">
         <article class="panel">
           <h2>Scores</h2>
-          <!-- You can reuse the same scoreboard element or render a summary copy -->
           <div id="scoreboardScoresScreen" class="scoreboard"></div>
         </article>
 
@@ -271,8 +270,6 @@
           </p>
           <div id="qualifiedBonusPanelScores" class="bonus-earned-list"></div>
         </article>
-
-        <!-- Hunny Pot actions are triggered via modals, but you might add buttons here later -->
 
         <div class="primary-actions">
           <button
@@ -288,6 +285,13 @@
             id="viewHistoryBtn"
           >
             Round info &amp; history
+          </button>
+          <button
+            type="button"
+            class="btn btn-danger"
+            id="restartGameBtn"
+          >
+            Restart game
           </button>
         </div>
       </section>
@@ -391,7 +395,7 @@
           class="btn btn-secondary"
           id="answerModalGhostBtn"
         >
-          Use Ghost Answer
+          Use random ride idea
         </button>
         <button
           type="button"
