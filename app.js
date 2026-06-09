@@ -80,7 +80,26 @@ const els = {
 
   // Bonus-related panels
   qualifiedBonusPanel: document.getElementById('qualifiedBonusPanel'),
-  bonusLibrary: document.getElementById('bonusLibrary')
+  bonusLibrary: document.getElementById('bonusLibrary'),
+
+  // Scores / bonuses on Scores screen (if present)
+  scoreboardScoresScreen: document.getElementById('scoreboardScoresScreen'),
+  qualifiedBonusPanelScores: document.getElementById('qualifiedBonusPanelScores')
+};
+
+// ---------- Screen elements (app flow) ----------
+const screenIds = ['setup', 'question', 'wager', 'reveal', 'scores', 'history'];
+const screens = {};
+screenIds.forEach(id => {
+  screens[id] = document.getElementById(`screen-${id}`);
+});
+
+const navEls = {
+  startGameBtn: document.getElementById('startGameBtn'),
+  toScoresBtn: document.getElementById('toScoresBtn'),
+  nextRoundBtn: document.getElementById('nextRoundBtn'),
+  viewHistoryBtn: document.getElementById('viewHistoryBtn'),
+  backToScoresBtn: document.getElementById('backToScoresBtn')
 };
 
 // ---------- Small helpers ----------
@@ -158,6 +177,44 @@ function getAvailablePoints(playerId) {
 function getPlayerName(id) {
   const p = state.players.find(x => x.id === id);
   return p ? p.name : 'Unknown';
+}
+
+// ---------- Screen routing ----------
+function showScreen(id) {
+  screenIds.forEach(name => {
+    const el = screens[name];
+    if (!el) return;
+    el.classList.toggle('screen--active', name === id);
+  });
+}
+
+function goToSetup() {
+  showScreen('setup');
+}
+
+function goToQuestion() {
+  showScreen('question');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goToWager() {
+  showScreen('wager');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goToReveal() {
+  showScreen('reveal');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goToScores() {
+  showScreen('scores');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goToHistory() {
+  showScreen('history');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ---------- Players ----------
@@ -245,7 +302,6 @@ function addToPot() {
       alertLike('Enter a number greater than 0.');
       return;
     }
-
     state.pot += amount;
     saveState();
     render();
@@ -401,6 +457,8 @@ function nextAnswerPrompt() {
     saveState();
     hideAnswerModal();
     render();
+    // Once answers are done and we're ready to guess, move to wager screen
+    goToWager();
     return;
   }
 
@@ -543,7 +601,6 @@ function attachWagerGuards() {
     const playerId = row.dataset.playerId;
     const input = row.querySelector('[data-amount]');
     if (!input) return;
-
     input.addEventListener('input', () => {
       const available = getAvailablePoints(playerId);
       let value = Number(input.value) || 0;
@@ -784,7 +841,6 @@ function resolveGuessingBet(betId) {
       amount: b.amount,
       reason: b.reason
     }));
-
     state.awardedBonuses.unshift(...records);
   } else {
     bet.bonusAwards = [];
@@ -890,6 +946,9 @@ function resolveGuessingBet(betId) {
   els.revealSub.textContent = 'Here is who said the answer and how the points changed.';
   els.revealBody.innerHTML = parts.join('');
   els.revealBackdrop.style.display = 'flex';
+
+  // After we show the reveal modal, we also move the main app to the Reveal screen
+  goToReveal();
 }
 
 els.revealCloseBtn.addEventListener('click', () => {
@@ -950,11 +1009,14 @@ function renderPlayers() {
 function renderScoreboard() {
   if (!state.players.length) {
     els.scoreboard.innerHTML = '<div class="empty">Scores will appear here once players are added.</div>';
+    if (els.scoreboardScoresScreen) {
+      els.scoreboardScoresScreen.innerHTML = '<div class="empty">Scores will appear here once players are added.</div>';
+    }
     return;
   }
 
   const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
-  els.scoreboard.innerHTML = ranked.map((p, i) => `
+  const cardsHtml = ranked.map((p, i) => `
     <div class="score-card">
       <div class="hint">${i === 0 ? 'Leader' : 'Place ' + (i + 1)}</div>
       <div class="score-name">${escapeHtml(p.name)}</div>
@@ -962,6 +1024,11 @@ function renderScoreboard() {
       <div class="hint">Started with ${p.startingPoints}</div>
     </div>
   `).join('');
+
+  els.scoreboard.innerHTML = cardsHtml;
+  if (els.scoreboardScoresScreen) {
+    els.scoreboardScoresScreen.innerHTML = cardsHtml;
+  }
 }
 
 function renderOpenMetrics() {
@@ -1216,15 +1283,20 @@ function getRandomQuestionForAttractionWithFallback() {
 
 // Bonus recap
 function renderQualifiedBonuses() {
-  if (!els.qualifiedBonusPanel) return;
+  if (!els.qualifiedBonusPanel && !els.qualifiedBonusPanelScores) return;
 
   if (!state.awardedBonuses.length) {
-    els.qualifiedBonusPanel.innerHTML =
-      '<div class="empty">No bonuses awarded yet.</div>';
+    const emptyHtml = '<div class="empty">No bonuses awarded yet.</div>';
+    if (els.qualifiedBonusPanel) {
+      els.qualifiedBonusPanel.innerHTML = emptyHtml;
+    }
+    if (els.qualifiedBonusPanelScores) {
+      els.qualifiedBonusPanelScores.innerHTML = emptyHtml;
+    }
     return;
   }
 
-  els.qualifiedBonusPanel.innerHTML = state.awardedBonuses
+  const cardsHtml = state.awardedBonuses
     .slice(0, 6)
     .map(award => `
       <div class="earned-card">
@@ -1238,6 +1310,13 @@ function renderQualifiedBonuses() {
       </div>
     `)
     .join('');
+
+  if (els.qualifiedBonusPanel) {
+    els.qualifiedBonusPanel.innerHTML = cardsHtml;
+  }
+  if (els.qualifiedBonusPanelScores) {
+    els.qualifiedBonusPanelScores.innerHTML = cardsHtml;
+  }
 }
 
 // Bonus library
@@ -1296,6 +1375,9 @@ function render() {
 function reuseQuestion(betId) {
   const bet = state.bets.find(b => b.id === betId);
   if (!bet) return;
+
+  // Ensure we are looking at the Question screen when reusing
+  goToQuestion();
 
   els.attractionName.value = bet.attraction || '';
   els.landName.value = bet.land || '';
@@ -1366,14 +1448,26 @@ els.playerName.addEventListener('keydown', e => {
 });
 
 window.addEventListener('load', () => {
-  els.playerName.focus();
   loadState();
   render();
   setupAttractionSuggestions();
+
+  if (!state.players || state.players.length === 0) {
+    goToSetup();
+    els.playerName.focus();
+  } else {
+    goToQuestion();
+  }
 });
 
 document.getElementById('createBetBtn').addEventListener('click', () => {
+  const beforeCount = state.bets.length;
   createBet();
+  const afterCount = state.bets.length;
+  if (afterCount > beforeCount) {
+    // Answers phase will begin via startAnswerPhase; wagering comes after that,
+    // so we don't immediately switch screens here.
+  }
 });
 
 document.getElementById('randomBetBtn').addEventListener('click', () => {
@@ -1414,4 +1508,40 @@ document.getElementById('clearAllBtn').addEventListener('click', () => {
   state.awardedBonuses = [];
   saveState();
   render();
+  goToSetup();
 });
+
+// Screen navigation buttons
+if (navEls.startGameBtn) {
+  navEls.startGameBtn.addEventListener('click', () => {
+    if (!state.players || state.players.length === 0) {
+      alertLike('Add at least one family member before starting the game.');
+      return;
+    }
+    goToQuestion();
+  });
+}
+
+if (navEls.toScoresBtn) {
+  navEls.toScoresBtn.addEventListener('click', () => {
+    goToScores();
+  });
+}
+
+if (navEls.nextRoundBtn) {
+  navEls.nextRoundBtn.addEventListener('click', () => {
+    goToQuestion();
+  });
+}
+
+if (navEls.viewHistoryBtn) {
+  navEls.viewHistoryBtn.addEventListener('click', () => {
+    goToHistory();
+  });
+}
+
+if (navEls.backToScoresBtn) {
+  navEls.backToScoresBtn.addEventListener('click', () => {
+    goToScores();
+  });
+}
