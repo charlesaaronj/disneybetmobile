@@ -11,7 +11,7 @@ const state = {
     {
       id: 'noGuessAuthor',
       name: 'No one guessed the author',
-      points: 3, // updated from 1 to 3
+      points: 3,
       active: true,
       description: 'If nobody guesses correctly, the real author gets +3 points.'
     },
@@ -55,6 +55,7 @@ const els = {
   answerInput: document.getElementById('answerModalInput'),
   answerSaveBtn: document.getElementById('answerModalSaveBtn'),
   answerCancelBtn: document.getElementById('answerModalCancelBtn'),
+  answerGhostBtn: document.getElementById('answerModalGhostBtn'),
 
   revealBackdrop: document.getElementById('revealModalBackdrop'),
   revealTitle: document.getElementById('revealModalTitle'),
@@ -179,6 +180,14 @@ function getPlayerName(id) {
   return p ? p.name : 'Unknown';
 }
 
+// Keep Hunny Pot at least number of players
+function enforceMinPot() {
+  const minPot = state.players.length;
+  if (state.pot < minPot) {
+    state.pot = minPot;
+  }
+}
+
 // ---------- Screen routing ----------
 function showScreen(id) {
   screenIds.forEach(name => {
@@ -225,6 +234,7 @@ function addPlayer(name, startingPoints) {
     startingPoints: clampScore(startingPoints),
     currentPoints: clampScore(startingPoints)
   });
+  enforceMinPot();
   saveState();
   render();
 }
@@ -234,6 +244,7 @@ function removePlayer(playerId) {
   state.bets = state.bets.filter(
     bet => !bet.guesses?.some(g => g.playerId === playerId)
   );
+  enforceMinPot();
   saveState();
   render();
 }
@@ -269,6 +280,7 @@ function giveFromPot(playerId) {
     if (amount > max) amount = max;
 
     state.pot -= amount;
+    enforceMinPot();
     player.currentPoints = clampScore(player.currentPoints + amount);
     saveState();
     render();
@@ -303,6 +315,7 @@ function addToPot() {
       return;
     }
     state.pot += amount;
+    enforceMinPot();
     saveState();
     render();
     close();
@@ -333,6 +346,7 @@ function clearPot() {
 
   const onConfirm = () => {
     state.pot = 0;
+    enforceMinPot();
     saveState();
     render();
     close();
@@ -359,8 +373,8 @@ function getCurrentGuessingBet() {
 }
 
 function createBet() {
-  if (!state.players.length) {
-    alertLike('Add family members before starting a round.');
+  if (!state.players || state.players.length < 2) {
+    alertLike('You need at least two family members to play.');
     return;
   }
 
@@ -457,7 +471,6 @@ function nextAnswerPrompt() {
     saveState();
     hideAnswerModal();
     render();
-    // Once answers are done and we're ready to guess, move to wager screen
     goToWager();
     return;
   }
@@ -516,6 +529,18 @@ els.answerSaveBtn.addEventListener('click', () => {
 if (els.answerCancelBtn) {
   els.answerCancelBtn.addEventListener('click', () => {
     hideAnswerModal();
+  });
+}
+
+// Ghost/Random ride fragment answer button
+if (els.answerGhostBtn) {
+  els.answerGhostBtn.addEventListener('click', () => {
+    if (typeof window.getRandomRideFragment === 'function') {
+      const text = window.getRandomRideFragment();
+      els.answerInput.value = text;
+    } else {
+      alertLike('No ride fragments are available right now.');
+    }
   });
 }
 
@@ -846,6 +871,7 @@ function resolveGuessingBet(betId) {
     bet.bonusAwards = [];
   }
 
+  enforceMinPot();
   saveState();
   render();
 
@@ -914,6 +940,7 @@ function resolveGuessingBet(betId) {
       if (hardCap > 0) {
         last.currentPoints = clampScore(last.currentPoints + hardCap);
         state.pot -= hardCap;
+        enforceMinPot();
 
         parts.push(
           `<div class="hint" style="margin-top:.5rem;">Catch-up: Gave ${hardCap} points from the Hunny Pot to ${escapeHtml(last.name)} (without passing anyone).</div>`
@@ -947,7 +974,6 @@ function resolveGuessingBet(betId) {
   els.revealBody.innerHTML = parts.join('');
   els.revealBackdrop.style.display = 'flex';
 
-  // After we show the reveal modal, we also move the main app to the Reveal screen
   goToReveal();
 }
 
@@ -1008,9 +1034,10 @@ function renderPlayers() {
 
 function renderScoreboard() {
   if (!state.players.length) {
-    els.scoreboard.innerHTML = '<div class="empty">Scores will appear here once players are added.</div>';
+    const empty = '<div class="empty">Scores will appear here once players are added.</div>';
+    els.scoreboard.innerHTML = empty;
     if (els.scoreboardScoresScreen) {
-      els.scoreboardScoresScreen.innerHTML = '<div class="empty">Scores will appear here once players are added.</div>';
+      els.scoreboardScoresScreen.innerHTML = empty;
     }
     return;
   }
@@ -1376,7 +1403,6 @@ function reuseQuestion(betId) {
   const bet = state.bets.find(b => b.id === betId);
   if (!bet) return;
 
-  // Ensure we are looking at the Question screen when reusing
   goToQuestion();
 
   els.attractionName.value = bet.attraction || '';
@@ -1413,16 +1439,29 @@ function setupAttractionSuggestions() {
     const match = attractions.find(a => a.name.toLowerCase() === name);
     if (match) {
       els.landName.value = match.land;
+
+      // Show a parks-data/global question when selecting an attraction
+      const q = getRandomQuestionForAttractionWithFallback();
+      if (q) {
+        els.betDescription.value = q;
+      }
     }
   });
 
   els.attractionName.addEventListener('blur', () => {
-    if (els.landName.value.trim()) return;
+    const currentLand = els.landName.value.trim();
     const name = els.attractionName.value.trim().toLowerCase();
     if (!name) return;
     const match = attractions.find(a => a.name.toLowerCase() === name);
-    if (match) {
+    if (match && !currentLand) {
       els.landName.value = match.land;
+    }
+
+    if (!els.betDescription.value.trim()) {
+      const q = getRandomQuestionForAttractionWithFallback();
+      if (q) {
+        els.betDescription.value = q;
+      }
     }
   });
 }
@@ -1449,12 +1488,13 @@ els.playerName.addEventListener('keydown', e => {
 
 window.addEventListener('load', () => {
   loadState();
+  enforceMinPot();
   render();
   setupAttractionSuggestions();
 
-  if (!state.players || state.players.length === 0) {
+  if (!state.players || state.players.length < 2) {
     goToSetup();
-    els.playerName.focus();
+    els.playerName?.focus();
   } else {
     goToQuestion();
   }
@@ -1465,17 +1505,19 @@ document.getElementById('createBetBtn').addEventListener('click', () => {
   createBet();
   const afterCount = state.bets.length;
   if (afterCount > beforeCount) {
-    // Answers phase will begin via startAnswerPhase; wagering comes after that,
-    // so we don't immediately switch screens here.
+    // Answers phase starts automatically
   }
 });
 
+// Generate: global questions.js only
 document.getElementById('randomBetBtn').addEventListener('click', () => {
-  const q = getRandomQuestionForAttractionWithFallback();
-  if (!q) {
+  const pool = window.DISNEY_LINE_QUESTIONS || [];
+  if (!pool.length) {
     alertLike('No question ideas are available yet.');
     return;
   }
+  const idx = Math.floor(Math.random() * pool.length);
+  const q = pool[idx];
   els.betDescription.value = q;
 });
 
@@ -1506,6 +1548,7 @@ document.getElementById('clearAllBtn').addEventListener('click', () => {
   state.bets = [];
   state.pot = 0;
   state.awardedBonuses = [];
+  enforceMinPot();
   saveState();
   render();
   goToSetup();
@@ -1514,8 +1557,8 @@ document.getElementById('clearAllBtn').addEventListener('click', () => {
 // Screen navigation buttons
 if (navEls.startGameBtn) {
   navEls.startGameBtn.addEventListener('click', () => {
-    if (!state.players || state.players.length === 0) {
-      alertLike('Add at least one family member before starting the game.');
+    if (!state.players || state.players.length < 2) {
+      alertLike('Add at least two family members before starting the game.');
       return;
     }
     goToQuestion();
