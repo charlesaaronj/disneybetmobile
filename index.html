@@ -1,556 +1,471 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Who Said Diz</title>
-  <style>
-    :root {
-      --bg: #fff8e8;
-      --card: #ffffff;
-      --card-2: #fff3cd;
-      --text: #3b2f1f;
-      --muted: #7a6a55;
-      --line: #e7d7b8;
-      --accent: #f0b429;
-      --accent-dark: #d99400;
-      --danger: #b54747;
-      --danger-dark: #963c3c;
-      --success: #3d8b5c;
-      --shadow: 0 10px 30px rgba(81, 57, 20, 0.08);
-      --radius: 18px;
-    }
 
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(180deg, #fff8e8 0%, #fffdf7 100%);
-      color: var(--text);
-    }
-
-    .app {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-
-    .hero {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      padding: 24px;
-      box-shadow: var(--shadow);
-      margin-bottom: 20px;
-    }
-
-    .hero h1 {
-      margin: 0 0 8px;
-      font-size: 2rem;
-    }
-
-    .hero p {
-      margin: 0;
-      color: var(--muted);
-    }
-
-    .grid {
-      display: grid;
-      gap: 20px;
-    }
-
-    .grid-2 {
-      grid-template-columns: 1fr 1fr;
-    }
-
-    .grid-3 {
-      grid-template-columns: 1.2fr 1fr 1fr;
-    }
-
-    .panel {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
-    }
-
-    .panel h2 {
-      margin: 0 0 14px;
-      font-size: 1.1rem;
-    }
-
-    .stack {
-      display: grid;
-      gap: 12px;
-    }
-
-    .field {
-      display: grid;
-      gap: 6px;
-    }
-
-    .field label {
-      font-size: 0.92rem;
-      font-weight: 700;
-    }
-
-    input, select, textarea, button {
-      font: inherit;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px 14px;
-      background: #fffdf7;
-      color: var(--text);
-    }
-
-    textarea {
-      min-height: 110px;
-      resize: vertical;
-    }
-
-    .actions,
-    .small-actions,
-    .small-actions-hunny {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .btn {
-      border: 0;
-      border-radius: 999px;
-      padding: 10px 14px;
-      cursor: pointer;
-      font-weight: 700;
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #412d00;
-    }
-
-    .btn-primary:hover {
-      background: var(--accent-dark);
-      color: white;
-    }
-
-    .btn-secondary {
-      background: #f7edd3;
-      color: var(--text);
-      border: 1px solid var(--line);
-    }
-
-    .btn-danger {
-      background: var(--danger);
-      color: white;
-    }
-
-    .btn-danger:hover {
-      background: var(--danger-dark);
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      padding: 7px 11px;
-      font-size: 0.88rem;
-      background: #f7edd3;
-      border: 1px solid var(--line);
-      color: var(--text);
-    }
-
-    .pill-open {
-      background: #fff3cd;
-    }
-
-    .pot-pill-total {
-      background: #ffefb3;
-      font-weight: 700;
-    }
-
-    .hint {
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .empty {
-      border: 1px dashed var(--line);
-      border-radius: 14px;
-      padding: 16px;
-      color: var(--muted);
-      background: #fffdf8;
-    }
-
-    .player-chip,
-    .bet-card,
-    .history-item,
-    .earned-card,
-    .bonus-card,
-    .score-card {
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 14px;
-      background: #fffdfa;
-    }
-
-    .player-chip + .player-chip,
-    .bet-card + .bet-card,
-    .history-item + .history-item,
-    .earned-card + .earned-card,
-    .bonus-card + .bonus-card {
-      margin-top: 10px;
-    }
-
-    .scoreboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 12px;
-    }
-
-    .score-name {
-      font-size: 1.05rem;
-      font-weight: 700;
-      margin-top: 4px;
-    }
-
-    .score-points {
-      font-size: 1.7rem;
-      font-weight: 800;
-      margin: 6px 0;
-    }
-
-    .metric-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-    }
-
-    .metric {
-      background: #fffdfa;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 14px;
-      display: grid;
-      gap: 6px;
-    }
-
-    .metric-value {
-      font-size: 1.5rem;
-      font-weight: 800;
-    }
-
-    .bet-head,
-    .earned-head,
-    .bonus-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: flex-start;
-    }
-
-    .bet-meta {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      gap: 8px;
-    }
-
-    .player-bet-row {
-      display: grid;
-      grid-template-columns: 1.1fr 1fr 0.8fr;
-      gap: 12px;
-      align-items: end;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .player-bet-row:last-child {
-      border-bottom: 0;
-      padding-bottom: 0;
-    }
-
-    .player-bet-row:first-child {
-      padding-top: 0;
-    }
-
-    .bonus-points {
-      font-weight: 800;
-      color: var(--success);
-      white-space: nowrap;
-    }
-
-    .reveal-section-title {
-      font-weight: 800;
-      margin-bottom: 4px;
-    }
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(43, 28, 10, 0.45);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 1000;
-    }
-
-    .modal {
-      width: min(560px, 100%);
-      background: var(--card);
-      border-radius: 22px;
-      border: 1px solid var(--line);
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
-      padding: 20px;
-    }
-
-    .modal h3 {
-      margin: 0 0 10px;
-      font-size: 1.2rem;
-    }
-
-    .modal p {
-      margin: 0 0 12px;
-      color: var(--muted);
-      white-space: pre-line;
-    }
-
-    .modal-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    @media (max-width: 900px) {
-      .grid-2,
-      .grid-3,
-      .metric-row,
-      .player-bet-row {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+  <link rel="preconnect" href="https://api.fontshare.com" />
+  <link
+    href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700&f[]=satoshi@400,500,700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <a class="sr-only" href="#main">Skip to content</a>
+
   <div class="app">
-    <section class="hero">
-      <h1>Who Said Diz</h1>
-      <p>Collect answers, guess who said it, wager points, and use the Hunny Pot for fun twists.</p>
-    </section>
-
-    <section class="grid grid-3">
-      <div class="panel">
-        <h2>Add family members</h2>
-        <div class="stack">
-          <div class="field">
-            <label for="playerName">Name</label>
-            <input id="playerName" type="text" placeholder="Enter player name" />
-          </div>
-          <div class="field">
-            <label for="playerPoints">Starting points</label>
-            <input id="playerPoints" type="number" min="0" step="1" value="10" />
-          </div>
-          <div class="actions">
-            <button id="addPlayerBtn" class="btn btn-primary" type="button">Add Player</button>
-            <button id="clearAllBtn" class="btn btn-danger" type="button">Clear All</button>
-          </div>
+    <header class="topbar">
+      <div class="brand">
+        <svg
+          class="logo"
+          viewBox="0 0 64 64"
+          fill="none"
+          aria-label="Who Said Diz logo"
+        >
+          <path
+            d="M14 48c4-13 14-22 28-25-2 11-9 21-20 28"
+            stroke="currentColor"
+            stroke-width="4"
+            stroke-linecap="round"
+          />
+          <circle
+            cx="22"
+            cy="20"
+            r="6"
+            stroke="currentColor"
+            stroke-width="4"
+          />
+          <circle
+            cx="40"
+            cy="16"
+            r="5"
+            stroke="currentColor"
+            stroke-width="4"
+          />
+          <path
+            d="M18 50h30"
+            stroke="currentColor"
+            stroke-width="4"
+            stroke-linecap="round"
+          />
+        </svg>
+        <div>
+          <h1>Who Said Diz</h1>
+          <p class="sub">Just a way to pass the time standing in a queue line</p>
         </div>
       </div>
+    </header>
 
-      <div class="panel">
-        <h2>Round setup</h2>
-        <div class="stack">
-          <div class="field">
-            <label for="attractionName">Attraction</label>
-            <input id="attractionName" list="attractionSuggestions" type="text" placeholder="Ex: Haunted Mansion" />
-            <datalist id="attractionSuggestions"></datalist>
+    <main id="main" class="app-main">
+      <section id="screen-setup" class="screen screen--active">
+        <article class="panel">
+          <h2>Scores</h2>
+          <div id="scoreboard" class="scoreboard"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Bonus points</h2>
+          <p class="hint">Recently awarded bonuses will show here.</p>
+          <div id="qualifiedBonusPanel" class="bonus-earned-list"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Family setup</h2>
+          <div class="grid-2">
+            <div class="field">
+              <label for="playerName">Family member</label>
+              <input id="playerName" type="text" placeholder="Add a name" />
+            </div>
+            <div class="field">
+              <label for="playerPoints">Starting points</label>
+              <input
+                id="playerPoints"
+                type="number"
+                min="0"
+                step="1"
+                value="10"
+              />
+            </div>
           </div>
 
-          <div class="field">
-            <label for="landName">Land</label>
-            <input id="landName" list="landSuggestions" type="text" placeholder="Ex: Frontierland" />
-            <datalist id="landSuggestions"></datalist>
+          <div class="small-actions">
+            <button class="btn btn-primary" type="button" id="addPlayerBtn">
+              Add family member
+            </button>
+            <button class="btn btn-danger" type="button" id="clearAllBtn">
+              Clear everything
+            </button>
           </div>
 
-          <div class="field">
-            <label for="betDescription">Question</label>
-            <textarea id="betDescription" placeholder="Type the question for this round"></textarea>
-          </div>
+          <p class="footer-note">
+            Use different starting points for kids, adults, or bonus rounds if you want handicaps.
+          </p>
+        </article>
 
-          <div class="actions">
-            <button id="createBetBtn" class="btn btn-primary" type="button">Create Round</button>
-            <button id="randomBetBtn" class="btn btn-secondary" type="button">Random Question</button>
-            <button id="clearBetFormBtn" class="btn btn-secondary" type="button">Clear Form</button>
-          </div>
+        <article class="panel">
+          <h2>Players</h2>
+          <p class="hint">Give someone a few points back so they can keep playing.</p>
+          <div id="playersList" class="players"></div>
+        </article>
+
+        <div class="primary-actions">
+          <button type="button" class="btn btn-primary" id="startGameBtn">
+            Start game
+          </button>
         </div>
-      </div>
+      </section>
 
-      <div class="panel">
-        <h2>Selected answer</h2>
-        <div id="selectedAnswerPanel" class="stack"></div>
-      </div>
-    </section>
+      <section id="screen-question" class="screen">
+        <article class="panel">
+          <h2>Pick a question</h2>
 
-    <section class="grid grid-2" style="margin-top: 20px;">
-      <div class="panel">
-        <h2>Players & Hunny Pot</h2>
-        <div id="playersList"></div>
-      </div>
+          <div class="grid-2">
+            <div class="field">
+              <label for="attractionName">Attraction</label>
+              <input
+                id="attractionName"
+                type="text"
+                placeholder="e.g., Space Mountain"
+                list="attractionSuggestions"
+              />
+              <datalist id="attractionSuggestions"></datalist>
+            </div>
 
-      <div class="panel">
-        <h2>Scoreboard</h2>
-        <div id="scoreboard" class="scoreboard-grid"></div>
-      </div>
-    </section>
+            <div class="field">
+              <label for="landName">Land / Area</label>
+              <input
+                id="landName"
+                type="text"
+                placeholder="e.g., Tomorrowland"
+                list="landSuggestions"
+              />
+              <datalist id="landSuggestions"></datalist>
+            </div>
+          </div>
 
-    <section class="panel" style="margin-top: 20px;">
-      <h2>Round metrics</h2>
-      <div id="openBetMetrics" class="metric-row"></div>
-    </section>
+          <div class="field">
+            <label for="betDescription">Question about this ride</label>
+            <textarea
+              id="betDescription"
+              placeholder="Type your own question. Attraction, land, and question are all required."
+            ></textarea>
+          </div>
 
-    <section class="grid grid-2" style="margin-top: 20px;">
-      <div class="panel">
-        <h2>Guessing & wagering</h2>
-        <div id="betPlayers"></div>
-        <div class="actions" style="margin-top: 14px;">
-          <button id="lockGuessesBtn" class="btn btn-primary" type="button">Lock Guesses & Resolve</button>
+          <p class="hint starterHint">
+            Once your question is ready, tap Answer to pass the phone around.
+          </p>
+
+          <div class="small-actions">
+            <button class="btn btn-primary" type="button" id="createBetBtn">
+              Answer
+            </button>
+            <button class="btn btn-secondary" type="button" id="randomBetBtn">
+              New question
+            </button>
+            <button class="btn btn-secondary" type="button" id="clearBetFormBtn">
+              Clear
+            </button>
+          </div>
+        </article>
+      </section>
+
+      <section id="screen-wager" class="screen">
+        <article class="panel">
+          <h2>Selected answer</h2>
+          <div id="selectedAnswerPanel" class="stack">
+            <div class="empty">
+              The selected answer and question will appear here once a round reaches guessing.
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h2>Wagers</h2>
+          <div id="betPlayers" class="players">
+            <div class="empty">
+              Wager choices will appear here once a round reaches guessing.
+            </div>
+          </div>
+
+          <div class="small-actions">
+            <button class="btn btn-primary" type="button" id="lockGuessesBtn">
+              Lock wagers
+            </button>
+          </div>
+        </article>
+      </section>
+
+      <section id="screen-reveal" class="screen">
+        <article class="panel">
+          <h2>Round result</h2>
+          <div id="revealSummary" class="reveal-summary"></div>
+
+          <div class="small-actions">
+            <button type="button" class="btn btn-primary" id="toScoresBtn">
+              Review scores
+            </button>
+          </div>
+        </article>
+      </section>
+
+      <section id="screen-scores" class="screen">
+        <article class="panel">
+          <h2>Scores</h2>
+          <div id="scoreboardScoresScreen" class="scoreboard"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Bonus points</h2>
+          <p class="hint">Recently awarded bonuses will show here.</p>
+          <div id="qualifiedBonusPanelScores" class="bonus-earned-list"></div>
+        </article>
+
+        <div class="primary-actions">
+          <button type="button" class="btn btn-primary" id="nextRoundBtn">
+            Next round
+          </button>
+          <button type="button" class="btn btn-secondary" id="viewHistoryBtn">
+            Round info &amp; history
+          </button>
+          <button type="button" class="btn btn-danger" id="restartGameBtn">
+            Restart game
+          </button>
         </div>
-      </div>
+      </section>
 
-      <div class="panel">
-        <h2>Active rounds</h2>
-        <div id="openBets"></div>
-      </div>
-    </section>
+      <section id="screen-history" class="screen">
+        <article class="panel">
+          <h2>Rounds</h2>
+          <div id="openBetMetrics" class="totals"></div>
+          <div id="openBets" class="bet-list"></div>
+        </article>
 
-    <section class="grid grid-2" style="margin-top: 20px;">
-      <div class="panel">
-        <h2>Round history</h2>
-        <div id="historyList"></div>
-      </div>
+        <article class="panel">
+          <h2>Round history</h2>
+          <p class="hint">This screen also shows Hunny Pot controls between questions.</p>
+          <div id="historyList" class="history-list"></div>
+        </article>
 
-      <div class="stack">
-        <div class="panel">
-          <h2>Bonus recap</h2>
-          <div id="qualifiedBonusPanel"></div>
-        </div>
-
-        <div class="panel">
+        <article class="panel">
           <h2>Bonus library</h2>
-          <div id="bonusLibrary"></div>
+          <p class="hint">
+            Use these when someone qualifies for a bonus.
+          </p>
+          <div id="bonusLibrary" class="bonus-list"></div>
+        </article>
+
+        <div class="primary-actions">
+          <button type="button" class="btn btn-primary" id="backToScoresBtn">
+            Back to scores
+          </button>
         </div>
-      </div>
-    </section>
+      </section>
+    </main>
   </div>
 
-  <!-- Answer Modal -->
-  <div id="answerModalBackdrop" class="modal-backdrop">
-    <div class="modal">
-      <h3>Answer this round</h3>
-      <p id="answerModalPrompt"></p>
+  <div
+    id="clearHunnyModalBackdrop"
+    class="modal-backdrop"
+    style="display:none;"
+  >
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="clearHunnyModalTitle"
+      aria-describedby="clearHunnyModalMessage"
+    >
+      <h3 id="clearHunnyModalTitle" class="modal-title">Clear Hunny Pot</h3>
+      <p class="hint" id="clearHunnyModalMessage"></p>
+      <div class="small-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="clearHunnyModalCancel"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          id="clearHunnyModalConfirm"
+        >
+          Clear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div
+    id="answerModalBackdrop"
+    class="modal-backdrop"
+    style="display:none;"
+  >
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="answerModalTitle"
+      aria-describedby="answerModalPrompt"
+    >
+      <h3 id="answerModalTitle" class="modal-title">Pass the phone</h3>
+      <p class="hint" id="answerModalPrompt"></p>
 
       <div class="field">
-        <label id="answerModalPlayerLabel" for="answerModalInput">Answer</label>
-        <input id="answerModalInput" type="text" placeholder="Type answer here" />
+        <label id="answerModalPlayerLabel" for="answerModalInput"></label>
+        <textarea id="answerModalInput"></textarea>
       </div>
 
-      <div class="modal-actions">
-        <button id="answerModalSaveBtn" class="btn btn-primary" type="button">Save Answer</button>
-        <button id="answerModalCancelBtn" class="btn btn-secondary" type="button">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Reveal Modal -->
-  <div id="revealModalBackdrop" class="modal-backdrop">
-    <div class="modal">
-      <h3 id="revealModalTitle">Round result</h3>
-      <p id="revealModalSub"></p>
-      <div id="revealModalBody" class="stack"></div>
-
-      <div class="modal-actions">
-        <button id="revealModalCloseBtn" class="btn btn-primary" type="button">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add Hunny Modal -->
-  <div id="addHunnyModalBackdrop" class="modal-backdrop">
-    <div class="modal">
-      <h3>Add to Hunny Pot</h3>
-      <p>Choose how many points to add to the Hunny Pot.</p>
-
-      <div class="field">
-        <label for="addHunnyModalInput">Points to add</label>
-        <input id="addHunnyModalInput" type="number" min="1" step="1" value="5" />
-      </div>
-
-      <div class="modal-actions">
-        <button id="addHunnyModalConfirm" class="btn btn-primary" type="button">Add Points</button>
-        <button id="addHunnyModalCancel" class="btn btn-secondary" type="button">Cancel</button>
+      <div class="small-actions">
+        <button
+          type="button"
+          class="btn btn-primary"
+          id="answerModalSaveBtn"
+        >
+          Save and pass
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="answerModalGhostBtn"
+        >
+          Ghost answer
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="answerModalCancelBtn"
+        >
+          Cancel
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Give Hunny Modal -->
-  <div id="giveHunnyModalBackdrop" class="modal-backdrop">
-    <div class="modal">
-      <h3>Give from Hunny Pot</h3>
-      <p id="giveHunnyModalMessage"></p>
+  <div
+    id="giveHunnyModalBackdrop"
+    class="modal-backdrop"
+    style="display:none;"
+  >
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="giveHunnyModalTitle"
+      aria-describedby="giveHunnyModalMessage"
+    >
+      <h3 id="giveHunnyModalTitle" class="modal-title">Give from Hunny Pot</h3>
+      <p id="giveHunnyModalMessage" class="hint"></p>
 
       <div class="field">
         <label for="giveHunnyModalInput">Points to give</label>
-        <input id="giveHunnyModalInput" type="number" min="1" step="1" />
+        <input
+          id="giveHunnyModalInput"
+          type="number"
+          min="1"
+          step="1"
+          inputmode="numeric"
+          pattern="[0-9]*"
+        />
       </div>
 
-      <div class="modal-actions">
-        <button id="giveHunnyModalConfirm" class="btn btn-primary" type="button">Give Points</button>
-        <button id="giveHunnyModalCancel" class="btn btn-secondary" type="button">Cancel</button>
+      <div class="small-actions">
+        <button
+          class="btn btn-secondary"
+          type="button"
+          id="giveHunnyModalCancel"
+        >
+          Cancel
+        </button>
+        <button
+          class="btn btn-primary"
+          type="button"
+          id="giveHunnyModalConfirm"
+        >
+          Give points
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Clear Hunny Modal -->
-  <div id="clearHunnyModalBackdrop" class="modal-backdrop">
-    <div class="modal">
-      <h3>Clear Hunny Pot</h3>
-      <p id="clearHunnyModalMessage"></p>
-
-      <div class="modal-actions">
-        <button id="clearHunnyModalConfirm" class="btn btn-danger" type="button">Clear Pot</button>
-        <button id="clearHunnyModalCancel" class="btn btn-secondary" type="button">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Hot Round Modal -->
-  <div id="hotRoundModalBackdrop" class="modal-backdrop">
-    <div class="modal">
-      <h3>Hunny Pot Hot Round</h3>
-      <p id="hotRoundModalMessage"></p>
+  <div
+    id="addHunnyModalBackdrop"
+    class="modal-backdrop"
+    style="display:none;"
+  >
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="addHunnyModalTitle"
+    >
+      <h3 id="addHunnyModalTitle" class="modal-title">Add to Hunny Pot</h3>
 
       <div class="field">
-        <label for="hotRoundModalInput">Extra Hunny Pot points for the winner</label>
-        <input id="hotRoundModalInput" type="number" min="1" step="1" />
+        <label for="addHunnyModalInput">Points to add</label>
+        <input
+          id="addHunnyModalInput"
+          type="number"
+          min="1"
+          step="1"
+          inputmode="numeric"
+          pattern="[0-9]*"
+        />
       </div>
 
-      <div class="modal-actions">
-        <button id="hotRoundModalConfirm" class="btn btn-primary" type="button">Make Hot Round</button>
-        <button id="hotRoundModalSkip" class="btn btn-secondary" type="button">No Thanks</button>
-        <button id="hotRoundModalCancel" class="btn btn-secondary" type="button">Cancel</button>
+      <div class="small-actions">
+        <button
+          class="btn btn-secondary"
+          type="button"
+          id="addHunnyModalCancel"
+        >
+          Cancel
+        </button>
+        <button
+          class="btn btn-primary"
+          type="button"
+          id="addHunnyModalConfirm"
+        >
+          Add points
+        </button>
       </div>
     </div>
   </div>
 
-  <script src="parks.js"></script>
+  <div
+    id="revealModalBackdrop"
+    class="modal-backdrop"
+    style="display:none;"
+  >
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="revealModalTitle"
+      aria-describedby="revealModalSub"
+    >
+      <h3 id="revealModalTitle" class="modal-title">Round result</h3>
+      <p class="hint" id="revealModalSub"></p>
+      <div class="field">
+        <div id="revealModalBody" class="hint"></div>
+      </div>
+      <div class="small-actions">
+        <button
+          type="button"
+          class="btn btn-primary"
+          id="revealModalCloseBtn"
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="parks-data.js"></script>
   <script src="questions.js"></script>
+  <script src="ghostRideFragments.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
