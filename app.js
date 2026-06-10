@@ -982,7 +982,7 @@ function resolveGuessingBet(betId) {
       .map(p => `${escapeHtml(p.name)}: ${clampScore(p.currentPoints)}`)
       .join('<br>')}</div>`
   );
-  parts.push(`<div class="hint" style="margin-top:.75rem;">Hunny Pot is now ${state.pot} points.</div>`);
+  parts.push(`<div style="margin-top:.75rem;">Hunny Pot is now ${state.pot} points.</div>`);
 
   if (roundBonuses && roundBonuses.length) {
     const bonusLines = roundBonuses
