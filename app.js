@@ -1249,7 +1249,7 @@ function renderSelectedAnswerPanel() {
           ? `
             <div class="field">
               <label>Attraction / Land</label>
-              <div class="hint">${escapeHtml(meta)}</div>
+              <div>${escapeHtml(meta)}</div>
             </div>
           `
           : ''
