@@ -935,29 +935,49 @@ function resolveGuessingBet(betId) {
     .filter(Boolean);
 
   const parts = [];
-  parts.push(`<div class="reveal-section-title">Author${authorNames.length > 1 ? 's' : ''}</div>`);
-  parts.push(`<div>${escapeHtml(authorNames.join(', ') || 'Unknown')}</div>`);
+
+  // Author section
+  parts.push(`
+    <div class="field">
+      <label class="hint">Author${authorNames.length > 1 ? 's' : ''}</label>
+      <div>${escapeHtml(authorNames.join(', ') || 'Unknown')}</div>
+    </div>
+  `);
+
   if (bet.attraction || bet.land) {
     parts.push(
-      `<div class="hint">Attraction: ${escapeHtml(bet.attraction || 'Unknown')} ${bet.land ? '(' + escapeHtml(bet.land) + ')' : ''}</div>`
+      `<div class="field">
+         <label class="hint">Attraction</label>
+         <div>${escapeHtml(bet.attraction || 'Unknown')} ${bet.land ? '(' + escapeHtml(bet.land) + ')' : ''}</div>
+       </div>`
     );
   }
 
   const fact = getFactForBet(bet);
   if (fact) {
     parts.push(
-      `<div class="hint" style="margin-top:.5rem;"><strong>Fun fact:</strong> ${escapeHtml(fact)}</div>`
+      `<div class="field">
+         <label class="hint">Fun fact</label>
+         <div class="hint">${escapeHtml(fact)}</div>
+       </div>`
     );
   }
 
-  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Winners</div>`);
-  if (anyCorrect && winnerLines.length) {
-    parts.push(`<div>${winnerLines.map(escapeHtml).join('<br>')}</div>`);
-  } else if (potThisRound > 0) {
-    parts.push(`<div>No one guessed correctly. All wagers went to the Hunny Pot.</div>`);
-  } else {
-    parts.push(`<div>No one placed a wager this round.</div>`);
-  }
+  // Winners section
+  parts.push(`
+    <div class="field" style="margin-top:.75rem;">
+      <label class="hint">Winners</label>
+      <div>
+        ${
+          anyCorrect && winnerLines.length
+            ? winnerLines.map(escapeHtml).join('<br>')
+            : potThisRound > 0
+            ? 'No one guessed correctly. All wagers went to the Hunny Pot.'
+            : 'No one placed a wager this round.'
+        }
+      </div>
+    </div>
+  `);
 
   // Automatic catch-up using Hunny Pot without leapfrogging
   const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
@@ -988,20 +1008,37 @@ function resolveGuessingBet(betId) {
         enforceMinPot();
 
         parts.push(
-          `<div class="hint" style="margin-top:.5rem;">Catch-up: Gave ${hardCap} points from the Hunny Pot to ${escapeHtml(last.name)} (without passing anyone).</div>`
+          `<div class="field">
+             <label class="hint">Catch-up</label>
+             <div class="hint">Gave ${hardCap} points from the Hunny Pot to ${escapeHtml(last.name)} (without passing anyone).</div>
+           </div>`
         );
       }
     }
   }
 
   const rankedAfter = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
-  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Scores after this round</div>`);
-  parts.push(
-    `<div>${rankedAfter
-      .map(p => `${escapeHtml(p.name)}: ${clampScore(p.currentPoints)}`)
-      .join('<br>')}</div>`
-  );
-  parts.push(`<div class="hint" style="margin-top:.75rem;">Hunny Pot is now ${state.pot} points.</div>`);
+
+  // Scores after round
+  parts.push(`
+    <div class="field" style="margin-top:.75rem;">
+      <label class="hint">Scores after this round</label>
+      <div>
+        ${
+          rankedAfter
+            .map(p => `${escapeHtml(p.name)}: ${clampScore(p.currentPoints)}`)
+            .join('<br>')
+        }
+      </div>
+    </div>
+  `);
+
+  parts.push(`
+    <div class="field">
+      <label class="hint">Hunny Pot</label>
+      <div class="hint">${state.pot} points</div>
+    </div>
+  `);
 
   if (roundBonuses && roundBonuses.length) {
     const bonusLines = roundBonuses
@@ -1011,8 +1048,12 @@ function resolveGuessingBet(betId) {
       })
       .filter(Boolean);
 
-    parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Bonus points this round</div>`);
-    parts.push(`<div>${bonusLines.map(escapeHtml).join('<br>')}</div>`);
+    parts.push(`
+      <div class="field" style="margin-top:.75rem;">
+        <label class="hint">Bonus points this round</label>
+        <div>${bonusLines.map(escapeHtml).join('<br>')}</div>
+      </div>
+    `);
   }
 
   // Put summary into the Round result panel instead of showing modal
