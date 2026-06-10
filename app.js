@@ -1419,13 +1419,28 @@ function getUsedSpecificQuestionsForAttraction(attractionName) {
   const used = new Set();
 
   state.bets
-    .filter(b => b.status === 'resolved' && b.attraction)
+    .filter(b => b.description)
     .forEach(bet => {
       if (
         bet.attraction &&
         bet.attraction.toLowerCase() === attractionName.toLowerCase() &&
         specificQuestions.has(bet.description)
       ) {
+        used.add(bet.description);
+      }
+    });
+
+  return used;
+}
+
+function getUsedGlobalQuestions() {
+  const globalPool = new Set(window.DISNEY_LINE_QUESTIONS || []);
+  const used = new Set();
+
+  state.bets
+    .filter(b => b.description)
+    .forEach(bet => {
+      if (globalPool.has(bet.description)) {
         used.add(bet.description);
       }
     });
@@ -1487,6 +1502,49 @@ function getRandomQuestionForAttractionWithFallback() {
   return globalPool[idx];
 }
 
+function getNextQuestionForCurrentSelection() {
+  const attractionName = els.attractionName.value.trim();
+  const globalPool = window.DISNEY_LINE_QUESTIONS || [];
+  const usedGlobal = getUsedGlobalQuestions();
+  const unusedGlobal = globalPool.filter(q => !usedGlobal.has(q));
+
+  if (!attractionName) {
+    if (unusedGlobal.length) {
+      return unusedGlobal[Math.floor(Math.random() * unusedGlobal.length)];
+    }
+    if (!globalPool.length) return '';
+    return globalPool[Math.floor(Math.random() * globalPool.length)];
+  }
+
+  const parks = window.PARKS;
+  const attractions = parks && Array.isArray(parks.attractions)
+    ? parks.attractions
+    : [];
+
+  const attraction = attractions.find(
+    a => a.name.toLowerCase() === attractionName.toLowerCase()
+  );
+
+  const specific = attraction && Array.isArray(attraction.questions)
+    ? attraction.questions
+    : [];
+
+  const usedSpecific = getUsedSpecificQuestionsForAttraction(attractionName);
+  const unusedSpecific = specific.filter(q => !usedSpecific.has(q));
+
+  if (unusedSpecific.length) {
+    return unusedSpecific[Math.floor(Math.random() * unusedSpecific.length)];
+  }
+
+  if (unusedGlobal.length) {
+    return unusedGlobal[Math.floor(Math.random() * unusedGlobal.length)];
+  }
+
+  const combined = [...specific, ...globalPool];
+  if (!combined.length) return '';
+  return combined[Math.floor(Math.random() * combined.length)];
+}
+
 function renderBonusLibrary() {
   if (!els.bonusLibrary) return;
   if (!state.bonuses || !state.bonuses.length) {
@@ -1516,10 +1574,10 @@ function renderBonusLibrary() {
         <div class="bonus-head">
           <div>
             <h3>${escapeHtml(bonus.name)}</h3>
-            <div class="hint">${escapeHtml(bonus.description)}</div>
+            <div class="hint">${escapeHtml(bonus.description || '')}</div>
             <div class="hint">${escapeHtml(qualificationHint)}</div>
           </div>
-          <div class="bonus-points">${bonus.points}</div>
+          <div class="bonus-points">+${bonus.points}</div>
         </div>
       </div>
     `;
@@ -1629,7 +1687,7 @@ document.getElementById('createBetBtn')?.addEventListener('click', () => {
 });
 
 document.getElementById('randomBetBtn')?.addEventListener('click', () => {
-  const q = getRandomQuestionForAttractionWithFallback();
+  const q = getNextQuestionForCurrentSelection();
   if (!q) {
     alertLike('No question ideas are available yet.');
     return;
