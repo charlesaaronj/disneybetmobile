@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Who Said Diz</title>
 
-  <!-- Optional: fonts, keep or remove as you like -->
   <link rel="preconnect" href="https://api.fontshare.com" />
   <link
     href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700&f[]=satoshi@400,500,700&display=swap"
@@ -23,7 +22,7 @@
           class="logo"
           viewBox="0 0 64 64"
           fill="none"
-          aria-label="Disney Line Guess logo"
+          aria-label="Who Said Diz logo"
         >
           <path
             d="M14 48c4-13 14-22 28-25-2 11-9 21-20 28"
@@ -54,27 +53,21 @@
         </svg>
         <div>
           <h1>Who Said Diz</h1>
-          <p class="sub">
-            Just a way to pass the time standing in a queue line
-          </p>
+          <p class="sub">Just a way to pass the time standing in a queue line</p>
         </div>
       </div>
     </header>
 
     <main id="main" class="app-main">
-      <!-- Screen: Setup (scores + family + players) -->
       <section id="screen-setup" class="screen screen--active">
         <article class="panel">
           <h2>Scores</h2>
           <div id="scoreboard" class="scoreboard"></div>
         </article>
 
-        <!-- Bonus recap is useful once playing, but we can show it here too -->
         <article class="panel">
           <h2>Bonus points</h2>
-          <p class="hint">
-            Recently awarded bonuses will show here.
-          </p>
+          <p class="hint">Recently awarded bonuses will show here.</p>
           <div id="qualifiedBonusPanel" class="bonus-earned-list"></div>
         </article>
 
@@ -96,51 +89,38 @@
               />
             </div>
           </div>
+
           <div class="small-actions">
-            <button
-              class="btn btn-primary"
-              type="button"
-              id="addPlayerBtn"
-            >
+            <button class="btn btn-primary" type="button" id="addPlayerBtn">
               Add family member
             </button>
-            <button
-              class="btn btn-danger"
-              type="button"
-              id="clearAllBtn"
-            >
+            <button class="btn btn-danger" type="button" id="clearAllBtn">
               Clear everything
             </button>
           </div>
+
           <p class="footer-note">
-            Use different starting points for kids, adults, or bonus rounds if
-            you want handicaps.
+            Use different starting points for kids, adults, or bonus rounds if you want handicaps.
           </p>
         </article>
 
         <article class="panel">
           <h2>Players</h2>
-          <p class="hint">
-            Give someone a few points back so they can keep playing.
-          </p>
+          <p class="hint">Give someone a few points back so they can keep playing.</p>
           <div id="playersList" class="players"></div>
         </article>
 
         <div class="primary-actions">
-          <button
-            type="button"
-            class="btn btn-primary"
-            id="startGameBtn"
-          >
+          <button type="button" class="btn btn-primary" id="startGameBtn">
             Start game
           </button>
         </div>
       </section>
 
-      <!-- Screen: Question & answers -->
       <section id="screen-question" class="screen">
         <article class="panel">
           <h2>Pick a question</h2>
+
           <div class="grid-2">
             <div class="field">
               <label for="attractionName">Attraction</label>
@@ -169,49 +149,34 @@
             <label for="betDescription">Question about this ride</label>
             <textarea
               id="betDescription"
-              placeholder="Type your own question. All three fields are required."
+              placeholder="Type your own question. Attraction, land, and question are all required."
             ></textarea>
           </div>
 
           <p class="hint starterHint">
-            Once your question is ready, tap "Enter Answers" to pass the phone
-            around.
+            Once your question is ready, tap Answer to pass the phone around.
           </p>
 
           <div class="small-actions">
-             <button
-              class="btn btn-primary"
-              type="button"
-              id="createBetBtn"
-            >
+            <button class="btn btn-primary" type="button" id="createBetBtn">
               Answer
             </button>
-            <button
-              class="btn btn-secondary"
-              type="button"
-              id="randomBetBtn"
-            >
+            <button class="btn btn-secondary" type="button" id="randomBetBtn">
               New question
             </button>
-            <button
-              class="btn btn-secondary"
-              type="button"
-              id="clearBetFormBtn"
-            >
+            <button class="btn btn-secondary" type="button" id="clearBetFormBtn">
               Clear
             </button>
           </div>
         </article>
       </section>
 
-      <!-- Screen: Wagers -->
       <section id="screen-wager" class="screen">
         <article class="panel">
           <h2>Selected answer</h2>
           <div id="selectedAnswerPanel" class="stack">
             <div class="empty">
-              The selected answer and question will appear here once a round
-              reaches guessing.
+              The selected answer and question will appear here once a round reaches guessing.
             </div>
           </div>
         </article>
@@ -223,36 +188,28 @@
               Wager choices will appear here once a round reaches guessing.
             </div>
           </div>
+
           <div class="small-actions">
-            <button
-              class="btn btn-primary"
-              type="button"
-              id="lockGuessesBtn"
-            >
+            <button class="btn btn-primary" type="button" id="lockGuessesBtn">
               Lock wagers
             </button>
           </div>
         </article>
       </section>
 
-      <!-- Screen: Reveal -->
       <section id="screen-reveal" class="screen">
         <article class="panel">
           <h2>Round result</h2>
           <div id="revealSummary" class="reveal-summary"></div>
+
           <div class="small-actions">
-            <button
-              type="button"
-              class="btn btn-primary"
-              id="toScoresBtn"
-            >
+            <button type="button" class="btn btn-primary" id="toScoresBtn">
               Review scores
             </button>
           </div>
         </article>
       </section>
 
-      <!-- Screen: Scores & Hunny Pot -->
       <section id="screen-scores" class="screen">
         <article class="panel">
           <h2>Scores</h2>
@@ -261,38 +218,23 @@
 
         <article class="panel">
           <h2>Bonus points</h2>
-          <p class="hint">
-            Recently awarded bonuses will show here.
-          </p>
+          <p class="hint">Recently awarded bonuses will show here.</p>
           <div id="qualifiedBonusPanelScores" class="bonus-earned-list"></div>
         </article>
 
         <div class="primary-actions">
-          <button
-            type="button"
-            class="btn btn-primary"
-            id="nextRoundBtn"
-          >
+          <button type="button" class="btn btn-primary" id="nextRoundBtn">
             Next round
           </button>
-          <button
-            type="button"
-            class="btn btn-secondary"
-            id="viewHistoryBtn"
-          >
+          <button type="button" class="btn btn-secondary" id="viewHistoryBtn">
             Round info &amp; history
           </button>
-          <button
-            type="button"
-            class="btn btn-danger"
-            id="restartGameBtn"
-          >
+          <button type="button" class="btn btn-danger" id="restartGameBtn">
             Restart game
           </button>
         </div>
       </section>
 
-      <!-- Screen: History & bonus library -->
       <section id="screen-history" class="screen">
         <article class="panel">
           <h2>Rounds</h2>
@@ -302,24 +244,20 @@
 
         <article class="panel">
           <h2>Round history</h2>
+          <p class="hint">This screen also shows Hunny Pot controls between questions.</p>
           <div id="historyList" class="history-list"></div>
         </article>
 
         <article class="panel">
           <h2>Bonus library</h2>
           <p class="hint">
-            Use these when someone qualifies for a bonus (for example, no one
-            guessed the author).
+            Use these when someone qualifies for a bonus.
           </p>
           <div id="bonusLibrary" class="bonus-list"></div>
         </article>
 
         <div class="primary-actions">
-          <button
-            type="button"
-            class="btn btn-primary"
-            id="backToScoresBtn"
-          >
+          <button type="button" class="btn btn-primary" id="backToScoresBtn">
             Back to scores
           </button>
         </div>
@@ -327,7 +265,6 @@
     </main>
   </div>
 
-  <!-- Clear Hunny Pot modal -->
   <div
     id="clearHunnyModalBackdrop"
     class="modal-backdrop"
@@ -338,6 +275,7 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="clearHunnyModalTitle"
+      aria-describedby="clearHunnyModalMessage"
     >
       <h3 id="clearHunnyModalTitle" class="modal-title">Clear Hunny Pot</h3>
       <p class="hint" id="clearHunnyModalMessage"></p>
@@ -360,7 +298,6 @@
     </div>
   </div>
 
-  <!-- Answer collection modal -->
   <div
     id="answerModalBackdrop"
     class="modal-backdrop"
@@ -371,13 +308,16 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="answerModalTitle"
+      aria-describedby="answerModalPrompt"
     >
       <h3 id="answerModalTitle" class="modal-title">Pass the phone</h3>
       <p class="hint" id="answerModalPrompt"></p>
+
       <div class="field">
-        <label id="answerModalPlayerLabel"></label>
+        <label id="answerModalPlayerLabel" for="answerModalInput"></label>
         <textarea id="answerModalInput"></textarea>
       </div>
+
       <div class="small-actions">
         <button
           type="button"
@@ -404,15 +344,21 @@
     </div>
   </div>
 
-  <!-- Give points modal -->
   <div
     id="giveHunnyModalBackdrop"
     class="modal-backdrop"
     style="display:none;"
   >
-    <div class="modal">
-      <h3>Give from Hunny Pot</h3>
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="giveHunnyModalTitle"
+      aria-describedby="giveHunnyModalMessage"
+    >
+      <h3 id="giveHunnyModalTitle" class="modal-title">Give from Hunny Pot</h3>
       <p id="giveHunnyModalMessage" class="hint"></p>
+
       <div class="field">
         <label for="giveHunnyModalInput">Points to give</label>
         <input
@@ -424,6 +370,7 @@
           pattern="[0-9]*"
         />
       </div>
+
       <div class="small-actions">
         <button
           class="btn btn-secondary"
@@ -443,14 +390,19 @@
     </div>
   </div>
 
-  <!-- Add points modal -->
   <div
     id="addHunnyModalBackdrop"
     class="modal-backdrop"
     style="display:none;"
   >
-    <div class="modal">
-      <h3>Add to Hunny Pot</h3>
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="addHunnyModalTitle"
+    >
+      <h3 id="addHunnyModalTitle" class="modal-title">Add to Hunny Pot</h3>
+
       <div class="field">
         <label for="addHunnyModalInput">Points to add</label>
         <input
@@ -462,6 +414,7 @@
           pattern="[0-9]*"
         />
       </div>
+
       <div class="small-actions">
         <button
           class="btn btn-secondary"
@@ -475,13 +428,12 @@
           type="button"
           id="addHunnyModalConfirm"
         >
-          Add Points
+          Add points
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Reveal modal -->
   <div
     id="revealModalBackdrop"
     class="modal-backdrop"
@@ -492,6 +444,7 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="revealModalTitle"
+      aria-describedby="revealModalSub"
     >
       <h3 id="revealModalTitle" class="modal-title">Round result</h3>
       <p class="hint" id="revealModalSub"></p>
@@ -510,7 +463,6 @@
     </div>
   </div>
 
-  <!-- Load your JS: parks data, questions, ghost fragments, app -->
   <script src="parks-data.js"></script>
   <script src="questions.js"></script>
   <script src="ghostRideFragments.js"></script>
