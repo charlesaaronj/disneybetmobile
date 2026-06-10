@@ -6,7 +6,6 @@ const state = {
   bets: [],
   pot: 0,
 
-  // Built‑in bonus rules (manual award via buttons)
   bonuses: [
     {
       id: 'noGuessAuthor',
@@ -79,19 +78,16 @@ const els = {
   clearHunnyCancel: document.getElementById('clearHunnyModalCancel'),
   clearHunnyConfirm: document.getElementById('clearHunnyModalConfirm'),
 
-  // Bonus-related panels
   qualifiedBonusPanel: document.getElementById('qualifiedBonusPanel'),
   bonusLibrary: document.getElementById('bonusLibrary'),
 
-  // Scores / bonuses on Scores screen (if present)
   scoreboardScoresScreen: document.getElementById('scoreboardScoresScreen'),
   qualifiedBonusPanelScores: document.getElementById('qualifiedBonusPanelScores'),
 
-  // Round result panel
   revealSummary: document.getElementById('revealSummary')
 };
 
-// ---------- Screen elements (app flow) ----------
+// ---------- Screen elements ----------
 const screenIds = ['setup', 'question', 'wager', 'reveal', 'scores', 'history'];
 const screens = {};
 screenIds.forEach(id => {
@@ -146,7 +142,6 @@ function alertLike(message) {
   setTimeout(() => toast.remove(), 2000);
 }
 
-// Fisher–Yates shuffle
 function shuffle(array) {
   const arr = array.slice();
   for (let i = arr.length - 1; i > 0; i--) {
@@ -184,13 +179,63 @@ function getPlayerName(id) {
   return p ? p.name : 'Unknown';
 }
 
-// Keep Hunny Pot at least number of players
 function enforceMinPot() {
   const minPot = state.players.length;
   if (state.pot < minPot) {
     state.pot = minPot;
   }
 }
+
+function setChosenAnswerForBet(bet, chosen) {
+  if (!bet || !chosen) return;
+  bet.chosenAnswerId = chosen.id;
+
+  const sameTextAuthors = bet.answers
+    .filter(a => a.text === chosen.text)
+    .map(a => a.playerId);
+
+  bet.correctAuthors = sameTextAuthors;
+  bet.correctAuthorId = sameTextAuthors[0] || null;
+}
+
+function chooseRandomAnswerForBet(bet) {
+  if (!bet || !Array.isArray(bet.answers) || !bet.answers.length) return;
+  const idx = Math.floor(Math.random() * bet.answers.length);
+  const chosen = bet.answers[idx];
+  setChosenAnswerForBet(bet, chosen);
+}
+
+function rerollChosenAnswer(betId) {
+  const bet = state.bets.find(b => b.id === betId);
+  if (!bet || !Array.isArray(bet.answers) || bet.answers.length < 2) {
+    alertLike('There is not another answer available to choose.');
+    return;
+  }
+
+  const currentId = bet.chosenAnswerId;
+  const alternatives = bet.answers.filter(a => a.id !== currentId);
+
+  if (!alternatives.length) {
+    alertLike('There is not another answer available to choose.');
+    return;
+  }
+
+  const next = alternatives[Math.floor(Math.random() * alternatives.length)];
+  setChosenAnswerForBet(bet, next);
+  saveState();
+  render();
+}
+
+function rerollCurrentSelectedAnswer() {
+  const bet = getCurrentGuessingBet();
+  if (!bet) {
+    alertLike('No round is ready right now.');
+    return;
+  }
+  rerollChosenAnswer(bet.id);
+}
+
+window.rerollCurrentSelectedAnswer = rerollCurrentSelectedAnswer;
 
 // ---------- Screen routing ----------
 function showScreen(id) {
@@ -412,7 +457,8 @@ function createBet() {
     roundWinners: [],
     bonusAwards: [],
     answerOrder: shuffle(state.players.map(p => p.id)),
-    wagerOrder: []
+    wagerOrder: [],
+    ghostAnswerUsed: false
   };
 
   state.bets.unshift(bet);
@@ -440,6 +486,10 @@ function startAnswerPhase(betId) {
   if (!bet) return;
   bet.answers = [];
   bet.status = 'answering';
+  bet.ghostAnswerUsed = false;
+  bet.chosenAnswerId = null;
+  bet.correctAuthorId = null;
+  bet.correctAuthors = [];
   if (!Array.isArray(bet.answerOrder) || !bet.answerOrder.length) {
     bet.answerOrder = shuffle(state.players.map(p => p.id));
   }
@@ -459,16 +509,7 @@ function nextAnswerPrompt() {
     bet.status = 'guessing';
 
     if (!bet.chosenAnswerId && bet.answers.length) {
-      const idx = Math.floor(Math.random() * bet.answers.length);
-      const chosen = bet.answers[idx];
-      bet.chosenAnswerId = chosen.id;
-
-      const sameTextAuthors = bet.answers
-        .filter(a => a.text === chosen.text)
-        .map(a => a.playerId);
-
-      bet.correctAuthors = sameTextAuthors;
-      bet.correctAuthorId = sameTextAuthors[0] || null;
+      chooseRandomAnswerForBet(bet);
     }
 
     bet.wagerOrder = shuffle(state.players.map(p => p.id));
@@ -497,6 +538,12 @@ function nextAnswerPrompt() {
 
   els.answerPlayerLabel.textContent = `${player.name}, type your answer`;
   els.answerInput.value = '';
+
+  if (els.answerGhostBtn) {
+    els.answerGhostBtn.disabled = !!bet.ghostAnswerUsed;
+    els.answerGhostBtn.style.display = bet.ghostAnswerUsed ? 'none' : '';
+  }
+
   showAnswerModal();
 }
 
@@ -529,14 +576,12 @@ els.answerSaveBtn.addEventListener('click', () => {
   nextAnswerPrompt();
 });
 
-// Cancel button for answer modal
 if (els.answerCancelBtn) {
   els.answerCancelBtn.addEventListener('click', () => {
     hideAnswerModal();
   });
 }
 
-// Ghost/Random ride fragment answer button (hidden answer)
 if (els.answerGhostBtn) {
   els.answerGhostBtn.addEventListener('click', () => {
     if (typeof window.getRandomRideFragment !== 'function') {
@@ -546,6 +591,11 @@ if (els.answerGhostBtn) {
 
     const bet = state.bets.find(b => b.id === currentAnswerBetId);
     if (!bet) return;
+
+    if (bet.ghostAnswerUsed) {
+      alertLike('The ghost answer has already been used this round.');
+      return;
+    }
 
     const order = Array.isArray(bet.answerOrder) && bet.answerOrder.length
       ? bet.answerOrder
@@ -561,8 +611,8 @@ if (els.answerGhostBtn) {
 
     const text = window.getRandomRideFragment();
 
-    // Save ghost answer WITHOUT showing it
     bet.answers.push({ id: uid(), playerId: player.id, text });
+    bet.ghostAnswerUsed = true;
     saveState();
     currentAnswerIndex += 1;
     nextAnswerPrompt();
@@ -576,14 +626,7 @@ function startGuessPhase(betId) {
   if (!bet.answers || !bet.answers.length) return;
 
   if (!bet.chosenAnswerId) {
-    const idx = Math.floor(Math.random() * bet.answers.length);
-    const chosen = bet.answers[idx];
-    bet.chosenAnswerId = chosen.id;
-    const sameTextAuthors = bet.answers
-      .filter(a => a.text === chosen.text)
-      .map(a => a.playerId);
-    bet.correctAuthors = sameTextAuthors;
-    bet.correctAuthorId = sameTextAuthors[0] || null;
+    chooseRandomAnswerForBet(bet);
   }
 
   if (!Array.isArray(bet.wagerOrder) || !bet.wagerOrder.length) {
@@ -634,7 +677,7 @@ function renderBetRows() {
         </div>
         <div class="field">
           <label>Wager</label>
-          <input data-amount type="number" min="0" step="1" value="0" placeholder="1" inputmode="numeric" pattern="[0-9]*" ${
+          <input data-amount type="number" min="0" step="1" value="1" placeholder="1" inputmode="numeric" pattern="[0-9]*" ${
             guessingBet ? '' : 'disabled'
           } />
         </div>
@@ -651,19 +694,44 @@ function attachWagerGuards() {
     const playerId = row.dataset.playerId;
     const input = row.querySelector('[data-amount]');
     if (!input) return;
+
     input.addEventListener('input', () => {
       const available = getAvailablePoints(playerId);
-      let value = Number(input.value) || 0;
-      if (!Number.isFinite(value) || value < 0) value = 0;
+      const raw = input.value.trim();
+
+      if (raw === '') return;
+      if (raw === '0') return;
+
+      let value = Number(raw);
+      if (!Number.isFinite(value)) return;
+
       if (value > available) {
-        value = available;
+        input.value = String(available);
         alertLike(`That's the max they can wager this round (${available} points).`);
       }
-      input.value = value;
+    });
+
+    input.addEventListener('blur', () => {
+      const available = getAvailablePoints(playerId);
+      const raw = input.value.trim();
+
+      if (raw === '') {
+        input.value = '1';
+        return;
+      }
+
+      let value = Number(raw);
+      if (!Number.isFinite(value) || value < 0) {
+        input.value = '1';
+        return;
+      }
+
+      if (value > available) {
+        input.value = String(available);
+      }
     });
   });
 }
-
 
 function buildGuessesForBet(bet) {
   const rows = [...document.querySelectorAll('[data-bet-player-row]')];
@@ -740,10 +808,8 @@ function computeBonusPointsForRound(betId) {
     : (bet.correctAuthorId ? [bet.correctAuthorId] : [])) || [];
 
   const guesses = bet.guesses || [];
-
   const bonuses = [];
 
-  // 1) Hidden author bonus
   if (correctAuthors.length) {
     const guessedIds = new Set(guesses.map(g => g.guessedAuthorId).filter(Boolean));
     correctAuthors.forEach(authorId => {
@@ -753,7 +819,6 @@ function computeBonusPointsForRound(betId) {
     });
   }
 
-  // 2) Three-in-a-row streak bonus
   const resolved = state.bets
     .filter(b => b.status === 'resolved')
     .sort((a, b2) => new Date(a.resolvedAt || a.createdAt) - new Date(b2.resolvedAt || b2.createdAt));
@@ -775,7 +840,6 @@ function computeBonusPointsForRound(betId) {
     });
   }
 
-  // 3) Land streak bonus
   if (bet.land) {
     const land = bet.land;
     const resolvedInLand = state.bets.filter(b => b.status === 'resolved' && b.land === land);
@@ -830,29 +894,19 @@ function resolveGuessingBet(betId) {
 
   const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
 
-  // 1) subtract all wagers EXCEPT from the author(s)
   wagers.forEach(w => {
     const player = playerMap[w.playerId];
     if (!player || w.wager <= 0) return;
-
-    if (correctAuthors.includes(w.playerId)) {
-      return;
-    }
-
+    if (correctAuthors.includes(w.playerId)) return;
     player.currentPoints = clampScore(player.currentPoints - w.wager);
   });
 
-  // 2) either pay winners or send pot to Hunny Pot
   const totalWinnerWager = winners.reduce((s, w) => s + w.wager, 0);
   if (anyCorrect && potThisRound > 0 && totalWinnerWager > 0) {
     winners.forEach(w => {
       const player = playerMap[w.playerId];
       if (!player) return;
-
-      if (correctAuthors.includes(w.playerId)) {
-        return;
-      }
-
+      if (correctAuthors.includes(w.playerId)) return;
       const share = (potThisRound * w.wager) / totalWinnerWager;
       player.currentPoints = clampScore(player.currentPoints + share);
     });
@@ -892,6 +946,7 @@ function resolveGuessingBet(betId) {
       amount: b.amount,
       reason: b.reason
     }));
+
     state.awardedBonuses.unshift(...records);
   } else {
     bet.bonusAwards = [];
@@ -915,79 +970,79 @@ function resolveGuessingBet(betId) {
     })
     .filter(Boolean);
 
-const parts = [];
+  const parts = [];
 
-parts.push(`<div class="reveal-section-title">Author${authorNames.length > 1 ? 's' : ''}</div>`);
-parts.push(`<div>${escapeHtml(authorNames.join(', ') || 'Unknown')}</div>`);
+  parts.push(`<div class="reveal-section-title">Author${authorNames.length > 1 ? 's' : ''}</div>`);
+  parts.push(`<div>${escapeHtml(authorNames.join(', ') || 'Unknown')}</div>`);
 
-if (bet.attraction || bet.land) {
-  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Attraction</div>`);
-  parts.push(
-    `<div>${escapeHtml(bet.attraction || 'Unknown')} ${bet.land ? '(' + escapeHtml(bet.land) + ')' : ''}</div>`
-  );
-}
-
-const fact = getFactForBet(bet);
-if (fact) {
-  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Fun fact</div>`);
-  parts.push(`<div>${escapeHtml(fact)}</div>`);
-}
-
-parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Winners</div>`);
-if (anyCorrect && winnerLines.length) {
-  parts.push(`<div>${winnerLines.map(escapeHtml).join('<br>')}</div>`);
-} else if (potThisRound > 0) {
-  parts.push(`<div>No one guessed correctly. All wagers went to the Hunny Pot.</div>`);
-} else {
-  parts.push(`<div>No one placed a wager this round.</div>`);
-}
-
-// Automatic catch-up using Hunny Pot without leapfrogging
-const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
-if (state.pot > 0 && ranked.length >= 2) {
-  const leader = ranked[0];
-  const last = ranked[ranked.length - 1];
-  const gap = leader.currentPoints - last.currentPoints;
-
-  if (gap >= 10) {
-    const secondLast = ranked[ranked.length - 2];
-
-    const maxToSecondLast = secondLast
-      ? Math.max(0, secondLast.currentPoints - last.currentPoints)
-      : gap;
-
-    const maxToLeaderMinusOne = Math.max(0, leader.currentPoints - 1 - last.currentPoints);
-
-    const hardCap = Math.min(
-      5,
-      state.pot,
-      maxToSecondLast,
-      maxToLeaderMinusOne
+  if (bet.attraction || bet.land) {
+    parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Attraction</div>`);
+    parts.push(
+      `<div>${escapeHtml(bet.attraction || 'Unknown')} ${bet.land ? '(' + escapeHtml(bet.land) + ')' : ''}</div>`
     );
+  }
 
-    if (hardCap > 0) {
-      last.currentPoints = clampScore(last.currentPoints + hardCap);
-      state.pot -= hardCap;
-      enforceMinPot();
+  const fact = getFactForBet(bet);
+  if (fact) {
+    parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Fun fact</div>`);
+    parts.push(`<div>${escapeHtml(fact)}</div>`);
+  }
 
-      parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Catch-up</div>`);
-      parts.push(
-        `<div>Gave ${hardCap} points from the Hunny Pot to ${escapeHtml(last.name)} (without passing anyone).</div>`
+  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Winners</div>`);
+  if (anyCorrect && winnerLines.length) {
+    parts.push(`<div>${winnerLines.map(escapeHtml).join('<br>')}</div>`);
+  } else if (potThisRound > 0) {
+    parts.push(`<div>No one guessed correctly. All wagers went to the Hunny Pot.</div>`);
+  } else {
+    parts.push(`<div>No one placed a wager this round.</div>`);
+  }
+
+  const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
+  if (state.pot > 0 && ranked.length >= 2) {
+    const leader = ranked[0];
+    const last = ranked[ranked.length - 1];
+    const gap = leader.currentPoints - last.currentPoints;
+
+    if (gap >= 10) {
+      const secondLast = ranked[ranked.length - 2];
+
+      const maxToSecondLast = secondLast
+        ? Math.max(0, secondLast.currentPoints - last.currentPoints)
+        : gap;
+
+      const maxToLeaderMinusOne = Math.max(0, leader.currentPoints - 1 - last.currentPoints);
+
+      const hardCap = Math.min(
+        5,
+        state.pot,
+        maxToSecondLast,
+        maxToLeaderMinusOne
       );
+
+      if (hardCap > 0) {
+        last.currentPoints = clampScore(last.currentPoints + hardCap);
+        state.pot -= hardCap;
+        enforceMinPot();
+
+        parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Catch-up</div>`);
+        parts.push(
+          `<div>Gave ${hardCap} points from the Hunny Pot to ${escapeHtml(last.name)} (without passing anyone).</div>`
+        );
+      }
     }
   }
-}
 
-const rankedAfter = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
-parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Scores after this round</div>`);
-parts.push(
-  `<div>${rankedAfter
-    .map(p => `${escapeHtml(p.name)}: ${clampScore(p.currentPoints)}`)
-    .join('<br>')}</div>`
-);
+  const rankedAfter = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
+  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Scores after this round</div>`);
+  parts.push(
+    `<div>${rankedAfter
+      .map(p => `${escapeHtml(p.name)}: ${clampScore(p.currentPoints)}`)
+      .join('<br>')}</div>`
+  );
 
-parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Hunny Pot</div>`);
-parts.push(`<div>${state.pot} points</div>`);
+  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Hunny Pot</div>`);
+  parts.push(`<div>${state.pot} points</div>`);
+
   if (roundBonuses && roundBonuses.length) {
     const bonusLines = roundBonuses
       .map(b => {
@@ -1000,7 +1055,6 @@ parts.push(`<div>${state.pot} points</div>`);
     parts.push(`<div>${bonusLines.map(escapeHtml).join('<br>')}</div>`);
   }
 
-  // Put summary into the Round result panel instead of showing modal
   if (els.revealSummary) {
     els.revealSummary.innerHTML = parts.join('');
   }
@@ -1013,11 +1067,11 @@ parts.push(`<div>${state.pot} points</div>`);
   goToReveal();
 }
 
-els.revealCloseBtn.addEventListener('click', () => {
+els.revealCloseBtn?.addEventListener('click', () => {
   els.revealBackdrop.style.display = 'none';
 });
 
-els.revealBackdrop.addEventListener('click', event => {
+els.revealBackdrop?.addEventListener('click', event => {
   if (event.target === els.revealBackdrop) {
     els.revealBackdrop.style.display = 'none';
   }
@@ -1094,6 +1148,40 @@ function renderScoreboard() {
   }
 }
 
+function renderQualifiedBonuses() {
+  if (!els.qualifiedBonusPanel) return;
+
+  if (!state.awardedBonuses.length) {
+    els.qualifiedBonusPanel.innerHTML =
+      '<div class="empty">No bonuses awarded yet.</div>';
+    if (els.qualifiedBonusPanelScores) {
+      els.qualifiedBonusPanelScores.innerHTML =
+        '<div class="empty">No bonuses awarded yet.</div>';
+    }
+    return;
+  }
+
+  const html = state.awardedBonuses
+    .slice(0, 6)
+    .map(award => `
+      <div class="earned-card">
+        <div class="earned-head">
+          <div>
+            <strong>${escapeHtml(award.playerName)}</strong>
+            <div class="hint">${escapeHtml(award.reason)}</div>
+          </div>
+          <div class="bonus-points">+${award.points}</div>
+        </div>
+      </div>
+    `)
+    .join('');
+
+  els.qualifiedBonusPanel.innerHTML = html;
+  if (els.qualifiedBonusPanelScores) {
+    els.qualifiedBonusPanelScores.innerHTML = html;
+  }
+}
+
 function renderOpenMetrics() {
   const answering = state.bets.filter(b => b.status === 'answering').length;
   const guessing = state.bets.filter(b => b.status === 'guessing').length;
@@ -1163,7 +1251,23 @@ function renderHistory() {
     return;
   }
 
-  els.historyList.innerHTML = resolved
+  const potControls = `
+    <article class="history-item" style="margin-bottom:.75rem;">
+      <div class="bet-head">
+        <div>
+          <h3>Hunny Pot</h3>
+          <div class="hint">Change the Hunny Pot between questions here.</div>
+        </div>
+      </div>
+      <div class="small-actions-hunny" style="margin-top:.5rem;">
+        <span class="pill pot-pill-total">Hunny Pot ${state.pot}</span>
+        <button class="btn btn-secondary" type="button" onclick="addToPot()">Add Pts</button>
+        <button class="btn btn-danger" type="button" onclick="clearPot()">Clear</button>
+      </div>
+    </article>
+  `;
+
+  const historyHtml = resolved
     .map(bet => {
       const correctAuthors = (bet.correctAuthors && bet.correctAuthors.length
         ? bet.correctAuthors
@@ -1212,6 +1316,8 @@ function renderHistory() {
       `;
     })
     .join('');
+
+  els.historyList.innerHTML = potControls + historyHtml;
 }
 
 function renderBetPlayers() {
@@ -1237,6 +1343,7 @@ function renderSelectedAnswerPanel() {
   const chosen = bet.answers.find(a => a.id === bet.chosenAnswerId);
   const answerText = chosen ? chosen.text : '';
   const meta = [bet.attraction, bet.land].filter(Boolean).join(' • ');
+  const canReroll = Array.isArray(bet.answers) && bet.answers.length > 1;
 
   els.selectedAnswerPanel.innerHTML = `
     <div class="stack">
@@ -1254,6 +1361,17 @@ function renderSelectedAnswerPanel() {
             <div class="field">
               <label>Attraction / Land</label>
               <div>${escapeHtml(meta)}</div>
+            </div>
+          `
+          : ''
+      }
+      ${
+        canReroll
+          ? `
+            <div class="small-actions" style="margin-top:.5rem;">
+              <button class="btn btn-secondary" type="button" onclick="rerollCurrentSelectedAnswer()">
+                Reroll Selected Answer
+              </button>
             </div>
           `
           : ''
@@ -1289,7 +1407,6 @@ function getUsedSpecificQuestionsForAttraction(attractionName) {
   return used;
 }
 
-// Fun fact helper
 function getFactForBet(bet) {
   if (!bet || !bet.attraction) return '';
 
@@ -1344,45 +1461,6 @@ function getRandomQuestionForAttractionWithFallback() {
   return globalPool[idx];
 }
 
-// Bonus recap
-function renderQualifiedBonuses() {
-  if (!els.qualifiedBonusPanel && !els.qualifiedBonusPanelScores) return;
-
-  if (!state.awardedBonuses.length) {
-    const emptyHtml = '<div class="empty">No bonuses awarded yet.</div>';
-    if (els.qualifiedBonusPanel) {
-      els.qualifiedBonusPanel.innerHTML = emptyHtml;
-    }
-    if (els.qualifiedBonusPanelScores) {
-      els.qualifiedBonusPanelScores.innerHTML = emptyHtml;
-    }
-    return;
-  }
-
-  const cardsHtml = state.awardedBonuses
-    .slice(0, 6)
-    .map(award => `
-      <div class="earned-card">
-        <div class="earned-head">
-          <div>
-            <strong>${escapeHtml(award.playerName)}</strong>
-            <div class="hint">${escapeHtml(award.reason)}</div>
-          </div>
-          <div class="bonus-points">+${award.points}</div>
-        </div>
-      </div>
-    `)
-    .join('');
-
-  if (els.qualifiedBonusPanel) {
-    els.qualifiedBonusPanel.innerHTML = cardsHtml;
-  }
-  if (els.qualifiedBonusPanelScores) {
-    els.qualifiedBonusPanelScores.innerHTML = cardsHtml;
-  }
-}
-
-// Bonus library
 function renderBonusLibrary() {
   if (!els.bonusLibrary) return;
   if (!state.bonuses || !state.bonuses.length) {
@@ -1412,10 +1490,10 @@ function renderBonusLibrary() {
         <div class="bonus-head">
           <div>
             <h3>${escapeHtml(bonus.name)}</h3>
-            <div class="hint">${escapeHtml(bonus.description || '')}</div>
+            <div class="hint">${escapeHtml(bonus.description)}</div>
             <div class="hint">${escapeHtml(qualificationHint)}</div>
           </div>
-          <div class="bonus-points">+${bonus.points}</div>
+          <div class="bonus-points">${bonus.points}</div>
         </div>
       </div>
     `;
@@ -1439,20 +1517,18 @@ function reuseQuestion(betId) {
   const bet = state.bets.find(b => b.id === betId);
   if (!bet) return;
 
-  goToQuestion();
-
   els.attractionName.value = bet.attraction || '';
   els.landName.value = bet.land || '';
   els.betDescription.value = bet.description || '';
 
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  goToQuestion();
 }
 window.reuseQuestion = reuseQuestion;
 
 // ---------- Attraction / land prefill ----------
 function setupAttractionSuggestions() {
   if (!window.PARKS) return;
-  const { attractions } = window.PARKS;
+  const attractions = window.PARKS.attractions || [];
 
   const dlAttractions = document.getElementById('attractionSuggestions');
   if (dlAttractions) {
@@ -1469,40 +1545,28 @@ function setupAttractionSuggestions() {
       .join('');
   }
 
-  els.attractionName.addEventListener('input', () => {
+  els.attractionName?.addEventListener('input', () => {
     const name = els.attractionName.value.trim().toLowerCase();
     if (!name) return;
     const match = attractions.find(a => a.name.toLowerCase() === name);
     if (match) {
       els.landName.value = match.land;
-
-      const q = getRandomQuestionForAttractionWithFallback();
-      if (q) {
-        els.betDescription.value = q;
-      }
     }
   });
 
-  els.attractionName.addEventListener('blur', () => {
-    const currentLand = els.landName.value.trim();
+  els.attractionName?.addEventListener('blur', () => {
+    if (els.landName.value.trim()) return;
     const name = els.attractionName.value.trim().toLowerCase();
     if (!name) return;
     const match = attractions.find(a => a.name.toLowerCase() === name);
-    if (match && !currentLand) {
+    if (match) {
       els.landName.value = match.land;
-    }
-
-    if (!els.betDescription.value.trim()) {
-      const q = getRandomQuestionForAttractionWithFallback();
-      if (q) {
-        els.betDescription.value = q;
-      }
     }
   });
 }
 
 // ---------- Events ----------
-document.getElementById('addPlayerBtn').addEventListener('click', () => {
+document.getElementById('addPlayerBtn')?.addEventListener('click', () => {
   const name = els.playerName.value.trim();
   const points = Number(els.playerPoints.value || 0);
 
@@ -1514,10 +1578,10 @@ document.getElementById('addPlayerBtn').addEventListener('click', () => {
   els.playerPoints.value = 10;
 });
 
-els.playerName.addEventListener('keydown', e => {
+els.playerName?.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     e.preventDefault();
-    document.getElementById('addPlayerBtn').click();
+    document.getElementById('addPlayerBtn')?.click();
   }
 });
 
@@ -1526,44 +1590,31 @@ window.addEventListener('load', () => {
   enforceMinPot();
   render();
   setupAttractionSuggestions();
-
-  if (!state.players || state.players.length < 2) {
-    goToSetup();
-    els.playerName?.focus();
-  } else {
-    goToQuestion();
-  }
+  goToSetup();
+  els.playerName?.focus();
 });
 
-document.getElementById('createBetBtn').addEventListener('click', () => {
-  const beforeCount = state.bets.length;
+document.getElementById('createBetBtn')?.addEventListener('click', () => {
   createBet();
-  const afterCount = state.bets.length;
-  if (afterCount > beforeCount) {
-    // Answer phase starts automatically
-  }
 });
 
-// Generate: global questions.js only
-document.getElementById('randomBetBtn').addEventListener('click', () => {
-  const pool = window.DISNEY_LINE_QUESTIONS || [];
-  if (!pool.length) {
+document.getElementById('randomBetBtn')?.addEventListener('click', () => {
+  const q = getRandomQuestionForAttractionWithFallback();
+  if (!q) {
     alertLike('No question ideas are available yet.');
     return;
   }
-  const idx = Math.floor(Math.random() * pool.length);
-  const q = pool[idx];
   els.betDescription.value = q;
 });
 
-document.getElementById('clearBetFormBtn').addEventListener('click', () => {
+document.getElementById('clearBetFormBtn')?.addEventListener('click', () => {
   els.betDescription.value = '';
   els.attractionName.value = '';
   els.landName.value = '';
   renderBetPlayers();
 });
 
-document.getElementById('lockGuessesBtn').addEventListener('click', () => {
+document.getElementById('lockGuessesBtn')?.addEventListener('click', () => {
   const bet = getCurrentGuessingBet();
   if (!bet) {
     alertLike('No round is ready for guessing right now.');
@@ -1578,88 +1629,41 @@ document.getElementById('lockGuessesBtn').addEventListener('click', () => {
   resolveGuessingBet(bet.id);
 });
 
-document.getElementById('clearAllBtn').addEventListener('click', () => {
+document.getElementById('clearAllBtn')?.addEventListener('click', () => {
   state.players = [];
   state.bets = [];
   state.pot = 0;
   state.awardedBonuses = [];
-  enforceMinPot();
   saveState();
   render();
-  currentAnswerBetId = null;
-  currentAnswerIndex = 0;
-  if (els.revealSummary) els.revealSummary.innerHTML = '';
   goToSetup();
 });
 
-// Screen navigation buttons
-if (navEls.startGameBtn) {
-  navEls.startGameBtn.addEventListener('click', () => {
-    if (!state.players || state.players.length < 2) {
-      alertLike('Add at least two family members before starting the game.');
-      return;
-    }
+navEls.startGameBtn?.addEventListener('click', () => {
+  if (state.players.length < 2) {
+    alertLike('Add at least two family members first.');
+    return;
+  }
+  goToQuestion();
+});
 
-    els.attractionName.value = '';
-    els.landName.value = '';
-    els.betDescription.value = '';
+navEls.toScoresBtn?.addEventListener('click', () => {
+  goToScores();
+});
 
-    goToQuestion();
-  });
-}
+navEls.nextRoundBtn?.addEventListener('click', () => {
+  goToQuestion();
+});
 
-if (navEls.toScoresBtn) {
-  navEls.toScoresBtn.addEventListener('click', () => {
-    goToScores();
-  });
-}
+navEls.viewHistoryBtn?.addEventListener('click', () => {
+  renderHistory();
+  goToHistory();
+});
 
-if (navEls.nextRoundBtn) {
-  navEls.nextRoundBtn.addEventListener('click', () => {
-    // Clear attraction, land, and question for the next round
-    els.attractionName.value = '';
-    els.landName.value = '';
-    els.betDescription.value = '';
-    goToQuestion();
-  });
-}
+navEls.backToScoresBtn?.addEventListener('click', () => {
+  goToScores();
+});
 
-if (navEls.viewHistoryBtn) {
-  navEls.viewHistoryBtn.addEventListener('click', () => {
-    goToHistory();
-  });
-}
-
-if (navEls.backToScoresBtn) {
-  navEls.backToScoresBtn.addEventListener('click', () => {
-    goToScores();
-  });
-}
-
-if (navEls.restartGameBtn) {
-  navEls.restartGameBtn.addEventListener('click', () => {
-    // Keep players, reset their points to starting values
-    state.players = (state.players || []).map(p => ({
-      ...p,
-      currentPoints: clampScore(p.startingPoints)
-    }));
-
-    // Wipe rounds, pot, and bonuses
-    state.bets = [];
-    state.pot = 0;
-    state.awardedBonuses = [];
-    enforceMinPot();
-    saveState();
-    render();
-
-    // Clear any in-progress round / summary
-    currentAnswerBetId = null;
-    currentAnswerIndex = 0;
-    if (els.revealSummary) {
-      els.revealSummary.innerHTML = '';
-    }
-
-    // Go back to setup screen
-    goToSetup();
-  });
-}
+navEls.restartGameBtn?.addEventListener('click', () => {
+  goToSetup();
+});
