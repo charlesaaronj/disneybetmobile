@@ -1245,18 +1245,34 @@ function renderOpenBets() {
 
 function renderHistory() {
   const resolved = state.bets.filter(b => b.status === 'resolved');
-  if (!resolved.length) {
-    els.historyList.innerHTML =
-      '<div class="empty">Resolved rounds will stay here so you can reuse fun questions later.</div>';
-    return;
-  }
+
+  const playerGiveHtml = state.players.length
+    ? state.players.map(p => `
+        <div class="player-chip" style="margin-top:.5rem;">
+          <div>
+            <strong>${escapeHtml(p.name)}</strong>
+            <div class="hint">${clampScore(p.currentPoints)} points right now</div>
+          </div>
+          <div class="small-actions">
+            <button
+              class="btn btn-secondary"
+              type="button"
+              onclick="giveFromPot('${p.id}')"
+              ${state.pot > 0 ? '' : 'disabled'}
+            >
+              Give from Hunny Pot
+            </button>
+          </div>
+        </div>
+      `).join('')
+    : '<div class="empty">No players yet.</div>';
 
   const potControls = `
     <article class="history-item" style="margin-bottom:.75rem;">
       <div class="bet-head">
         <div>
           <h3>Hunny Pot</h3>
-          <div class="hint">Change the Hunny Pot between questions here.</div>
+          <div class="hint">Change the Hunny Pot and give points between questions here.</div>
         </div>
       </div>
       <div class="small-actions-hunny" style="margin-top:.5rem;">
@@ -1264,8 +1280,18 @@ function renderHistory() {
         <button class="btn btn-secondary" type="button" onclick="addToPot()">Add Pts</button>
         <button class="btn btn-danger" type="button" onclick="clearPot()">Clear</button>
       </div>
+      <div class="stack" style="margin-top:.75rem;">
+        ${playerGiveHtml}
+      </div>
     </article>
   `;
+
+  if (!resolved.length) {
+    els.historyList.innerHTML =
+      potControls +
+      '<div class="empty">Resolved rounds will stay here so you can reuse fun questions later.</div>';
+    return;
+  }
 
   const historyHtml = resolved
     .map(bet => {
@@ -1545,24 +1571,28 @@ function setupAttractionSuggestions() {
       .join('');
   }
 
-  els.attractionName?.addEventListener('input', () => {
+  function applyAttractionSelection() {
     const name = els.attractionName.value.trim().toLowerCase();
     if (!name) return;
-    const match = attractions.find(a => a.name.toLowerCase() === name);
-    if (match) {
-      els.landName.value = match.land;
-    }
-  });
 
-  els.attractionName?.addEventListener('blur', () => {
-    if (els.landName.value.trim()) return;
-    const name = els.attractionName.value.trim().toLowerCase();
-    if (!name) return;
     const match = attractions.find(a => a.name.toLowerCase() === name);
-    if (match) {
+    if (!match) return;
+
+    if (match.land) {
       els.landName.value = match.land;
     }
-  });
+
+    if (!els.betDescription.value.trim()) {
+      const question = getRandomQuestionForAttractionWithFallback();
+      if (question) {
+        els.betDescription.value = question;
+      }
+    }
+  }
+
+  els.attractionName?.addEventListener('input', applyAttractionSelection);
+  els.attractionName?.addEventListener('change', applyAttractionSelection);
+  els.attractionName?.addEventListener('blur', applyAttractionSelection);
 }
 
 // ---------- Events ----------
