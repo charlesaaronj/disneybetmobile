@@ -634,7 +634,7 @@ function renderBetRows() {
         </div>
         <div class="field">
           <label>Wager</label>
-          <input data-amount type="number" min="0" step="1" value="1" placeholder="1" inputmode="numeric" pattern="[0-9]*" ${
+          <input data-amount type="number" min="0" step="1" value="0" placeholder="1" inputmode="numeric" pattern="[0-9]*" ${
             guessingBet ? '' : 'disabled'
           } />
         </div>
@@ -643,14 +643,6 @@ function renderBetRows() {
   }).join('');
 
   attachWagerGuards();
-
-  const inputs = els.betPlayers.querySelectorAll('[data-amount]');
-  inputs.forEach(input => {
-    const val = Number(input.value);
-    if (!Number.isFinite(val) || val <= 0) {
-      input.value = '1';
-    }
-  });
 }
 
 function attachWagerGuards() {
@@ -659,22 +651,10 @@ function attachWagerGuards() {
     const playerId = row.dataset.playerId;
     const input = row.querySelector('[data-amount]');
     if (!input) return;
-
     input.addEventListener('input', () => {
       const available = getAvailablePoints(playerId);
-      let raw = input.value.trim();
-
-      // Explicit "0" allowed as sit-out
-      if (raw === '0') {
-        input.value = '0';
-        return;
-      }
-
-      let value = Number(raw);
-      if (!Number.isFinite(value) || value <= 0) {
-        value = 1;
-      }
-
+      let value = Number(input.value) || 0;
+      if (!Number.isFinite(value) || value < 0) value = 0;
       if (value > available) {
         value = available;
         alertLike(`That's the max they can wager this round (${available} points).`);
@@ -683,6 +663,7 @@ function attachWagerGuards() {
     });
   });
 }
+
 
 function buildGuessesForBet(bet) {
   const rows = [...document.querySelectorAll('[data-bet-player-row]')];
