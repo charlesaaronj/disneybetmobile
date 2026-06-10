@@ -186,6 +186,12 @@ function enforceMinPot() {
   }
 }
 
+function resetQuestionForm() {
+  els.attractionName.value = '';
+  els.landName.value = '';
+  els.betDescription.value = '';
+}
+
 function setChosenAnswerForBet(bet, chosen) {
   if (!bet || !chosen) return;
   bet.chosenAnswerId = chosen.id;
@@ -1448,6 +1454,19 @@ function getUsedGlobalQuestions() {
   return used;
 }
 
+function getRandomUnusedGlobalQuestion() {
+  const globalPool = window.DISNEY_LINE_QUESTIONS || [];
+  const usedGlobal = getUsedGlobalQuestions();
+  const unusedGlobal = globalPool.filter(q => !usedGlobal.has(q));
+
+  if (unusedGlobal.length) {
+    return unusedGlobal[Math.floor(Math.random() * unusedGlobal.length)];
+  }
+
+  if (!globalPool.length) return '';
+  return globalPool[Math.floor(Math.random() * globalPool.length)];
+}
+
 function getFactForBet(bet) {
   if (!bet || !bet.attraction) return '';
 
@@ -1500,49 +1519,6 @@ function getRandomQuestionForAttractionWithFallback() {
 
   const idx = Math.floor(Math.random() * globalPool.length);
   return globalPool[idx];
-}
-
-function getNextQuestionForCurrentSelection() {
-  const attractionName = els.attractionName.value.trim();
-  const globalPool = window.DISNEY_LINE_QUESTIONS || [];
-  const usedGlobal = getUsedGlobalQuestions();
-  const unusedGlobal = globalPool.filter(q => !usedGlobal.has(q));
-
-  if (!attractionName) {
-    if (unusedGlobal.length) {
-      return unusedGlobal[Math.floor(Math.random() * unusedGlobal.length)];
-    }
-    if (!globalPool.length) return '';
-    return globalPool[Math.floor(Math.random() * globalPool.length)];
-  }
-
-  const parks = window.PARKS;
-  const attractions = parks && Array.isArray(parks.attractions)
-    ? parks.attractions
-    : [];
-
-  const attraction = attractions.find(
-    a => a.name.toLowerCase() === attractionName.toLowerCase()
-  );
-
-  const specific = attraction && Array.isArray(attraction.questions)
-    ? attraction.questions
-    : [];
-
-  const usedSpecific = getUsedSpecificQuestionsForAttraction(attractionName);
-  const unusedSpecific = specific.filter(q => !usedSpecific.has(q));
-
-  if (unusedSpecific.length) {
-    return unusedSpecific[Math.floor(Math.random() * unusedSpecific.length)];
-  }
-
-  if (unusedGlobal.length) {
-    return unusedGlobal[Math.floor(Math.random() * unusedGlobal.length)];
-  }
-
-  const combined = [...specific, ...globalPool];
-  if (!combined.length) return '';
-  return combined[Math.floor(Math.random() * combined.length)];
 }
 
 function renderBonusLibrary() {
@@ -1687,18 +1663,16 @@ document.getElementById('createBetBtn')?.addEventListener('click', () => {
 });
 
 document.getElementById('randomBetBtn')?.addEventListener('click', () => {
-  const q = getNextQuestionForCurrentSelection();
+  const q = getRandomUnusedGlobalQuestion();
   if (!q) {
-    alertLike('No question ideas are available yet.');
+    alertLike('No global question ideas are available yet.');
     return;
   }
   els.betDescription.value = q;
 });
 
 document.getElementById('clearBetFormBtn')?.addEventListener('click', () => {
-  els.betDescription.value = '';
-  els.attractionName.value = '';
-  els.landName.value = '';
+  resetQuestionForm();
   renderBetPlayers();
 });
 
@@ -1740,6 +1714,7 @@ navEls.toScoresBtn?.addEventListener('click', () => {
 });
 
 navEls.nextRoundBtn?.addEventListener('click', () => {
+  resetQuestionForm();
   goToQuestion();
 });
 
