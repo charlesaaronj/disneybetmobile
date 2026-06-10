@@ -1599,6 +1599,11 @@ if (navEls.startGameBtn) {
       alertLike('Add at least two family members before starting the game.');
       return;
     }
+
+    els.attractionName.value = '';
+    els.landName.value = '';
+    els.betDescription.value = '';
+
     goToQuestion();
   });
 }
