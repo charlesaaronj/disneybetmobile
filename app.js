@@ -920,14 +920,14 @@ function resolveGuessingBet(betId) {
   parts.push(`<div>${escapeHtml(authorNames.join(', ') || 'Unknown')}</div>`);
   if (bet.attraction || bet.land) {
     parts.push(
-      `<div class="hint">Attraction: ${escapeHtml(bet.attraction || 'Unknown')} ${bet.land ? '(' + escapeHtml(bet.land) + ')' : ''}</div>`
+      `<div>Attraction: ${escapeHtml(bet.attraction || 'Unknown')} ${bet.land ? '(' + escapeHtml(bet.land) + ')' : ''}</div>`
     );
   }
 
   const fact = getFactForBet(bet);
   if (fact) {
     parts.push(
-      `<div class="hint" style="margin-top:.5rem;"><strong>Fun fact:</strong> ${escapeHtml(fact)}</div>`
+      `<div><strong>Fun fact:</strong> ${escapeHtml(fact)}</div>`
     );
   }
 
@@ -982,7 +982,7 @@ function resolveGuessingBet(betId) {
       .map(p => `${escapeHtml(p.name)}: ${clampScore(p.currentPoints)}`)
       .join('<br>')}</div>`
   );
-  parts.push(`<div style="margin-top:.75rem;">Hunny Pot is now ${state.pot} points.</div>`);
+  parts.push(`<div>Hunny Pot is now ${state.pot} points.</div>`);
 
   if (roundBonuses && roundBonuses.length) {
     const bonusLines = roundBonuses
