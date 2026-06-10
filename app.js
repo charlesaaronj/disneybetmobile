@@ -683,7 +683,6 @@ function attachWagerGuards() {
     });
   });
 }
-
 function buildGuessesForBet(bet) {
   const rows = [...document.querySelectorAll('[data-bet-player-row]')];
   const guesses = rows.map(row => {
