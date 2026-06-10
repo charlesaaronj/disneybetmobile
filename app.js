@@ -915,75 +915,79 @@ function resolveGuessingBet(betId) {
     })
     .filter(Boolean);
 
-  const parts = [];
-  parts.push(`<div class="reveal-section-title">Author${authorNames.length > 1 ? 's' : ''}</div>`);
-  parts.push(`<div>${escapeHtml(authorNames.join(', ') || 'Unknown')}</div>`);
-  if (bet.attraction || bet.land) {
-    parts.push(
-      `<div>Attraction: ${escapeHtml(bet.attraction || 'Unknown')} ${bet.land ? '(' + escapeHtml(bet.land) + ')' : ''}</div>`
+const parts = [];
+
+parts.push(`<div class="reveal-section-title">Author${authorNames.length > 1 ? 's' : ''}</div>`);
+parts.push(`<div>${escapeHtml(authorNames.join(', ') || 'Unknown')}</div>`);
+
+if (bet.attraction || bet.land) {
+  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Attraction</div>`);
+  parts.push(
+    `<div>${escapeHtml(bet.attraction || 'Unknown')} ${bet.land ? '(' + escapeHtml(bet.land) + ')' : ''}</div>`
+  );
+}
+
+const fact = getFactForBet(bet);
+if (fact) {
+  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Fun fact</div>`);
+  parts.push(`<div>${escapeHtml(fact)}</div>`);
+}
+
+parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Winners</div>`);
+if (anyCorrect && winnerLines.length) {
+  parts.push(`<div>${winnerLines.map(escapeHtml).join('<br>')}</div>`);
+} else if (potThisRound > 0) {
+  parts.push(`<div>No one guessed correctly. All wagers went to the Hunny Pot.</div>`);
+} else {
+  parts.push(`<div>No one placed a wager this round.</div>`);
+}
+
+// Automatic catch-up using Hunny Pot without leapfrogging
+const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
+if (state.pot > 0 && ranked.length >= 2) {
+  const leader = ranked[0];
+  const last = ranked[ranked.length - 1];
+  const gap = leader.currentPoints - last.currentPoints;
+
+  if (gap >= 10) {
+    const secondLast = ranked[ranked.length - 2];
+
+    const maxToSecondLast = secondLast
+      ? Math.max(0, secondLast.currentPoints - last.currentPoints)
+      : gap;
+
+    const maxToLeaderMinusOne = Math.max(0, leader.currentPoints - 1 - last.currentPoints);
+
+    const hardCap = Math.min(
+      5,
+      state.pot,
+      maxToSecondLast,
+      maxToLeaderMinusOne
     );
-  }
 
-  const fact = getFactForBet(bet);
-  if (fact) {
-    parts.push(
-      `<div><strong>Fun fact:</strong> ${escapeHtml(fact)}</div>`
-    );
-  }
+    if (hardCap > 0) {
+      last.currentPoints = clampScore(last.currentPoints + hardCap);
+      state.pot -= hardCap;
+      enforceMinPot();
 
-  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Winners</div>`);
-  if (anyCorrect && winnerLines.length) {
-    parts.push(`<div>${winnerLines.map(escapeHtml).join('<br>')}</div>`);
-  } else if (potThisRound > 0) {
-    parts.push(`<div>No one guessed correctly. All wagers went to the Hunny Pot.</div>`);
-  } else {
-    parts.push(`<div>No one placed a wager this round.</div>`);
-  }
-
-  // Automatic catch-up using Hunny Pot without leapfrogging
-  const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
-  if (state.pot > 0 && ranked.length >= 2) {
-    const leader = ranked[0];
-    const last = ranked[ranked.length - 1];
-    const gap = leader.currentPoints - last.currentPoints;
-
-    if (gap >= 10) {
-      const secondLast = ranked[ranked.length - 2];
-
-      const maxToSecondLast = secondLast
-        ? Math.max(0, secondLast.currentPoints - last.currentPoints)
-        : gap;
-
-      const maxToLeaderMinusOne = Math.max(0, leader.currentPoints - 1 - last.currentPoints);
-
-      const hardCap = Math.min(
-        5,
-        state.pot,
-        maxToSecondLast,
-        maxToLeaderMinusOne
+      parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Catch-up</div>`);
+      parts.push(
+        `<div>Gave ${hardCap} points from the Hunny Pot to ${escapeHtml(last.name)} (without passing anyone).</div>`
       );
-
-      if (hardCap > 0) {
-        last.currentPoints = clampScore(last.currentPoints + hardCap);
-        state.pot -= hardCap;
-        enforceMinPot();
-
-        parts.push(
-          `<div class="hint" style="margin-top:.5rem;">Catch-up: Gave ${hardCap} points from the Hunny Pot to ${escapeHtml(last.name)} (without passing anyone).</div>`
-        );
-      }
     }
   }
+}
 
-  const rankedAfter = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
-  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Scores after this round</div>`);
-  parts.push(
-    `<div>${rankedAfter
-      .map(p => `${escapeHtml(p.name)}: ${clampScore(p.currentPoints)}`)
-      .join('<br>')}</div>`
-  );
-  parts.push(`<div>Hunny Pot is now ${state.pot} points.</div>`);
+const rankedAfter = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
+parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Scores after this round</div>`);
+parts.push(
+  `<div>${rankedAfter
+    .map(p => `${escapeHtml(p.name)}: ${clampScore(p.currentPoints)}`)
+    .join('<br>')}</div>`
+);
 
+parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Hunny Pot</div>`);
+parts.push(`<div>${state.pot} points</div>`);
   if (roundBonuses && roundBonuses.length) {
     const bonusLines = roundBonuses
       .map(b => {
