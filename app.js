@@ -186,6 +186,12 @@ function enforceMinPot() {
   }
 }
 
+function resetQuestionForm() {
+  els.attractionName.value = '';
+  els.landName.value = '';
+  els.betDescription.value = '';
+}
+
 function setChosenAnswerForBet(bet, chosen) {
   if (!bet || !chosen) return;
   bet.chosenAnswerId = chosen.id;
@@ -1245,18 +1251,34 @@ function renderOpenBets() {
 
 function renderHistory() {
   const resolved = state.bets.filter(b => b.status === 'resolved');
-  if (!resolved.length) {
-    els.historyList.innerHTML =
-      '<div class="empty">Resolved rounds will stay here so you can reuse fun questions later.</div>';
-    return;
-  }
+
+  const playerGiveHtml = state.players.length
+    ? state.players.map(p => `
+        <div class="player-chip" style="margin-top:.5rem;">
+          <div>
+            <strong>${escapeHtml(p.name)}</strong>
+            <div class="hint">${clampScore(p.currentPoints)} points right now</div>
+          </div>
+          <div class="small-actions">
+            <button
+              class="btn btn-secondary"
+              type="button"
+              onclick="giveFromPot('${p.id}')"
+              ${state.pot > 0 ? '' : 'disabled'}
+            >
+              Give from Hunny Pot
+            </button>
+          </div>
+        </div>
+      `).join('')
+    : '<div class="empty">No players yet.</div>';
 
   const potControls = `
     <article class="history-item" style="margin-bottom:.75rem;">
       <div class="bet-head">
         <div>
           <h3>Hunny Pot</h3>
-          <div class="hint">Change the Hunny Pot between questions here.</div>
+          <div class="hint">Change the Hunny Pot and give points between questions here.</div>
         </div>
       </div>
       <div class="small-actions-hunny" style="margin-top:.5rem;">
@@ -1264,8 +1286,18 @@ function renderHistory() {
         <button class="btn btn-secondary" type="button" onclick="addToPot()">Add Pts</button>
         <button class="btn btn-danger" type="button" onclick="clearPot()">Clear</button>
       </div>
+      <div class="stack" style="margin-top:.75rem;">
+        ${playerGiveHtml}
+      </div>
     </article>
   `;
+
+  if (!resolved.length) {
+    els.historyList.innerHTML =
+      potControls +
+      '<div class="empty">Resolved rounds will stay here so you can reuse fun questions later.</div>';
+    return;
+  }
 
   const historyHtml = resolved
     .map(bet => {
@@ -1393,7 +1425,7 @@ function getUsedSpecificQuestionsForAttraction(attractionName) {
   const used = new Set();
 
   state.bets
-    .filter(b => b.status === 'resolved' && b.attraction)
+    .filter(b => b.description)
     .forEach(bet => {
       if (
         bet.attraction &&
@@ -1405,6 +1437,34 @@ function getUsedSpecificQuestionsForAttraction(attractionName) {
     });
 
   return used;
+}
+
+function getUsedGlobalQuestions() {
+  const globalPool = new Set(window.DISNEY_LINE_QUESTIONS || []);
+  const used = new Set();
+
+  state.bets
+    .filter(b => b.description)
+    .forEach(bet => {
+      if (globalPool.has(bet.description)) {
+        used.add(bet.description);
+      }
+    });
+
+  return used;
+}
+
+function getRandomUnusedGlobalQuestion() {
+  const globalPool = window.DISNEY_LINE_QUESTIONS || [];
+  const usedGlobal = getUsedGlobalQuestions();
+  const unusedGlobal = globalPool.filter(q => !usedGlobal.has(q));
+
+  if (unusedGlobal.length) {
+    return unusedGlobal[Math.floor(Math.random() * unusedGlobal.length)];
+  }
+
+  if (!globalPool.length) return '';
+  return globalPool[Math.floor(Math.random() * globalPool.length)];
 }
 
 function getFactForBet(bet) {
@@ -1490,10 +1550,10 @@ function renderBonusLibrary() {
         <div class="bonus-head">
           <div>
             <h3>${escapeHtml(bonus.name)}</h3>
-            <div class="hint">${escapeHtml(bonus.description)}</div>
+            <div class="hint">${escapeHtml(bonus.description || '')}</div>
             <div class="hint">${escapeHtml(qualificationHint)}</div>
           </div>
-          <div class="bonus-points">${bonus.points}</div>
+          <div class="bonus-points">+${bonus.points}</div>
         </div>
       </div>
     `;
@@ -1545,24 +1605,28 @@ function setupAttractionSuggestions() {
       .join('');
   }
 
-  els.attractionName?.addEventListener('input', () => {
+  function applyAttractionSelection() {
     const name = els.attractionName.value.trim().toLowerCase();
     if (!name) return;
-    const match = attractions.find(a => a.name.toLowerCase() === name);
-    if (match) {
-      els.landName.value = match.land;
-    }
-  });
 
-  els.attractionName?.addEventListener('blur', () => {
-    if (els.landName.value.trim()) return;
-    const name = els.attractionName.value.trim().toLowerCase();
-    if (!name) return;
     const match = attractions.find(a => a.name.toLowerCase() === name);
-    if (match) {
+    if (!match) return;
+
+    if (match.land) {
       els.landName.value = match.land;
     }
-  });
+
+    if (!els.betDescription.value.trim()) {
+      const question = getRandomQuestionForAttractionWithFallback();
+      if (question) {
+        els.betDescription.value = question;
+      }
+    }
+  }
+
+  els.attractionName?.addEventListener('input', applyAttractionSelection);
+  els.attractionName?.addEventListener('change', applyAttractionSelection);
+  els.attractionName?.addEventListener('blur', applyAttractionSelection);
 }
 
 // ---------- Events ----------
@@ -1599,18 +1663,16 @@ document.getElementById('createBetBtn')?.addEventListener('click', () => {
 });
 
 document.getElementById('randomBetBtn')?.addEventListener('click', () => {
-  const q = getRandomQuestionForAttractionWithFallback();
+  const q = getRandomUnusedGlobalQuestion();
   if (!q) {
-    alertLike('No question ideas are available yet.');
+    alertLike('No global question ideas are available yet.');
     return;
   }
   els.betDescription.value = q;
 });
 
 document.getElementById('clearBetFormBtn')?.addEventListener('click', () => {
-  els.betDescription.value = '';
-  els.attractionName.value = '';
-  els.landName.value = '';
+  resetQuestionForm();
   renderBetPlayers();
 });
 
@@ -1652,6 +1714,7 @@ navEls.toScoresBtn?.addEventListener('click', () => {
 });
 
 navEls.nextRoundBtn?.addEventListener('click', () => {
+  resetQuestionForm();
   goToQuestion();
 });
 
