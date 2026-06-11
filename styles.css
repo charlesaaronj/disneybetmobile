@@ -23,6 +23,7 @@
   --color-surface: #ffffff;
   --color-surface-2: #fbfaf7;
   --color-surface-offset: #f3f0ec;
+  --color-surface-soft: #f6f3ee;
   --color-border: #ddd6ca;
 
   --color-text: #1f1d18;
@@ -57,6 +58,7 @@
   --color-surface: #1c1b19;
   --color-surface-2: #201f1d;
   --color-surface-offset: #22211f;
+  --color-surface-soft: #1f1e1c;
   --color-border: #393836;
 
   --color-text: #e2dfd8;
@@ -146,13 +148,22 @@ textarea {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
+  gap: var(--space-3);
+}
+
+/* Top + main container mimics an app frame */
+.screen-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
 .app-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 /* Each screen is a vertical stack that fills the width.
@@ -179,14 +190,14 @@ textarea {
   width: 100%;
 }
 
-/* Topbar */
+/* ---------- Topbar ---------- */
 
 .topbar {
   display: flex;
   gap: var(--space-3);
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-3);
   padding: var(--space-4);
   background: color-mix(in oklab, var(--color-surface) 94%, transparent);
   border: 1px solid var(--color-border);
@@ -252,7 +263,8 @@ h3 {
     background-color 180ms ease,
     color 180ms ease,
     border-color 180ms ease,
-    transform 180ms ease;
+    transform 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .btn:hover {
@@ -262,6 +274,7 @@ h3 {
 .btn-primary {
   background: var(--color-primary);
   color: var(--color-text-inverse);
+  box-shadow: 0 10px 24px rgba(35, 91, 140, 0.25);
 }
 
 .btn-primary:hover {
@@ -279,6 +292,13 @@ h3 {
   border-color: color-mix(in oklab, var(--color-error) 30%, transparent);
 }
 
+/* Tiny button variant for inline actions */
+.btn-xs {
+  min-height: 32px;
+  padding: 0.3rem 0.7rem;
+  font-size: var(--text-xs);
+}
+
 /* ---------- Panels & simple stacks ---------- */
 
 .stack {
@@ -286,8 +306,9 @@ h3 {
   gap: var(--space-3);
 }
 
+/* Primary card container for each section */
 .panel {
-  background: linear-gradient(180deg, #ffffff, #fbfaf7);
+  background: linear-gradient(180deg, var(--color-surface), var(--color-surface-2));
   border: 1px solid var(--color-border);
   border-radius: 20px;
   padding: var(--space-4);
@@ -334,16 +355,52 @@ h3 {
 .bonus-card,
 .earned-card {
   border: 1px solid var(--color-border);
-  background: linear-gradient(180deg, #ffffff, #fbfaf7);
+  background: linear-gradient(180deg, var(--color-surface), var(--color-surface-2));
   border-radius: 16px;
 }
 
+/* Player card with avatar + stats */
 .player-chip {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: var(--space-2);
   padding: var(--space-3);
   align-items: center;
+}
+
+.player-chip__main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.player-chip__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: radial-gradient(circle at 30% 30%, #facc15, #eab308);
+  color: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.player-chip__name {
+  font-weight: 600;
+}
+
+.player-chip__meta {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.player-chip__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-end;
 }
 
 .scoreboard {
@@ -426,16 +483,33 @@ h3 {
   gap: 0.45rem;
 }
 
+/* Wager rows: stack on mobile, side-by-side on larger devices */
 .player-bet-row {
   padding: 0.85rem;
   display: grid;
-  grid-template-columns: 1.2fr 0.9fr 0.8fr;
   gap: var(--space-3);
   align-items: center;
 }
 
 .player-bet-row strong {
   font-size: var(--text-sm);
+}
+
+.player-bet-row > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.player-bet-row .field-group {
+  display: grid;
+  gap: var(--space-3);
+}
+
+@media (min-width: 400px) {
+  .player-bet-row .field-group {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* ---------- Bonus panels ---------- */
@@ -578,7 +652,6 @@ h3 {
 
 @media (max-width: 900px) {
   .grid-2,
-  .player-bet-row,
   .player-chip,
   .totals {
     grid-template-columns: 1fr;
