@@ -1513,7 +1513,7 @@ function renderSelectedAnswerPanel() {
     <div class="stack">
       <div class="field">
         <label>Question</label>
-        <div>${escapeHtml(bet.description || 'Unknown question')}</div>
+        <div class="hint">${escapeHtml(bet.description || 'Unknown question')}</div>
       </div>
       <div class="field">
         <label>Selected answer</label>
@@ -1524,7 +1524,7 @@ function renderSelectedAnswerPanel() {
           ? `
             <div class="field">
               <label>Attraction / Land</label>
-              <div>${escapeHtml(meta)}</div>
+              <div class="hint">${escapeHtml(meta)}</div>
             </div>
           `
           : ''
