@@ -429,7 +429,8 @@ function renderGuessingRound() {
 // Render the “wager per player” list for the current guessing bet.
 function renderBetRows() {
   if (!state.players.length) {
-    els.betPlayers.innerHTML = '<div class="empty">Add players, then start a round.</div>';
+    els.betPlayers.innerHTML =
+      '<div class="empty">Add players, then start a round.</div>';
     return;
   }
 
@@ -443,29 +444,41 @@ function renderBetRows() {
     const player = state.players.find(p => p.id === playerId);
     if (!player) return '';
     const available = getAvailablePoints(player.id);
+
     return `
       <div class="player-bet-row" data-bet-player-row data-player-id="${player.id}">
         <div>
           <strong>${escapeHtml(player.name)}</strong>
-          <div class="hint">Available ${available} points</div>
+          <div class="hint">Can wager up to ${available} points this round</div>
         </div>
-        <div class="field">
-          <label>Who said it?</label>
-          <select data-guess-player ${guessingBet ? '' : 'disabled'}>
-            ${
-              guessingBet
-                ? state.players
-                    .map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`)
-                    .join('')
-                : ''
-            }
-          </select>
-        </div>
-        <div class="field">
-          <label>Wager</label>
-          <input data-amount type="number" min="0" step="1" value="1"
-            placeholder="1" inputmode="numeric" pattern="[0-9]*"
-            ${guessingBet ? '' : 'disabled'} />
+        <div class="field-group">
+          <div class="field">
+            <label class="field__label">Who said it?</label>
+            <select class="field__input" data-guess-player ${guessingBet ? '' : 'disabled'}>
+              ${
+                guessingBet
+                  ? state.players
+                      .map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`)
+                      .join('')
+                  : ''
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label class="field__label">Wager</label>
+            <input
+              class="field__input"
+              data-amount
+              type="number"
+              min="0"
+              step="1"
+              value="1"
+              placeholder="1"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              ${guessingBet ? '' : 'disabled'}
+            />
+          </div>
         </div>
       </div>
     `;
@@ -537,40 +550,58 @@ function buildRawGuessesForBet() {
 
 function renderPlayers() {
   if (!state.players.length) {
-    els.playersList.innerHTML = '<div class="empty">No family members yet. Add names above to begin.</div>';
+    els.playersList.innerHTML =
+      '<div class="empty">No family members yet. Add names above to begin.</div>';
     return;
   }
 
   const potHtml = `
     <div class="player-chip" style="margin-bottom:.5rem;">
-      <div>
-        <div class="small-actions-hunny" style="margin-top:.25rem;">
-          <span class="pill pot-pill-total">Hunny Pot ${state.pot}</span>
-          <button class="btn btn-secondary" type="button" onclick="addToPot()">Add Pts</button>
-          <button class="btn btn-danger" type="button" onclick="clearPot()">Clear</button>
+      <div class="player-chip__main">
+        <div>
+          <div class="player-chip__name">Hunny Pot</div>
+          <div class="player-chip__meta">Shared bonus points for big swings.</div>
         </div>
+      </div>
+      <div class="player-chip__actions small-actions-hunny">
+        <span class="pill pot-pill-total">Hunny Pot ${state.pot}</span>
+        <button class="btn btn-secondary btn-xs" type="button" onclick="addToPot()">Add pts</button>
+        <button class="btn btn-danger btn-xs" type="button" onclick="clearPot()">Clear</button>
       </div>
     </div>
   `;
 
   const playersHtml = state.players.map(p => {
     const canReceive = clampScore(p.currentPoints) === 0 && state.pot > 0;
+    const initials = p.name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+
     return `
       <div class="player-chip">
-        <div>
-          <strong>${escapeHtml(p.name)}</strong>
-          <div class="hint">Starts with ${p.startingPoints} points</div>
-        </div>
-        <div>
-          <div class="small-actions">
-            <span class="pill pill-open">${clampScore(p.currentPoints)} now</span>
-            ${
-              canReceive
-                ? `<button class="btn btn-secondary" type="button" onclick="giveFromPot('${p.id}')">Give from Hunny Pot</button>`
-                : ''
-            }
-            <button class="btn btn-danger" type="button" onclick="removePlayer('${p.id}')">Remove</button>
+        <div class="player-chip__main">
+          <div class="player-chip__avatar">${escapeHtml(initials || '?')}</div>
+          <div>
+            <div class="player-chip__name">${escapeHtml(p.name)}</div>
+            <div class="player-chip__meta">
+              Started with ${p.startingPoints} · Now ${clampScore(p.currentPoints)}
+            </div>
           </div>
+        </div>
+        <div class="player-chip__actions">
+          ${
+            canReceive
+              ? `<button class="btn btn-secondary btn-xs" type="button" onclick="giveFromPot('${p.id}')">
+                   Give from Hunny Pot
+                 </button>`
+              : ''
+          }
+          <button class="btn btn-danger btn-xs" type="button" onclick="removePlayer('${p.id}')">
+            Remove
+          </button>
         </div>
       </div>
     `;
@@ -581,7 +612,8 @@ function renderPlayers() {
 
 function renderScoreboard() {
   if (!state.players.length) {
-    const empty = '<div class="empty">Scores will appear here once players are added.</div>';
+    const empty =
+      '<div class="empty">Scores will appear here once players are added.</div>';
     els.scoreboard.innerHTML = empty;
     if (els.scoreboardScoresScreen) {
       els.scoreboardScoresScreen.innerHTML = empty;
@@ -667,7 +699,8 @@ function renderOpenMetrics() {
 function renderOpenBets() {
   const open = state.bets.filter(b => b.status !== 'resolved');
   if (!open.length) {
-    els.openBets.innerHTML = '<div class="empty">No active rounds. Start a new question above.</div>';
+    els.openBets.innerHTML =
+      '<div class="empty">No active rounds. Start a new question above.</div>';
     return;
   }
 
@@ -1171,3 +1204,4 @@ window.addEventListener('load', () => {
   goToSetup();
   els.playerName?.focus();
 });
+
