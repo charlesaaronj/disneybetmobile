@@ -1117,7 +1117,7 @@ function resolveGuessingBet(betId) {
 
   if (bet.hotRound && bet.hotRoundBonus > 0) {
     parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Hot Round</div>`);
-    parts.push(`<div>This was a Hunny Pot Hot Round with ${bet.hotRoundBonus} extra points available from the Hunny Pot.</div>`);
+    parts.push(`<div class="hint">This was a Hunny Pot Hot Round with ${bet.hotRoundBonus} extra points available from the Hunny Pot.</div>`);
   }
 
   parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Winners</div>`);
@@ -1136,7 +1136,7 @@ function resolveGuessingBet(betId) {
 
   if (hotRoundLines.length) {
     parts.push(`<div>Hot Round bonus</div>`);
-    parts.push(`<div>${hotRoundLines.map(escapeHtml).join('<br>')}</div>`);
+    parts.push(`<div class="hint">${hotRoundLines.map(escapeHtml).join('<br>')}</div>`);
   }
 
   // Catch-up from Hunny Pot (this mutates scores AFTER the first save)
