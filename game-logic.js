@@ -641,7 +641,7 @@ export function resolveGuessingBet(betId) {
 
   // List individual Hot Round bonus payouts (if any).
   if (hotRoundLines.length) {
-    parts.push(`<div>Hot Round bonus</div>`);
+    //parts.push(`<div>Hot Round bonus</div>`);
     parts.push(`<div class="hint">${hotRoundLines.map(escapeHtml).join('<br>')}</div>`);
   }
 
