@@ -1517,7 +1517,7 @@ function renderSelectedAnswerPanel() {
       </div>
       <div class="field">
         <label>Selected answer</label>
-        <div>${escapeHtml(answerText || 'No selected answer yet')}</div>
+        <div class="hint">${escapeHtml(answerText || 'No selected answer yet')}</div>
       </div>
       ${
         meta
