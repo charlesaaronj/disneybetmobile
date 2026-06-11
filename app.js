@@ -1199,7 +1199,7 @@ function resolveGuessingBet(betId) {
       .filter(Boolean);
 
     parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Bonus points this round</div>`);
-    parts.push(`<div class="html">${bonusLines.map(escapeHtml).join('<br>')}</div>`);
+    parts.push(`<div class="hint">${bonusLines.map(escapeHtml).join('<br>')}</div>`);
   }
 
   if (els.revealSummary) {
