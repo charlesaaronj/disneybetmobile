@@ -1112,7 +1112,7 @@ function resolveGuessingBet(betId) {
   }
 
   if (hotRoundLines.length) {
-    parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Hot Round bonus</div>`);
+    parts.push(`<div>Hot Round bonus</div>`);
     parts.push(`<div>${hotRoundLines.map(escapeHtml).join('<br>')}</div>`);
   }
 
