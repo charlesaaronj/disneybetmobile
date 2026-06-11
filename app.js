@@ -1082,19 +1082,19 @@ function resolveGuessingBet(betId) {
   const parts = [];
 
   parts.push(`<div class="reveal-section-title">Author${authorNames.length > 1 ? 's' : ''}</div>`);
-  parts.push(`<div>${escapeHtml(authorNames.join(', ') || 'Unknown')}</div>`);
+  parts.push(`<div class="hint">${escapeHtml(authorNames.join(', ') || 'Unknown')}</div>`);
 
   if (bet.attraction || bet.land) {
     parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Attraction</div>`);
     parts.push(
-      `<div>${escapeHtml(bet.attraction || 'Unknown')} ${bet.land ? '(' + escapeHtml(bet.land) + ')' : ''}</div>`
+      `<div class="hint" >${escapeHtml(bet.attraction || 'Unknown')} ${bet.land ? '(' + escapeHtml(bet.land) + ')' : ''}</div>`
     );
   }
 
   const fact = getFactForBet(bet);
   if (fact) {
     parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Fun fact</div>`);
-    parts.push(`<div>${escapeHtml(fact)}</div>`);
+    parts.push(`<div class="hint">${escapeHtml(fact)}</div>`);
   }
 
   if (bet.hotRound && bet.hotRoundBonus > 0) {
