@@ -1106,7 +1106,7 @@ function resolveGuessingBet(betId) {
   if (anyCorrect && winnerLines.length) {
     parts.push(`<div class="hint">${winnerLines.map(escapeHtml).join('<br>')}</div>`);
   } else if (potThisRound > 0) {
-    parts.push(`<div>No one guessed correctly. All wagers went to the Hunny Pot.</div>`);
+    parts.push(`<div class = "hint">No one guessed correctly. All wagers went to the Hunny Pot.</div>`);
   } else {
     parts.push(`<div>No one placed a wager this round.</div>`);
   }
@@ -1171,7 +1171,7 @@ function resolveGuessingBet(betId) {
       .filter(Boolean);
 
     parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Bonus points this round</div>`);
-    parts.push(`<div>${bonusLines.map(escapeHtml).join('<br>')}</div>`);
+    parts.push(`<div class="html">${bonusLines.map(escapeHtml).join('<br>')}</div>`);
   }
 
   if (els.revealSummary) {
