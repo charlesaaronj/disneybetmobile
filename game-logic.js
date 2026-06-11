@@ -675,7 +675,7 @@ export function resolveGuessingBet(betId) {
 
         parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Catch-up</div>`);
         parts.push(
-          `<div class="hint">Gave ${hardCap} points from the Hunny Pot to ${escapeHtml(last.name)} (without passing anyone).</div>`
+          `<div class="hint">Gave ${hardCap} points from the Hunny Pot to ${escapeHtml(last.name)}.</div>`
         );
       }
     }
