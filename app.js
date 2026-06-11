@@ -1839,6 +1839,7 @@ navEls.startGameBtn?.addEventListener('click', () => {
     alertLike('Add at least two family members first.');
     return;
   }
+  resetQuestionForm();   // clear attraction, land, and question
   goToQuestion();
 });
 
