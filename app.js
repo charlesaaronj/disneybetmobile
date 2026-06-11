@@ -1532,7 +1532,7 @@ function renderSelectedAnswerPanel() {
     ? `
       <div class="field">
         <label>Hot Round bonus</label>
-        <div>+${bet.hotRoundBonus} from the Hunny Pot</div>
+        <div class="hint">+${bet.hotRoundBonus} from the Hunny Pot</div>
       </div>
     `
     : '';
