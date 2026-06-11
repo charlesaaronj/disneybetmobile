@@ -1531,7 +1531,6 @@ function renderSelectedAnswerPanel() {
   const hot = bet.hotRound && bet.hotRoundBonus > 0
     ? `
       <div class="field">
-        <label>Hot Round bonus</label>
         <div class="hint">+${bet.hotRoundBonus} from the Hunny Pot</div>
       </div>
     `
