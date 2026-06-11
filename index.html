@@ -463,6 +463,63 @@
     </div>
   </div>
 
+  <!-- NEW: Hot Round modal -->
+  <div
+    id="hotRoundModalBackdrop"
+    class="modal-backdrop"
+    style="display:none;"
+  >
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="hotRoundModalTitle"
+      aria-describedby="hotRoundModalMessage"
+    >
+      <h3 id="hotRoundModalTitle" class="modal-title">Hunny Pot Hot Round</h3>
+      <p class="hint" id="hotRoundModalMessage">
+        The Hunny Pot has points. You can set aside some as an extra bonus for this round's winner.
+      </p>
+
+      <div class="field">
+        <label for="hotRoundModalInput">Extra points from Hunny Pot</label>
+        <input
+          id="hotRoundModalInput"
+          type="number"
+          min="1"
+          step="1"
+          inputmode="numeric"
+          pattern="[0-9]*"
+        />
+        <p class="hint">These points will be shared between any winners, on top of normal winnings.</p>
+      </div>
+
+      <div class="small-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="hotRoundModalSkip"
+        >
+          Not this round
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="hotRoundModalCancel"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          id="hotRoundModalConfirm"
+        >
+          Make it Hot
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script src="parks-data.js"></script>
   <script src="questions.js"></script>
   <script src="ghostRideFragments.js"></script>
