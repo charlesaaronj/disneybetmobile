@@ -977,6 +977,24 @@ function resolveGuessingBet(betId) {
     wager: Math.max(0, Number(g.wager || 0))
   }));
 
+  // Auto-add +1 to the current leader's wager (no ties)
+  let autoLeaderBoostLine = '';
+  if (wagers.length && state.players.length) {
+    const rankedNow = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
+    const top = rankedNow[0];
+    const second = rankedNow[1];
+    const clearLeader = top && (!second || top.currentPoints > second.currentPoints);
+
+    if (clearLeader) {
+      const leaderId = top.id;
+      const leaderWagerObj = wagers.find(w => w.playerId === leaderId);
+      if (leaderWagerObj && leaderWagerObj.wager > 0) {
+        leaderWagerObj.wager += 1;
+        autoLeaderBoostLine = `${top.name} automatically got +1 added to their wager for being in the lead.`;
+      }
+    }
+  }
+
   const potThisRound = wagers.reduce((sum, w) => sum + w.wager, 0);
   const winners = wagers.filter(
     w => w.wager > 0 && correctAuthors.includes(w.guessedAuthorId)
@@ -1109,6 +1127,11 @@ function resolveGuessingBet(betId) {
     parts.push(`<div class = "hint">No one guessed correctly. All wagers went to the Hunny Pot.</div>`);
   } else {
     parts.push(`<div>No one placed a wager this round.</div>`);
+  }
+
+  // Mention the automatic +1 leader wager, if it happened
+  if (autoLeaderBoostLine) {
+    parts.push(`<div class="hint" style="margin-top:.25rem;">${escapeHtml(autoLeaderBoostLine)}</div>`);
   }
 
   if (hotRoundLines.length) {
@@ -1504,7 +1527,7 @@ function renderSelectedAnswerPanel() {
     ? `
       <div class="field">
         <label>Hot Round bonus</label>
-        <div>+${bet.hotRoundBonus} from the Hunny Pot</div>
+        <div class="hint">+${bet.hotRoundBonus} from the Hunny Pot</div>
       </div>
     `
     : '';
@@ -1513,18 +1536,18 @@ function renderSelectedAnswerPanel() {
     <div class="stack">
       <div class="field">
         <label>Question</label>
-        <div class="hint">${escapeHtml(bet.description || 'Unknown question')}</div>
+        <div>${escapeHtml(bet.description || 'Unknown question')}</div>
       </div>
       <div class="field">
         <label>Selected answer</label>
-        <div class="hint">${escapeHtml(answerText || 'No selected answer yet')}</div>
+        <div>${escapeHtml(answerText || 'No selected answer yet')}</div>
       </div>
       ${
         meta
           ? `
             <div class="field">
               <label>Attraction / Land</label>
-              <div class="hint">${escapeHtml(meta)}</div>
+              <div>${escapeHtml(meta)}</div>
             </div>
           `
           : ''
@@ -1535,7 +1558,7 @@ function renderSelectedAnswerPanel() {
           ? `
             <div class="small-actions" style="margin-top:.5rem;">
               <button class="btn btn-secondary" type="button" onclick="rerollCurrentSelectedAnswer()">
-               Select new answer
+                Reroll Selected Answer
               </button>
             </div>
           `
@@ -1839,7 +1862,7 @@ navEls.startGameBtn?.addEventListener('click', () => {
     alertLike('Add at least two family members first.');
     return;
   }
-  resetQuestionForm();   // clear attraction, land, and question
+  resetQuestionForm();
   goToQuestion();
 });
 
