@@ -1104,7 +1104,7 @@ function resolveGuessingBet(betId) {
 
   parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Winners</div>`);
   if (anyCorrect && winnerLines.length) {
-    parts.push(`<div>${winnerLines.map(escapeHtml).join('<br>')}</div>`);
+    parts.push(`<div class="hint">${winnerLines.map(escapeHtml).join('<br>')}</div>`);
   } else if (potThisRound > 0) {
     parts.push(`<div>No one guessed correctly. All wagers went to the Hunny Pot.</div>`);
   } else {
@@ -1154,13 +1154,13 @@ function resolveGuessingBet(betId) {
   const rankedAfter = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
   parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Scores after this round</div>`);
   parts.push(
-    `<div>${rankedAfter
+    `<div class="hint">${rankedAfter
       .map(p => `${escapeHtml(p.name)}: ${clampScore(p.currentPoints)}`)
       .join('<br>')}</div>`
   );
 
   parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Hunny Pot</div>`);
-  parts.push(`<div>${state.pot} points</div>`);
+  parts.push(`<div class="hint">${state.pot} points</div>`);
 
   if (roundBonuses && roundBonuses.length) {
     const bonusLines = roundBonuses
