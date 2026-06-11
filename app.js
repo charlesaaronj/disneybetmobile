@@ -78,6 +78,14 @@ const els = {
   clearHunnyCancel: document.getElementById('clearHunnyModalCancel'),
   clearHunnyConfirm: document.getElementById('clearHunnyModalConfirm'),
 
+  // Hot Round modal
+  hotRoundBackdrop: document.getElementById('hotRoundModalBackdrop'),
+  hotRoundMessage: document.getElementById('hotRoundModalMessage'),
+  hotRoundInput: document.getElementById('hotRoundModalInput'),
+  hotRoundCancel: document.getElementById('hotRoundModalCancel'),
+  hotRoundSkip: document.getElementById('hotRoundModalSkip'),
+  hotRoundConfirm: document.getElementById('hotRoundModalConfirm'),
+
   qualifiedBonusPanel: document.getElementById('qualifiedBonusPanel'),
   bonusLibrary: document.getElementById('bonusLibrary'),
 
@@ -422,12 +430,61 @@ window.clearPot = clearPot;
 window.giveFromPot = giveFromPot;
 window.removePlayer = removePlayer;
 
+// ---------- Hot Round ----------
+function openHotRoundModal(onSubmit) {
+  if (!els.hotRoundBackdrop || !els.hotRoundInput) {
+    onSubmit({ hotRound: false, hotRoundBonus: 0 });
+    return;
+  }
+
+  const max = state.pot;
+  els.hotRoundMessage.textContent =
+    `The Hunny Pot has ${max} points. Make this a Hunny Pot Hot Round and give extra pot points to the winner?`;
+  els.hotRoundInput.value = String(Math.min(5, max));
+  els.hotRoundInput.min = '1';
+  els.hotRoundInput.max = String(max);
+
+  const close = () => {
+    els.hotRoundBackdrop.style.display = 'none';
+    els.hotRoundConfirm.removeEventListener('click', onConfirm);
+    els.hotRoundSkip.removeEventListener('click', onSkip);
+    els.hotRoundCancel.removeEventListener('click', onCancel);
+  };
+
+  const onConfirm = () => {
+    let amount = Number(els.hotRoundInput.value);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alertLike('Enter a number greater than 0.');
+      return;
+    }
+    if (amount > max) amount = max;
+    close();
+    onSubmit({ hotRound: true, hotRoundBonus: clampScore(amount) });
+  };
+
+  const onSkip = () => {
+    close();
+    onSubmit({ hotRound: false, hotRoundBonus: 0 });
+  };
+
+  const onCancel = () => {
+    close();
+  };
+
+  els.hotRoundConfirm.addEventListener('click', onConfirm);
+  els.hotRoundSkip.addEventListener('click', onSkip);
+  els.hotRoundCancel.addEventListener('click', onCancel);
+
+  els.hotRoundBackdrop.style.display = 'flex';
+  els.hotRoundInput.focus();
+}
+
 // ---------- Bets / guessing ----------
 function getCurrentGuessingBet() {
   return state.bets.find(b => b.status === 'guessing') || null;
 }
 
-function createBet() {
+function finalizeCreateBet(options) {
   if (!state.players || state.players.length < 2) {
     alertLike('You need at least two family members to play.');
     return;
@@ -464,7 +521,9 @@ function createBet() {
     bonusAwards: [],
     answerOrder: shuffle(state.players.map(p => p.id)),
     wagerOrder: [],
-    ghostAnswerUsed: false
+    ghostAnswerUsed: false,
+    hotRound: !!options.hotRound,
+    hotRoundBonus: clampScore(options.hotRoundBonus || 0)
   };
 
   state.bets.unshift(bet);
@@ -472,6 +531,32 @@ function createBet() {
   saveState();
   render();
   startAnswerPhase(betId);
+}
+
+function createBet() {
+  if (!state.players || state.players.length < 2) {
+    alertLike('You need at least two family members to play.');
+    return;
+  }
+
+  const attraction = els.attractionName.value.trim();
+  const land = els.landName.value.trim();
+  const question = els.betDescription.value.trim();
+
+  if (!attraction || !land || !question) {
+    alertLike('Attraction, Land, and Question are all required.');
+    return;
+  }
+
+  // If pot is healthy, offer Hot Round
+  if (state.pot > 10) {
+    openHotRoundModal(selection => {
+      if (!selection) return;
+      finalizeCreateBet(selection);
+    });
+  } else {
+    finalizeCreateBet({ hotRound: false, hotRoundBonus: 0 });
+  }
 }
 
 // ---------- Answer collection ----------
@@ -920,6 +1005,24 @@ function resolveGuessingBet(betId) {
     state.pot += potThisRound;
   }
 
+  // Hot Round extra payout from Hunny Pot
+  const hotRoundLines = [];
+  if (bet.hotRound && bet.hotRoundBonus > 0 && anyCorrect && totalWinnerWager > 0 && state.pot > 0) {
+    const extraTotal = Math.min(clampScore(bet.hotRoundBonus), clampScore(state.pot));
+    if (extraTotal > 0) {
+      winners.forEach(w => {
+        const player = playerMap[w.playerId];
+        if (!player) return;
+        const share = (extraTotal * w.wager) / totalWinnerWager;
+        const award = clampScore(share);
+        if (award <= 0) return;
+        player.currentPoints = clampScore(player.currentPoints + award);
+        hotRoundLines.push(`${player.name}: +${award} Hot Round bonus`);
+      });
+      state.pot -= extraTotal;
+    }
+  }
+
   bet.status = 'resolved';
   bet.resolvedAt = new Date().toLocaleString();
   bet.roundWinners = winners.map(w => w.playerId);
@@ -994,6 +1097,11 @@ function resolveGuessingBet(betId) {
     parts.push(`<div>${escapeHtml(fact)}</div>`);
   }
 
+  if (bet.hotRound && bet.hotRoundBonus > 0) {
+    parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Hot Round</div>`);
+    parts.push(`<div>This was a Hunny Pot Hot Round with ${bet.hotRoundBonus} extra points available from the Hunny Pot.</div>`);
+  }
+
   parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Winners</div>`);
   if (anyCorrect && winnerLines.length) {
     parts.push(`<div>${winnerLines.map(escapeHtml).join('<br>')}</div>`);
@@ -1001,6 +1109,11 @@ function resolveGuessingBet(betId) {
     parts.push(`<div>No one guessed correctly. All wagers went to the Hunny Pot.</div>`);
   } else {
     parts.push(`<div>No one placed a wager this round.</div>`);
+  }
+
+  if (hotRoundLines.length) {
+    parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Hot Round bonus</div>`);
+    parts.push(`<div>${hotRoundLines.map(escapeHtml).join('<br>')}</div>`);
   }
 
   const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
@@ -1232,6 +1345,10 @@ function renderOpenBets() {
     if (bet.land) metaParts.push(escapeHtml(bet.land));
     const meta = metaParts.length ? metaParts.join(' • ') : '';
 
+    const hot = bet.hotRound && bet.hotRoundBonus > 0
+      ? `<span class="pill">Hot Round +${bet.hotRoundBonus}</span>`
+      : '';
+
     return `
       <article class="bet-card">
         <div class="bet-head">
@@ -1242,6 +1359,7 @@ function renderOpenBets() {
           <div class="bet-meta">
             <span class="pill pill-open">${statusLabel}</span>
             ${meta ? `<span class="pill">${meta}</span>` : ''}
+            ${hot}
           </div>
         </div>
       </article>
@@ -1318,6 +1436,10 @@ function renderHistory() {
       if (bet.land) metaParts.push(escapeHtml(bet.land));
       const metaText = metaParts.length ? metaParts.join(' • ') : '';
 
+      const hot = bet.hotRound && bet.hotRoundBonus > 0
+        ? `<div class="hint" style="margin-top:.35rem;"><strong>Hot Round:</strong> +${bet.hotRoundBonus} Hunny Pot bonus</div>`
+        : '';
+
       return `
         <article class="history-item">
           <div class="bet-head">
@@ -1334,6 +1456,7 @@ function renderHistory() {
             <strong>Winners:</strong>
             ${winners.length ? escapeHtml(winners.join(', ')) : 'No winners'}
           </div>
+          ${hot}
 
           <div class="small-actions" style="margin-top:0.5rem;">
             <button
@@ -1377,6 +1500,15 @@ function renderSelectedAnswerPanel() {
   const meta = [bet.attraction, bet.land].filter(Boolean).join(' • ');
   const canReroll = Array.isArray(bet.answers) && bet.answers.length > 1;
 
+  const hot = bet.hotRound && bet.hotRoundBonus > 0
+    ? `
+      <div class="field">
+        <label>Hot Round bonus</label>
+        <div class="hint">+${bet.hotRoundBonus} from the Hunny Pot</div>
+      </div>
+    `
+    : '';
+
   els.selectedAnswerPanel.innerHTML = `
     <div class="stack">
       <div class="field">
@@ -1397,6 +1529,7 @@ function renderSelectedAnswerPanel() {
           `
           : ''
       }
+      ${hot}
       ${
         canReroll
           ? `
