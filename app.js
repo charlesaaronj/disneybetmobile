@@ -1079,9 +1079,9 @@ function resolveGuessingBet(betId) {
     bet.bonusAwards = [];
   }
 
+  // First persistence after payouts/bonuses (before catch-up)
   enforceMinPot();
   saveState();
-  render();
 
   const authorNames = correctAuthors
     .map(id => {
@@ -1139,6 +1139,7 @@ function resolveGuessingBet(betId) {
     parts.push(`<div>${hotRoundLines.map(escapeHtml).join('<br>')}</div>`);
   }
 
+  // Catch-up from Hunny Pot (this mutates scores AFTER the first save)
   const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
   if (state.pot > 0 && ranked.length >= 2) {
     const leader = ranked[0];
@@ -1174,6 +1175,10 @@ function resolveGuessingBet(betId) {
     }
   }
 
+  // Save + render AGAIN so scoreboard shows catch-up scores
+  saveState();
+  render();
+
   const rankedAfter = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
   parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Scores after this round</div>`);
   parts.push(
@@ -1194,7 +1199,7 @@ function resolveGuessingBet(betId) {
       .filter(Boolean);
 
     parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Bonus points this round</div>`);
-    parts.push(`<div class="hint">${bonusLines.map(escapeHtml).join('<br>')}</div>`);
+    parts.push(`<div class="html">${bonusLines.map(escapeHtml).join('<br>')}</div>`);
   }
 
   if (els.revealSummary) {
@@ -1527,7 +1532,7 @@ function renderSelectedAnswerPanel() {
     ? `
       <div class="field">
         <label>Hot Round bonus</label>
-        <div class="hint">+${bet.hotRoundBonus} from the Hunny Pot</div>
+        <div>+${bet.hotRoundBonus} from the Hunny Pot</div>
       </div>
     `
     : '';
@@ -1536,18 +1541,18 @@ function renderSelectedAnswerPanel() {
     <div class="stack">
       <div class="field">
         <label>Question</label>
-        <div>${escapeHtml(bet.description || 'Unknown question')}</div>
+        <div class="hint">${escapeHtml(bet.description || 'Unknown question')}</div>
       </div>
       <div class="field">
         <label>Selected answer</label>
-        <div>${escapeHtml(answerText || 'No selected answer yet')}</div>
+        <div class="hint">${escapeHtml(answerText || 'No selected answer yet')}</div>
       </div>
       ${
         meta
           ? `
             <div class="field">
               <label>Attraction / Land</label>
-              <div>${escapeHtml(meta)}</div>
+              <div class="hint">${escapeHtml(meta)}</div>
             </div>
           `
           : ''
@@ -1558,7 +1563,7 @@ function renderSelectedAnswerPanel() {
           ? `
             <div class="small-actions" style="margin-top:.5rem;">
               <button class="btn btn-secondary" type="button" onclick="rerollCurrentSelectedAnswer()">
-                Reroll Selected Answer
+               Select new answer
               </button>
             </div>
           `
