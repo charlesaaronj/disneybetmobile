@@ -1535,7 +1535,7 @@ function renderSelectedAnswerPanel() {
           ? `
             <div class="small-actions" style="margin-top:.5rem;">
               <button class="btn btn-secondary" type="button" onclick="rerollCurrentSelectedAnswer()">
-                Reroll Selected Answer
+               Select new answer
               </button>
             </div>
           `
