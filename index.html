@@ -16,253 +16,256 @@
   <a class="sr-only" href="#main">Skip to content</a>
 
   <div class="app">
-    <header class="topbar">
-      <div class="brand">
-        <svg
-          class="logo"
-          viewBox="0 0 64 64"
-          fill="none"
-          aria-label="Who Said Diz logo"
-        >
-          <path
-            d="M14 48c4-13 14-22 28-25-2 11-9 21-20 28"
-            stroke="currentColor"
-            stroke-width="4"
-            stroke-linecap="round"
-          />
-          <circle
-            cx="22"
-            cy="20"
-            r="6"
-            stroke="currentColor"
-            stroke-width="4"
-          />
-          <circle
-            cx="40"
-            cy="16"
-            r="5"
-            stroke="currentColor"
-            stroke-width="4"
-          />
-          <path
-            d="M18 50h30"
-            stroke="currentColor"
-            stroke-width="4"
-            stroke-linecap="round"
-          />
-        </svg>
-        <div>
-          <h1>Who Said Diz</h1>
-          <p class="sub">Just a way to pass the time standing in a queue line</p>
+    <div class="screen-shell">
+      <header class="topbar">
+        <div class="brand">
+          <svg
+            class="logo"
+            viewBox="0 0 64 64"
+            fill="none"
+            aria-label="Who Said Diz logo"
+          >
+            <path
+              d="M14 48c4-13 14-22 28-25-2 11-9 21-20 28"
+              stroke="currentColor"
+              stroke-width="4"
+              stroke-linecap="round"
+            />
+            <circle
+              cx="22"
+              cy="20"
+              r="6"
+              stroke="currentColor"
+              stroke-width="4"
+            />
+            <circle
+              cx="40"
+              cy="16"
+              r="5"
+              stroke="currentColor"
+              stroke-width="4"
+            />
+            <path
+              d="M18 50h30"
+              stroke="currentColor"
+              stroke-width="4"
+              stroke-linecap="round"
+            />
+          </svg>
+          <div>
+            <h1>Who Said Diz</h1>
+            <p class="sub">A family guessing game for passing time in line.</p>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
 
-    <main id="main" class="app-main">
-      <section id="screen-setup" class="screen screen--active">
-        <article class="panel">
-          <h2>Scores</h2>
-          <div id="scoreboard" class="scoreboard"></div>
-        </article>
+      <main id="main" class="app-main">
+        <section id="screen-setup" class="screen screen--active">
+          <article class="panel">
+            <h2>Scores</h2>
+            <div id="scoreboard" class="scoreboard"></div>
+          </article>
 
-        <article class="panel">
-          <h2>Bonus points</h2>
-          <p class="hint">Recently awarded bonuses will show here.</p>
-          <div id="qualifiedBonusPanel" class="bonus-earned-list"></div>
-        </article>
+          <article class="panel">
+            <h2>Bonus points</h2>
+            <p class="hint">Recently awarded bonuses will show here.</p>
+            <div id="qualifiedBonusPanel" class="bonus-earned-list"></div>
+          </article>
 
-        <article class="panel">
-          <h2>Family setup</h2>
-          <div class="grid-2">
+          <article class="panel">
+            <h2>Family setup</h2>
+            <div class="grid-2">
+              <div class="field">
+                <label for="playerName">Family member</label>
+                <input id="playerName" type="text" placeholder="Add a name" />
+              </div>
+              <div class="field">
+                <label for="playerPoints">Starting points</label>
+                <input
+                  id="playerPoints"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value="10"
+                />
+              </div>
+            </div>
+
+            <div class="small-actions">
+              <button class="btn btn-primary" type="button" id="addPlayerBtn">
+                Add family member
+              </button>
+              <button class="btn btn-danger" type="button" id="clearAllBtn">
+                Clear everything
+              </button>
+            </div>
+
+            <p class="footer-note">
+              Use different starting points for kids, adults, or bonus rounds if you want handicaps.
+            </p>
+          </article>
+
+          <article class="panel">
+            <h2>Players</h2>
+            <p class="hint">You can give someone a few points back so they can keep playing.</p>
+            <div id="playersList" class="players"></div>
+          </article>
+
+          <div class="primary-actions">
+            <button type="button" class="btn btn-primary" id="startGameBtn">
+              Start game
+            </button>
+          </div>
+        </section>
+
+        <section id="screen-question" class="screen">
+          <article class="panel">
+            <h2>Pick a question</h2>
+
+            <div class="grid-2">
+              <div class="field">
+                <label for="attractionName">Attraction</label>
+                <input
+                  id="attractionName"
+                  type="text"
+                  placeholder="e.g., Space Mountain"
+                  list="attractionSuggestions"
+                />
+                <datalist id="attractionSuggestions"></datalist>
+              </div>
+
+              <div class="field">
+                <label for="landName">Land / Area</label>
+                <input
+                  id="landName"
+                  type="text"
+                  placeholder="e.g., Tomorrowland"
+                  list="landSuggestions"
+                />
+                <datalist id="landSuggestions"></datalist>
+              </div>
+            </div>
+
             <div class="field">
-              <label for="playerName">Family member</label>
-              <input id="playerName" type="text" placeholder="Add a name" />
-            </div>
-            <div class="field">
-              <label for="playerPoints">Starting points</label>
-              <input
-                id="playerPoints"
-                type="number"
-                min="0"
-                step="1"
-                value="10"
-              />
-            </div>
-          </div>
-
-          <div class="small-actions">
-            <button class="btn btn-primary" type="button" id="addPlayerBtn">
-              Add family member
-            </button>
-            <button class="btn btn-danger" type="button" id="clearAllBtn">
-              Clear everything
-            </button>
-          </div>
-
-          <p class="footer-note">
-            Use different starting points for kids, adults, or bonus rounds if you want handicaps.
-          </p>
-        </article>
-
-        <article class="panel">
-          <h2>Players</h2>
-          <p class="hint">Give someone a few points back so they can keep playing.</p>
-          <div id="playersList" class="players"></div>
-        </article>
-
-        <div class="primary-actions">
-          <button type="button" class="btn btn-primary" id="startGameBtn">
-            Start game
-          </button>
-        </div>
-      </section>
-
-      <section id="screen-question" class="screen">
-        <article class="panel">
-          <h2>Pick a question</h2>
-
-          <div class="grid-2">
-            <div class="field">
-              <label for="attractionName">Attraction</label>
-              <input
-                id="attractionName"
-                type="text"
-                placeholder="e.g., Space Mountain"
-                list="attractionSuggestions"
-              />
-              <datalist id="attractionSuggestions"></datalist>
+              <label for="betDescription">Question about this ride</label>
+              <textarea
+                id="betDescription"
+                placeholder="Type your own question. Attraction, land, and question are all required."
+              ></textarea>
             </div>
 
-            <div class="field">
-              <label for="landName">Land / Area</label>
-              <input
-                id="landName"
-                type="text"
-                placeholder="e.g., Tomorrowland"
-                list="landSuggestions"
-              />
-              <datalist id="landSuggestions"></datalist>
+            <p class="hint starterHint">
+              Once your question is ready, tap Answer to pass the phone around.
+            </p>
+
+            <div class="small-actions">
+              <button class="btn btn-primary" type="button" id="createBetBtn">
+                Answer
+              </button>
+              <button class="btn btn-secondary" type="button" id="randomBetBtn">
+                New question
+              </button>
+              <button class="btn btn-secondary" type="button" id="clearBetFormBtn">
+                Clear
+              </button>
             </div>
-          </div>
+          </article>
+        </section>
 
-          <div class="field">
-            <label for="betDescription">Question about this ride</label>
-            <textarea
-              id="betDescription"
-              placeholder="Type your own question. Attraction, land, and question are all required."
-            ></textarea>
-          </div>
-
-          <p class="hint starterHint">
-            Once your question is ready, tap Answer to pass the phone around.
-          </p>
-
-          <div class="small-actions">
-            <button class="btn btn-primary" type="button" id="createBetBtn">
-              Answer
-            </button>
-            <button class="btn btn-secondary" type="button" id="randomBetBtn">
-              New question
-            </button>
-            <button class="btn btn-secondary" type="button" id="clearBetFormBtn">
-              Clear
-            </button>
-          </div>
-        </article>
-      </section>
-
-      <section id="screen-wager" class="screen">
-        <article class="panel">
-          <h2>Selected answer</h2>
-          <div id="selectedAnswerPanel" class="stack">
-            <div class="empty">
-              The selected answer and question will appear here once a round reaches guessing.
+        <section id="screen-wager" class="screen">
+          <article class="panel">
+            <h2>Selected answer</h2>
+            <div id="selectedAnswerPanel" class="stack">
+              <div class="empty">
+                The selected answer and question will appear here once a round reaches guessing.
+              </div>
             </div>
-          </div>
-        </article>
+          </article>
 
-        <article class="panel">
-          <h2>Wagers</h2>
-          <div id="betPlayers" class="players">
-            <div class="empty">
-              Wager choices will appear here once a round reaches guessing.
+          <article class="panel">
+            <h2>Place your bets</h2>
+            <p class="hint">Each player guesses who said it and wagers points.</p>
+            <div id="betPlayers" class="players">
+              <div class="empty">
+                Wager choices will appear here once a round reaches guessing.
+              </div>
             </div>
-          </div>
 
-          <div class="small-actions">
-            <button class="btn btn-primary" type="button" id="lockGuessesBtn">
-              Lock wagers
+            <div class="small-actions">
+              <button class="btn btn-primary" type="button" id="lockGuessesBtn">
+                Lock wagers &amp; reveal
+              </button>
+            </div>
+          </article>
+        </section>
+
+        <section id="screen-reveal" class="screen">
+          <article class="panel">
+            <h2>Round result</h2>
+            <div id="revealSummary" class="reveal-summary"></div>
+
+            <div class="small-actions">
+              <button type="button" class="btn btn-primary" id="toScoresBtn">
+                Review scores
+              </button>
+            </div>
+          </article>
+        </section>
+
+        <section id="screen-scores" class="screen">
+          <article class="panel">
+            <h2>Scores</h2>
+            <div id="scoreboardScoresScreen" class="scoreboard"></div>
+          </article>
+
+          <article class="panel">
+            <h2>Bonus points</h2>
+            <p class="hint">Recently awarded bonuses will show here.</p>
+            <div id="qualifiedBonusPanelScores" class="bonus-earned-list"></div>
+          </article>
+
+          <div class="primary-actions">
+            <button type="button" class="btn btn-primary" id="nextRoundBtn">
+              Next round
+            </button>
+            <button type="button" class="btn btn-secondary" id="viewHistoryBtn">
+              Round info &amp; history
+            </button>
+            <button type="button" class="btn btn-danger" id="restartGameBtn">
+              Restart game
             </button>
           </div>
-        </article>
-      </section>
+        </section>
 
-      <section id="screen-reveal" class="screen">
-        <article class="panel">
-          <h2>Round result</h2>
-          <div id="revealSummary" class="reveal-summary"></div>
+        <section id="screen-history" class="screen">
+          <article class="panel">
+            <h2>Rounds</h2>
+            <div id="openBetMetrics" class="totals"></div>
+            <div id="openBets" class="bet-list"></div>
+          </article>
 
-          <div class="small-actions">
-            <button type="button" class="btn btn-primary" id="toScoresBtn">
-              Review scores
+          <article class="panel">
+            <h2>Round history</h2>
+            <p class="hint">This screen also shows Hunny Pot controls between questions.</p>
+            <div id="historyList" class="history-list"></div>
+          </article>
+
+          <article class="panel">
+            <h2>Bonus library</h2>
+            <p class="hint">
+              Use these when someone qualifies for a bonus.
+            </p>
+            <div id="bonusLibrary" class="bonus-list"></div>
+          </article>
+
+          <div class="primary-actions">
+            <button type="button" class="btn btn-primary" id="backToScoresBtn">
+              Back to scores
             </button>
           </div>
-        </article>
-      </section>
-
-      <section id="screen-scores" class="screen">
-        <article class="panel">
-          <h2>Scores</h2>
-          <div id="scoreboardScoresScreen" class="scoreboard"></div>
-        </article>
-
-        <article class="panel">
-          <h2>Bonus points</h2>
-          <p class="hint">Recently awarded bonuses will show here.</p>
-          <div id="qualifiedBonusPanelScores" class="bonus-earned-list"></div>
-        </article>
-
-        <div class="primary-actions">
-          <button type="button" class="btn btn-primary" id="nextRoundBtn">
-            Next round
-          </button>
-          <button type="button" class="btn btn-secondary" id="viewHistoryBtn">
-            Round info &amp; history
-          </button>
-          <button type="button" class="btn btn-danger" id="restartGameBtn">
-            Restart game
-          </button>
-        </div>
-      </section>
-
-      <section id="screen-history" class="screen">
-        <article class="panel">
-          <h2>Rounds</h2>
-          <div id="openBetMetrics" class="totals"></div>
-          <div id="openBets" class="bet-list"></div>
-        </article>
-
-        <article class="panel">
-          <h2>Round history</h2>
-          <p class="hint">This screen also shows Hunny Pot controls between questions.</p>
-          <div id="historyList" class="history-list"></div>
-        </article>
-
-        <article class="panel">
-          <h2>Bonus library</h2>
-          <p class="hint">
-            Use these when someone qualifies for a bonus.
-          </p>
-          <div id="bonusLibrary" class="bonus-list"></div>
-        </article>
-
-        <div class="primary-actions">
-          <button type="button" class="btn btn-primary" id="backToScoresBtn">
-            Back to scores
-          </button>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+    </div>
   </div>
 
   <div
@@ -463,7 +466,7 @@
     </div>
   </div>
 
-  <!-- NEW: Hot Round modal -->
+  <!-- Hot Round modal -->
   <div
     id="hotRoundModalBackdrop"
     class="modal-backdrop"
@@ -523,7 +526,6 @@
   <script src="parks-data.js"></script>
   <script src="questions.js"></script>
   <script src="ghostRideFragments.js"></script>
-  <!-- ui.js is now the ES module entry point -->
-<script type="module" src="ui.js"></script>
+  <script type="module" src="ui.js"></script>
 </body>
 </html>
