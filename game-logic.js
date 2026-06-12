@@ -519,6 +519,11 @@ export function resolveGuessingBet(betId) {
     return null;
   }
 
+  // Snapshot scores before this round.
+  const beforeScores = Object.fromEntries(
+    state.players.map(p => [p.id, clampScore(p.currentPoints)])
+  );
+
   const guesses = bet.guesses || [];
   const wagers = guesses.map(g => ({
     playerId: g.playerId,
@@ -730,12 +735,38 @@ export function resolveGuessingBet(betId) {
   // Save again so scoreboard reflects catch-up.
   saveState();
 
+  // Store per-player score changes on this bet for history.
+  const scoreChanges = state.players.map(p => {
+    const before = beforeScores[p.id] ?? 0;
+    const after = clampScore(p.currentPoints);
+    const delta = after - before;
+    return {
+      playerId: p.id,
+      before,
+      after,
+      delta
+    };
+  });
+  bet.scoreChanges = scoreChanges;
+
   const rankedAfter = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
-  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Scores after this round</div>`);
+
+  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Scores this round</div>`);
   parts.push(
-    `<div class="hint">${rankedAfter
-      .map(p => `${escapeHtml(p.name)}: ${clampScore(p.currentPoints)}`)
-      .join('<br>')}</div>`
+    `<div class="hint">` +
+      rankedAfter
+        .map(p => {
+          const before = beforeScores[p.id] ?? 0;
+          const after = clampScore(p.currentPoints);
+          const delta = after - before;
+          const deltaText =
+            delta > 0 ? `(+${delta})` :
+            delta < 0 ? `(${delta})` :
+            `(no change)`;
+          return `${escapeHtml(p.name)}: ${before} → ${after} ${deltaText}`;
+        })
+        .join('<br>') +
+    `</div>`
   );
 
   parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Hunny Pot</div>`);
