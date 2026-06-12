@@ -338,6 +338,28 @@ export function normalizeGuesses(rawGuesses) {
   return guesses;
 }
 
+// After normalizeGuesses
+export function validateTableStakes(guesses) {
+  // Only look at players who are actually in the round
+  const active = guesses.filter(g => g.wager > 0);
+  if (!active.length) {
+    // No one is playing, let normalizeGuesses handle that case.
+    return { ok: false, message: 'At least one player must wager points.' };
+  }
+
+  const uniqueWagers = Array.from(new Set(active.map(g => g.wager)));
+
+  if (uniqueWagers.length === 1) {
+    // All non-zero wagers are equal
+    return { ok: true, target: uniqueWagers[0] };
+  }
+
+  return {
+    ok: false,
+    message: 'Table stakes: everyone who is in must wager the same amount before locking.'
+  };
+}
+
 // ---------- Bonus helpers ----------
 
 // Get all resolved rounds a player has ever won, ordered oldest -> newest.
