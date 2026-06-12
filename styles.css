@@ -100,39 +100,47 @@ body {
   line-height: 1.55;
   color: var(--color-text);
   background:
-    radial-gradient(circle at top left, color-mix(in oklab, var(--color-gold) 12%, transparent), transparent 32%),
-    radial-gradient(circle at top right, color-mix(in oklab, var(--color-primary) 14%, transparent), transparent 36%),
+    radial-gradient(
+      circle at top left,
+      color-mix(in oklab, var(--color-gold) 12%, transparent),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at top right,
+      color-mix(in oklab, var(--color-primary) 14%, transparent),
+      transparent 36%
+    ),
     var(--color-bg);
 }
 
 /* ---------- Park-specific themes ---------- */
 
-/* Magic Kingdom – soft royal blue + pink */
+/* Magic Kingdom – pink */
 body.park-mk {
   background:
-    radial-gradient(circle at top, #ffb7e5 0, transparent 38%),
-    radial-gradient(circle at bottom, #4f6bff 0, #1b2560 52%, #0b1028 100%);
+    radial-gradient(circle at top, #ffc0cb 0, transparent 42%),
+    radial-gradient(circle at bottom, #ff8da1 0, #ff5c8a 40%, #31071a 100%);
 }
 
-/* EPCOT – purples and cool sci‑fi tones */
+/* EPCOT – blue */
 body.park-epcot {
   background:
-    radial-gradient(circle at top, #d3a6ff 0, transparent 40%),
-    radial-gradient(circle at bottom, #5b4bff 0, #2b235c 50%, #0c0a23 100%);
+    radial-gradient(circle at top, #cfe2ff 0, transparent 42%),
+    radial-gradient(circle at bottom, #4f6bff 0, #2740a8 45%, #0a102e 100%);
 }
 
-/* Hollywood Studios – teal with neon accent */
-body.park-hs {
-  background:
-    radial-gradient(circle at top, #7ff7ff 0, transparent 40%),
-    radial-gradient(circle at bottom, #0093a6 0, #005066 55%, #02161d 100%);
-}
-
-/* Animal Kingdom – lush greens + warm base */
+/* Animal Kingdom – green */
 body.park-dak {
   background:
-    radial-gradient(circle at top, #b7ffbf 0, transparent 40%),
-    radial-gradient(circle at bottom, #2f6b3d 0, #174126 55%, #05160c 100%);
+    radial-gradient(circle at top, #c8f7c5 0, transparent 42%),
+    radial-gradient(circle at bottom, #3b7a3a 0, #1f4f26 45%, #05170c 100%);
+}
+
+/* Hollywood Studios – purple */
+body.park-hs {
+  background:
+    radial-gradient(circle at top, #e3c8ff 0, transparent 42%),
+    radial-gradient(circle at bottom, #ad41df 0, #6b1b9c 45%, #1a0627 100%);
 }
 
 button,
@@ -688,74 +696,4 @@ h3 {
   }
 
   .topbar,
-  .bet-head {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .small-actions {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-
-  .small-actions .btn {
-    flex: 1 1 auto;
-  }
-
-  .app {
-    padding: var(--space-3);
-  }
-}
-
-@media (max-width: 600px) {
-  .app {
-    padding: var(--space-2);
-    min-height: 100dvh;
-  }
-
-  .topbar {
-    padding: var(--space-3);
-  }
-
-  .panel {
-    padding: var(--space-3);
-  }
-
-  h1 {
-    font-size: var(--text-lg);
-  }
-
-  h2 {
-    font-size: var(--text-base);
-  }
-
-  .sub {
-    max-width: 100%;
-  }
-
-  .small-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .small-actions .btn,
-  .btn-primary,
-  .btn-secondary,
-  .btn-danger {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .bet-card,
-  .history-item {
-    padding: var(--space-3);
-  }
-
-  .metric {
-    width: 100%;
-  }
-
-  .score-points {
-    font-size: 1.45rem;
-  }
-}
+  .bet-he
