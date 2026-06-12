@@ -32,7 +32,8 @@ import {
   resolveGuessingBet,
   getRandomQuestionForAttractionWithFallback,
   rerollCurrentSelectedAnswer,
-  validateTableStakes
+  validateTableStakes,
+  resetGameKeepingPlayers
 } from './game-logic.js';
 
 // ---------- DOM element lookups ----------
@@ -1188,6 +1189,8 @@ navEls.backToScoresBtn?.addEventListener('click', () => {
 });
 
 navEls.restartGameBtn?.addEventListener('click', () => {
+  resetGameKeepingPlayers();
+  render();
   goToSetup();
 });
 
