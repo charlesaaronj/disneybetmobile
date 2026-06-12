@@ -439,28 +439,44 @@ export function computeBonusPointsForRound(betId) {
     });
   }
 
-  // Bonus 3: multiple wins in the same land.
-  if (bet.land) {
-    const land = bet.land;
-    const resolvedInLand = state.bets.filter(b => b.status === 'resolved' && b.land === land);
-    const playerIds = state.players.map(p => p.id);
+ // Bonus 3: multiple wins in the same land, across different attractions.
+if (bet.land) {
+  const land = bet.land;
+  const resolvedInLand = state.bets.filter(
+    b => b.status === 'resolved' && b.land === land
+  );
+  const playerIds = state.players.map(p => p.id);
 
-    playerIds.forEach(pid => {
-      let winsInLand = 0;
-      resolvedInLand.forEach(round => {
-        const rCorrect = (round.correctAuthors && round.correctAuthors.length
-          ? round.correctAuthors
-          : (round.correctAuthorId ? [round.correctAuthorId] : [])) || [];
-        const guessedCorrect = (round.guesses || []).some(
-          g => g.playerId === pid && rCorrect.includes(g.guessedAuthorId)
-        );
-        if (guessedCorrect) winsInLand += 1;
-      });
-      if (winsInLand >= 2) {
-        bonuses.push({ playerId: pid, amount: 2, reason: `Multiple wins in ${land}` });
+  playerIds.forEach(pid => {
+    const attractionsWithWins = new Set();
+
+    resolvedInLand.forEach(round => {
+      const rCorrect = (round.correctAuthors && round.correctAuthors.length
+        ? round.correctAuthors
+        : (round.correctAuthorId ? [round.correctAuthorId] : [])) || [];
+
+      const guessedCorrect = (round.guesses || []).some(
+        g => g.playerId === pid && rCorrect.includes(g.guessedAuthorId)
+      );
+
+      if (guessedCorrect) {
+        const attr = round.attraction || '';
+        if (attr) {
+          attractionsWithWins.add(attr);
+        }
       }
     });
-  }
+
+    // Only award if the player has wins in at least 2 different attractions
+    if (attractionsWithWins.size >= 2) {
+      bonuses.push({
+        playerId: pid,
+        amount: 2,
+        reason: `Multiple wins in ${land}`
+      });
+    }
+  });
+}
 
   return bonuses;
 }
