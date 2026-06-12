@@ -501,21 +501,22 @@ export function resolveGuessingBet(betId) {
     const clearLeader = top && (!second || top.currentPoints > second.currentPoints);
 
     if (clearLeader) {
-  const leaderId = top.id;
-  const leaderWagerObj = wagers.find(w => w.playerId === leaderId);
-  if (leaderWagerObj && leaderWagerObj.wager > 0) {
-    const available = getAvailablePoints(leaderId);
-    const boosted = leaderWagerObj.wager + 1;
+      const leaderId = top.id;
+      const leaderWagerObj = wagers.find(w => w.playerId === leaderId);
+      if (leaderWagerObj && leaderWagerObj.wager > 0) {
+        const available = getAvailablePoints(leaderId);
+        const boosted = leaderWagerObj.wager + 1;
 
-    if (boosted <= available) {
-      leaderWagerObj.wager = boosted;
-      autoLeaderBoostLine = `${top.name} automatically got 1 added to their wager for being in the lead.`;
-    } else {
-      // They don't actually have an extra point to risk; no boost.
-      autoLeaderBoostLine = `${top.name} is in the lead but didn't have an extra point to auto-wager.`;
+        if (boosted <= available) {
+          leaderWagerObj.wager = boosted;
+          autoLeaderBoostLine = `${top.name} automatically got 1 added to their wager for being in the lead.`;
+        } else {
+          // They don't actually have an extra point to risk; no boost.
+          autoLeaderBoostLine = `${top.name} is in the lead but didn't have an extra point to auto-wager.`;
+        }
+      }
     }
   }
-}
 
   const potThisRound = wagers.reduce((sum, w) => sum + w.wager, 0);
   const winners = wagers.filter(
