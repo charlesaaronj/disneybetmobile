@@ -31,7 +31,8 @@ import {
   getRandomUnusedGlobalQuestion,
   resolveGuessingBet,
   getRandomQuestionForAttractionWithFallback,
-  rerollCurrentSelectedAnswer
+  rerollCurrentSelectedAnswer,
+  validateTableStakes
 } from './game-logic.js';
 
 // ---------- DOM element lookups ----------
@@ -1118,8 +1119,15 @@ document.getElementById('lockGuessesBtn')?.addEventListener('click', () => {
   }
 
   const rawGuesses = buildRawGuessesForBet();
-  const guesses = normalizeGuesses(rawGuesses);
+  let guesses = normalizeGuesses(rawGuesses);
   if (!guesses) return;
+
+  // New: enforce table-stakes equality before resolving
+  const tableCheck = validateTableStakes(guesses);
+  if (!tableCheck.ok) {
+    alertLike(tableCheck.message);
+    return;
+  }
 
   bet.guesses = guesses;
   saveState();
