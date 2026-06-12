@@ -813,6 +813,29 @@ function renderHistory() {
         ? `<div class="hint" style="margin-top:.35rem;"><strong>Hot Round:</strong> +${bet.hotRoundBonus} Hunny Pot bonus</div>`
         : '';
 
+      // New: per-player point changes from this round, if present.
+      let scoreChangeHtml = '';
+      if (Array.isArray(bet.scoreChanges) && bet.scoreChanges.length) {
+        const lines = bet.scoreChanges.map(change => {
+          const player = state.players.find(p => p.id === change.playerId);
+          const name = player ? player.name : 'Unknown';
+          const delta = change.delta || 0;
+          if (delta > 0) {
+            return `${escapeHtml(name)} (+${delta})`;
+          } else if (delta < 0) {
+            return `${escapeHtml(name)} (${delta})`;
+          }
+          return `${escapeHtml(name)} (no change)`;
+        });
+
+        scoreChangeHtml = `
+          <div class="hint" style="margin-top:0.25rem;">
+            <strong>Points this round:</strong>
+            ${escapeHtml(lines.join(', '))}
+          </div>
+        `;
+      }
+
       return `
         <article class="history-item">
           <div class="bet-head">
@@ -830,6 +853,7 @@ function renderHistory() {
             ${winners.length ? escapeHtml(winners.join(', ')) : 'No winners'}
           </div>
           ${hot}
+          ${scoreChangeHtml}
 
           <div class="small-actions" style="margin-top:0.5rem;">
             <button
@@ -1123,7 +1147,7 @@ document.getElementById('lockGuessesBtn')?.addEventListener('click', () => {
   let guesses = normalizeGuesses(rawGuesses);
   if (!guesses) return;
 
-  // New: enforce table-stakes equality before resolving
+  // Enforce table stakes equality before resolving.
   const tableCheck = validateTableStakes(guesses);
   if (!tableCheck.ok) {
     alertLike(tableCheck.message);
@@ -1215,4 +1239,3 @@ window.addEventListener('load', () => {
   goToSetup();
   els.playerName?.focus();
 });
-
