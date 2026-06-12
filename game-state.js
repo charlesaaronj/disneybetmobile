@@ -9,9 +9,6 @@ export const state = {
   bets: [],
   pot: 0,
 
-  // Currently selected park for theming ('' | 'mk' | 'epcot' | 'hs' | 'dak').
-  park: '',
-
   // Configurable bonus definitions used by bonus helpers.
   bonuses: [
     {
@@ -125,7 +122,6 @@ export function loadState() {
     state.pot = Number(parsed.pot) || 0;
     state.bonuses = parsed.bonuses || state.bonuses || [];
     state.awardedBonuses = parsed.awardedBonuses || [];
-    state.park = parsed.park || '';
   } catch {
     // Corrupt data? Just fall back to defaults.
   }
