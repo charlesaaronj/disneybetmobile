@@ -219,7 +219,9 @@ export function startAnswerPhase(betId) {
 // the bet into "guessing" state if all have answered.
 export function getNextAnswerPrompt(betId, currentAnswerIndex) {
   const bet = state.bets.find(b => b.id === betId);
-  if (!bet) return { done: true, bet: null, player: null, nextIndex: currentAnswerIndex };
+  if (!bet) {
+    return { done: true, bet: null, player: null, nextIndex: currentAnswerIndex };
+  }
 
   const order = Array.isArray(bet.answerOrder) && bet.answerOrder.length
     ? bet.answerOrder
@@ -440,43 +442,43 @@ export function computeBonusPointsForRound(betId) {
   }
 
   // Bonus 3: multiple wins in the same land, across different attractions.
-if (bet.land) {
-  const land = bet.land;
-  const resolvedInLand = state.bets.filter(
-    b => b.status === 'resolved' && b.land === land
-  );
-  const playerIds = state.players.map(p => p.id);
+  if (bet.land) {
+    const land = bet.land;
+    const resolvedInLand = state.bets.filter(
+      b => b.status === 'resolved' && b.land === land
+    );
+    const playerIds = state.players.map(p => p.id);
 
-  playerIds.forEach(pid => {
-    const attractionsWithWins = new Set();
+    playerIds.forEach(pid => {
+      const attractionsWithWins = new Set();
 
-    resolvedInLand.forEach(round => {
-      const rCorrect = (round.correctAuthors && round.correctAuthors.length
-        ? round.correctAuthors
-        : (round.correctAuthorId ? [round.correctAuthorId] : [])) || [];
+      resolvedInLand.forEach(round => {
+        const rCorrect = (round.correctAuthors && round.correctAuthors.length
+          ? round.correctAuthors
+          : (round.correctAuthorId ? [round.correctAuthorId] : [])) || [];
 
-      const guessedCorrect = (round.guesses || []).some(
-        g => g.playerId === pid && rCorrect.includes(g.guessedAuthorId)
-      );
+        const guessedCorrect = (round.guesses || []).some(
+          g => g.playerId === pid && rCorrect.includes(g.guessedAuthorId)
+        );
 
-      if (guessedCorrect) {
-        const attr = round.attraction || '';
-        if (attr) {
-          attractionsWithWins.add(attr);
+        if (guessedCorrect) {
+          const attr = round.attraction || '';
+          if (attr) {
+            attractionsWithWins.add(attr);
+          }
         }
+      });
+
+      // Only award if the player has wins in at least 2 different attractions
+      if (attractionsWithWins.size >= 2) {
+        bonuses.push({
+          playerId: pid,
+          amount: 2,
+          reason: `Multiple wins in ${land}`
+        });
       }
     });
-
-    // Only award if the player has wins in at least 2 different attractions
-    if (attractionsWithWins.size >= 2) {
-      bonuses.push({
-        playerId: pid,
-        amount: 2,
-        reason: `Multiple wins in ${land}`
-      });
-    }
-  });
-}
+  }
 
   return bonuses;
 }
@@ -484,7 +486,7 @@ if (bet.land) {
 // ---------- Resolve one round ----------
 
 // Resolve the guessing phase for a round, applying:
-// - wagers and payouts
+// - wagers and payouts (losers pay, winners gain that amount)
 // - Hunny Pot updates (including Hot Round)
 // - automatic catch-up
 // Returns an object describing summary text to render.
@@ -508,7 +510,7 @@ export function resolveGuessingBet(betId) {
     wager: Math.max(0, Number(g.wager || 0))
   }));
 
-  // Auto-add +1 to the current leader's wager (if single clear leader).
+  // Auto-add +1 to the current leader's wager (if single clear leader, capped by available points).
   let autoLeaderBoostLine = '';
   if (wagers.length && state.players.length) {
     const rankedNow = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
@@ -527,45 +529,50 @@ export function resolveGuessingBet(betId) {
           leaderWagerObj.wager = boosted;
           autoLeaderBoostLine = `${top.name} automatically got 1 added to their wager for being in the lead.`;
         } else {
-          // They don't actually have an extra point to risk; no boost.
           autoLeaderBoostLine = `${top.name} is in the lead but didn't have an extra point to auto-wager.`;
         }
       }
     }
   }
 
-  const potThisRound = wagers.reduce((sum, w) => sum + w.wager, 0);
+  // Split wagers into winners and losers.
   const winners = wagers.filter(
     w => w.wager > 0 && correctAuthors.includes(w.guessedAuthorId)
+  );
+  const losers = wagers.filter(
+    w => w.wager > 0 && !correctAuthors.includes(w.guessedAuthorId)
   );
   const anyCorrect = winners.length > 0;
 
   const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
 
-  // Subtract losing wagers from players (including authors guessing incorrectly).
-  wagers.forEach(w => {
+  // Subtract losing wagers from losers only.
+  losers.forEach(w => {
     const player = playerMap[w.playerId];
-    if (!player || w.wager <= 0) return;
-    if (correctAuthors.includes(w.playerId)) return;
+    if (!player) return;
     player.currentPoints = clampScore(player.currentPoints - w.wager);
   });
 
-  // Payout pot among winners in proportion to their wagers.
-  const totalWinnerWager = winners.reduce((s, w) => s + w.wager, 0);
-  if (anyCorrect && potThisRound > 0 && totalWinnerWager > 0) {
+  // Build a pot from losers' wagers only.
+  const losersPot = losers.reduce((sum, w) => sum + w.wager, 0);
+
+  // Total winning wager, for proportional payouts.
+  const totalWinnerWager = winners.reduce((sum, w) => sum + w.wager, 0);
+
+  // Payout losers' pot among winners.
+  if (anyCorrect && losersPot > 0 && totalWinnerWager > 0) {
     winners.forEach(w => {
       const player = playerMap[w.playerId];
       if (!player) return;
-      if (correctAuthors.includes(w.playerId)) return;
-      const share = (potThisRound * w.wager) / totalWinnerWager;
+      const share = (losersPot * w.wager) / totalWinnerWager;
       player.currentPoints = clampScore(player.currentPoints + share);
     });
-  } else if (!anyCorrect && potThisRound > 0) {
-    // If no one got it right, add potThisRound into the Hunny Pot.
-    state.pot += potThisRound;
+  } else if (!anyCorrect && losersPot > 0) {
+    // If no one got it right, losers' wagers go to the Hunny Pot instead.
+    state.pot += losersPot;
   }
 
-  // Hot Round extra payout from Hunny Pot.
+  // Hot Round extra payout from Hunny Pot (still based on winner wagers).
   const hotRoundLines = [];
   if (bet.hotRound && bet.hotRoundBonus > 0 && anyCorrect && totalWinnerWager > 0 && state.pot > 0) {
     const extraTotal = Math.min(clampScore(bet.hotRoundBonus), clampScore(state.pot));
@@ -674,8 +681,8 @@ export function resolveGuessingBet(betId) {
   parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Winners</div>`);
   if (anyCorrect && winnerLines.length) {
     parts.push(`<div class="hint">${winnerLines.map(escapeHtml).join('<br>')}</div>`);
-  } else if (potThisRound > 0) {
-    parts.push(`<div class = "hint">No one guessed correctly. All wagers went to the Hunny Pot.</div>`);
+  } else if (losersPot > 0) {
+    parts.push(`<div class="hint">No one guessed correctly. All wagers went to the Hunny Pot.</div>`);
   } else {
     parts.push(`<div>No one placed a wager this round.</div>`);
   }
@@ -687,7 +694,6 @@ export function resolveGuessingBet(betId) {
 
   // List individual Hot Round bonus payouts (if any).
   if (hotRoundLines.length) {
-    //parts.push(`<div>Hot Round bonus</div>`);
     parts.push(`<div class="hint">${hotRoundLines.map(escapeHtml).join('<br>')}</div>`);
   }
 
@@ -753,8 +759,7 @@ export function resolveGuessingBet(betId) {
     parts.push(`<div class="hint">${bonusLines.map(escapeHtml).join('<br>')}</div>`);
   }
 
-  // Return the HTML summary for the modal body and summary panel,
-  // so UI can drop it directly into the DOM.
+  // Return the HTML summary for the modal body and summary panel.
   return {
     bet,
     html: parts.join('')
