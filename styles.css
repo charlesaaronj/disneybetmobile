@@ -93,16 +93,36 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Base “app-like” gradient, similar to Lightning Lane */
 body {
   min-height: 100dvh;
   font-family: var(--font-body);
   font-size: var(--text-base);
   line-height: 1.55;
   color: var(--color-text);
-  background:
-    radial-gradient(circle at top left, color-mix(in oklab, var(--color-gold) 12%, transparent), transparent 32%),
-    radial-gradient(circle at top right, color-mix(in oklab, var(--color-primary) 14%, transparent), transparent 36%),
-    var(--color-bg);
+  background: linear-gradient(180deg, #0077d9 0%, #4f2d9f 40%, #021021 100%);
+}
+
+/* ---------- Park-specific themes (single main hue each) ---------- */
+
+/* Magic Kingdom – pink */
+body.park-mk {
+  background: linear-gradient(180deg, #ffc0cb 0%, #ff5c8a 42%, #31071a 100%);
+}
+
+/* EPCOT – blue */
+body.park-epcot {
+  background: linear-gradient(180deg, #cfe2ff 0%, #4f6bff 45%, #0a102e 100%);
+}
+
+/* Animal Kingdom – green */
+body.park-dak {
+  background: linear-gradient(180deg, #c8f7c5 0%, #3b7a3a 45%, #05170c 100%);
+}
+
+/* Hollywood Studios – purple */
+body.park-hs {
+  background: linear-gradient(180deg, #e3c8ff 0%, #ad41df 45%, #1a0627 100%);
 }
 
 button,
@@ -139,12 +159,12 @@ textarea {
   outline-offset: 2px;
 }
 
-/* ---------- App shell ---------- */
+/* ---------- App shell (phone-like frame) ---------- */
 
 .app {
-  max-width: 1300px;
+  max-width: 420px;
   margin: 0 auto;
-  padding: var(--space-4);
+  padding: 1.25rem 1rem;
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
@@ -171,7 +191,7 @@ textarea {
 .screen {
   display: none;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 1rem;
 }
 
 .screen--active {
@@ -190,32 +210,35 @@ textarea {
   width: 100%;
 }
 
-/* ---------- Topbar ---------- */
+/* ---------- Topbar / hero ---------- */
 
 .topbar {
   display: flex;
-  gap: var(--space-3);
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: stretch;
   margin-bottom: var(--space-3);
-  padding: var(--space-4);
-  background: color-mix(in oklab, var(--color-surface) 94%, transparent);
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  box-shadow: var(--shadow-md);
-  backdrop-filter: blur(14px);
+  padding: 1.25rem 1.25rem;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 24px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(18px);
 }
 
+/* Stack logo and text similar to the sample hero */
 .brand {
   display: flex;
-  gap: var(--space-3);
+  flex-direction: column;
+  gap: 0.6rem;
   align-items: center;
+  text-align: center;
 }
 
 .logo {
-  width: 56px;
-  height: 56px;
-  color: var(--color-primary);
+  width: 72px;
+  height: 72px;
+  color: #ffffff;
 }
 
 /* Typography */
@@ -228,7 +251,8 @@ h3 {
 }
 
 h1 {
-  font-size: var(--text-xl);
+  font-size: 1.4rem;
+  letter-spacing: 0.03em;
 }
 
 h2 {
@@ -241,21 +265,44 @@ h3 {
 }
 
 .sub {
-  color: var(--color-text-muted);
+  color: #e9f3ff;
   font-size: var(--text-sm);
   max-width: 60ch;
 }
 
-/* ---------- Buttons ---------- */
+/* Optional greeting card style (if you add the HTML) */
+.greeting-card {
+  margin-bottom: var(--space-3);
+  padding: 0.9rem 1.1rem;
+  border-radius: 20px;
+  background: #f4f9ff;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+.greeting-eyebrow {
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5b6a7a;
+}
+
+.greeting-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #182233;
+}
+
+/* ---------- Buttons (pill CTAs) ---------- */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  min-height: 44px;
+  min-height: 40px;
   padding: 0.8rem 1rem;
-  border-radius: var(--radius-full);
+  border-radius: 999px;
   border: 1px solid transparent;
   font-weight: 700;
   font-size: var(--text-sm);
@@ -271,25 +318,30 @@ h3 {
   transform: translateY(-1px);
 }
 
+/* Primary CTA like “Purchase” */
 .btn-primary {
-  background: var(--color-primary);
-  color: var(--color-text-inverse);
-  box-shadow: 0 10px 24px rgba(35, 91, 140, 0.25);
+  background: #0077d9;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
 }
 
 .btn-primary:hover {
-  background: var(--color-primary-hover);
+  background: #008af5;
 }
 
+/* Secondary buttons: light outline */
 .btn-secondary {
-  background: var(--color-surface-offset);
-  border-color: color-mix(in oklab, var(--color-text) 12%, transparent);
+  background: transparent;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.65);
 }
 
+/* Danger: softer red */
 .btn-danger {
-  background: color-mix(in oklab, var(--color-error) 14%, var(--color-surface));
-  color: var(--color-error);
-  border-color: color-mix(in oklab, var(--color-error) 30%, transparent);
+  background: #ffe2e2;
+  color: #b42318;
+  border-color: #fda4a4;
 }
 
 /* Tiny button variant for inline actions */
@@ -306,13 +358,29 @@ h3 {
   gap: var(--space-3);
 }
 
-/* Primary card container for each section */
+/* Primary card container for each section (Lightning Lane‑like) */
 .panel {
-  background: linear-gradient(180deg, var(--color-surface), var(--color-surface-2));
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  padding: var(--space-4);
-  box-shadow: var(--shadow-md);
+  background: #fdfdfd;
+  border-radius: 24px;
+  padding: 1rem 1.1rem;
+  border: none;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.28);
+}
+
+/* Section titles with small accent bar */
+.panel > h2 {
+  margin-bottom: 0.4rem;
+  font-size: 1.05rem;
+}
+
+.panel > h2::after {
+  content: '';
+  display: block;
+  width: 28px;
+  height: 3px;
+  border-radius: 999px;
+  margin-top: 0.25rem;
+  background: linear-gradient(90deg, #00c0ff, #38ffb8);
 }
 
 /* Grid helpers */
@@ -348,15 +416,17 @@ h3 {
   gap: var(--space-3);
 }
 
+/* Inner cards now feel like small tiles inside the big panels */
 .player-chip,
 .score-card,
 .history-item,
 .player-bet-row,
 .bonus-card,
 .earned-card {
-  border: 1px solid var(--color-border);
-  background: linear-gradient(180deg, var(--color-surface), var(--color-surface-2));
-  border-radius: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
 }
 
 /* Player card with avatar + stats */
@@ -546,8 +616,9 @@ h3 {
   color: var(--color-text-muted);
   padding: var(--space-6);
   text-align: center;
-  border: 1px dashed var(--color-border);
-  border-radius: 16px;
+  border-radius: 18px;
+  border: 1px dashed rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 /* ---------- Small actions row ---------- */
