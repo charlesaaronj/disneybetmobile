@@ -1,4 +1,4 @@
- //ui.js
+// ui.js
 // All DOM wiring, rendering, and event handlers live here.
 // This is the only file loaded by the HTML via <script type="module">;
 // it imports state + game-logic, and triggers re-renders when needed.
