@@ -40,7 +40,7 @@ export function removePlayer(playerId) {
   saveState();
 }
 
-// reset game scores
+// Reset game scores but keep players.
 export function resetGameKeepingPlayers() {
   // Reset scores back to starting points.
   state.players.forEach(p => {
@@ -502,7 +502,7 @@ export function computeBonusPointsForRound(betId) {
 // ---------- Resolve one round ----------
 
 // Resolve the guessing phase for a round, applying:
-// - wagers and payouts (losers pay, winners gain that amount)
+// - wagers and payouts (losers pay, winners gain that amount, authors unaffected)
 // - Hunny Pot updates (including Hot Round)
 // - automatic catch-up
 // Returns an object describing summary text to render.
@@ -551,31 +551,39 @@ export function resolveGuessingBet(betId) {
     }
   }
 
-  // Split wagers into winners and losers.
+  // Winners and losers are ONLY non-authors.
   const winners = wagers.filter(
-    w => w.wager > 0 && correctAuthors.includes(w.guessedAuthorId)
+    w =>
+      w.wager > 0 &&
+      !correctAuthors.includes(w.playerId) &&          // authors never move points
+      correctAuthors.includes(w.guessedAuthorId)
   );
+
   const losers = wagers.filter(
-    w => w.wager > 0 && !correctAuthors.includes(w.guessedAuthorId)
+    w =>
+      w.wager > 0 &&
+      !correctAuthors.includes(w.playerId) &&          // authors never move points
+      !correctAuthors.includes(w.guessedAuthorId)
   );
+
   const anyCorrect = winners.length > 0;
 
   const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
 
-  // Subtract losing wagers from losers only.
+  // Subtract losing wagers from losers only (authors never lose points).
   losers.forEach(w => {
     const player = playerMap[w.playerId];
     if (!player) return;
     player.currentPoints = clampScore(player.currentPoints - w.wager);
   });
 
-  // Build a pot from losers' wagers only.
+  // Build a pot from losers' wagers only (authors never contribute).
   const losersPot = losers.reduce((sum, w) => sum + w.wager, 0);
 
-  // Total winning wager, for proportional payouts.
+  // Total winning wager, for proportional payouts (authors excluded already).
   const totalWinnerWager = winners.reduce((sum, w) => sum + w.wager, 0);
 
-  // Payout losers' pot among winners.
+  // Payout losers' pot among winners (authors never gain points from bets).
   if (anyCorrect && losersPot > 0 && totalWinnerWager > 0) {
     winners.forEach(w => {
       const player = playerMap[w.playerId];
@@ -588,7 +596,7 @@ export function resolveGuessingBet(betId) {
     state.pot += losersPot;
   }
 
-  // Hot Round extra payout from Hunny Pot (still based on winner wagers).
+  // Hot Round extra payout from Hunny Pot (still only to non-author winners).
   const hotRoundLines = [];
   if (bet.hotRound && bet.hotRoundBonus > 0 && anyCorrect && totalWinnerWager > 0 && state.pot > 0) {
     const extraTotal = Math.min(clampScore(bet.hotRoundBonus), clampScore(state.pot));
