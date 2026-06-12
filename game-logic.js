@@ -40,6 +40,22 @@ export function removePlayer(playerId) {
   saveState();
 }
 
+// reset game scores
+export function resetGameKeepingPlayers() {
+  // Reset scores back to starting points.
+  state.players.forEach(p => {
+    p.currentPoints = clampScore(p.startingPoints || 0);
+  });
+
+  // Clear rounds, pot, and awarded bonuses.
+  state.bets = [];
+  state.pot = 0;
+  state.awardedBonuses = [];
+
+  enforceMinPot();
+  saveState();
+}
+
 // ---------- Hunny Pot ----------
 
 // Give some amount from the pot to a specific player.
