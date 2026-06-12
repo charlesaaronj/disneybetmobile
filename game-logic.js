@@ -526,43 +526,18 @@ export function resolveGuessingBet(betId) {
     wager: Math.max(0, Number(g.wager || 0))
   }));
 
-  // Auto-add +1 to the current leader's wager (if single clear leader, capped by available points).
-  let autoLeaderBoostLine = '';
-  if (wagers.length && state.players.length) {
-    const rankedNow = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
-    const top = rankedNow[0];
-    const second = rankedNow[1];
-    const clearLeader = top && (!second || top.currentPoints > second.currentPoints);
-
-    if (clearLeader) {
-      const leaderId = top.id;
-      const leaderWagerObj = wagers.find(w => w.playerId === leaderId);
-      if (leaderWagerObj && leaderWagerObj.wager > 0) {
-        const available = getAvailablePoints(leaderId);
-        const boosted = leaderWagerObj.wager + 1;
-
-        if (boosted <= available) {
-          leaderWagerObj.wager = boosted;
-          autoLeaderBoostLine = `${top.name} automatically got 1 added to their wager for being in the lead.`;
-        } else {
-          autoLeaderBoostLine = `${top.name} is in the lead but didn't have an extra point to auto-wager.`;
-        }
-      }
-    }
-  }
-
   // Winners and losers are ONLY non-authors.
   const winners = wagers.filter(
     w =>
       w.wager > 0 &&
-      !correctAuthors.includes(w.playerId) &&          // authors never move points
+      !correctAuthors.includes(w.playerId) &&
       correctAuthors.includes(w.guessedAuthorId)
   );
 
   const losers = wagers.filter(
     w =>
       w.wager > 0 &&
-      !correctAuthors.includes(w.playerId) &&          // authors never move points
+      !correctAuthors.includes(w.playerId) &&
       !correctAuthors.includes(w.guessedAuthorId)
   );
 
@@ -709,11 +684,6 @@ export function resolveGuessingBet(betId) {
     parts.push(`<div class="hint">No one guessed correctly. All wagers went to the Hunny Pot.</div>`);
   } else {
     parts.push(`<div>No one placed a wager this round.</div>`);
-  }
-
-  // Mention the automatic +1 leader wager, if it happened.
-  if (autoLeaderBoostLine) {
-    parts.push(`<div class="hint" style="margin-top:.25rem;">${escapeHtml(autoLeaderBoostLine)}</div>`);
   }
 
   // List individual Hot Round bonus payouts (if any).
