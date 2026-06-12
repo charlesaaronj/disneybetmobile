@@ -105,6 +105,36 @@ body {
     var(--color-bg);
 }
 
+/* ---------- Park-specific themes ---------- */
+
+/* Magic Kingdom – soft royal blue + pink */
+body.park-mk {
+  background:
+    radial-gradient(circle at top, #ffb7e5 0, transparent 38%),
+    radial-gradient(circle at bottom, #4f6bff 0, #1b2560 52%, #0b1028 100%);
+}
+
+/* EPCOT – purples and cool sci‑fi tones */
+body.park-epcot {
+  background:
+    radial-gradient(circle at top, #d3a6ff 0, transparent 40%),
+    radial-gradient(circle at bottom, #5b4bff 0, #2b235c 50%, #0c0a23 100%);
+}
+
+/* Hollywood Studios – teal with neon accent */
+body.park-hs {
+  background:
+    radial-gradient(circle at top, #7ff7ff 0, transparent 40%),
+    radial-gradient(circle at bottom, #0093a6 0, #005066 55%, #02161d 100%);
+}
+
+/* Animal Kingdom – lush greens + warm base */
+body.park-dak {
+  background:
+    radial-gradient(circle at top, #b7ffbf 0, transparent 40%),
+    radial-gradient(circle at bottom, #2f6b3d 0, #174126 55%, #05160c 100%);
+}
+
 button,
 input,
 textarea,
