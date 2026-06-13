@@ -3,9 +3,13 @@
 // Who Said Diz — player management, Hunny Pot, round lifecycle,
 // wagering, and round resolution.
 //
-// DEBUG LOGGING: console.log statements are added throughout
-// to surface state at each critical step via the in-page console.
-// Remove all console.log calls before production release.
+// This file owns:
+//   - how points move
+//   - how rounds progress (answering → guessing → resolved)
+//   - how gameOptions (simple/competitive/custom) affect logic
+//
+// Author rule: authors NEVER gain or lose points from wagers
+// in their own round, regardless of mode.
 // ============================================================
 
 import {
@@ -24,6 +28,15 @@ import {
 
 
 // ============================================================
+// QUICK OPTION HELPERS
+// ============================================================
+
+function opt(key) {
+  return !!state.gameOptions?.[key];
+}
+
+
+// ============================================================
 // PLAYERS
 // ============================================================
 
@@ -37,7 +50,6 @@ export function addPlayer(name, startingPoints) {
   });
   enforceMinPot();
   saveState();
-  console.log('addPlayer done, players now:', state.players.map(p => p.name + ':' + p.currentPoints).join(', '));
 }
 
 export function removePlayer(playerId) {
@@ -62,7 +74,6 @@ export function removePlayer(playerId) {
 
   enforceMinPot();
   saveState();
-  console.log('removePlayer done, players remaining:', state.players.map(p => p.name).join(', '));
 }
 
 export function resetGameKeepingPlayers() {
@@ -70,12 +81,44 @@ export function resetGameKeepingPlayers() {
   state.players.forEach(p => {
     p.currentPoints = clampScore(p.startingPoints || 0);
   });
-  state.bets          = [];
-  state.pot           = 0;
+  state.bets           = [];
+  state.pot            = 0;
   state.awardedBonuses = [];
   enforceMinPot();
   saveState();
-  console.log('resetGameKeepingPlayers done, player scores reset to starting points');
+}
+
+
+// ============================================================
+// GAME MODE / OPTIONS
+// (mode selection UI lives in ui.js; these are helpers)
+// ============================================================
+
+export function setGameMode(mode, optionsFromUI = null) {
+  const valid = ['simple', 'competitive', 'custom'];
+  state.gameMode = valid.includes(mode) ? mode : 'competitive';
+
+  // If UI passed custom options, use them; otherwise load defaults.
+  if (optionsFromUI && typeof optionsFromUI === 'object') {
+    state.gameOptions = {
+      ...state.gameOptions,
+      ...optionsFromUI
+    };
+  }
+
+  // Authors never wager, regardless of mode.
+  state.gameOptions.authorsWager = false;
+
+  saveState();
+}
+
+export function updateGameOptions(patch) {
+  state.gameOptions = {
+    ...state.gameOptions,
+    ...patch,
+    authorsWager: false
+  };
+  saveState();
 }
 
 
@@ -97,7 +140,6 @@ export function giveFromPot(playerId, amount) {
   player.currentPoints  = clampScore(player.currentPoints + amt);
   enforceMinPot();
   saveState();
-  console.log('giveFromPot done:', player.name, 'now has', player.currentPoints, 'pot now', state.pot);
   return null;
 }
 
@@ -108,7 +150,6 @@ export function addToPot(amount) {
   state.pot += amt;
   enforceMinPot();
   saveState();
-  console.log('addToPot done, pot now:', state.pot);
   return null;
 }
 
@@ -118,7 +159,6 @@ export function clearPot() {
   state.pot = 0;
   enforceMinPot();
   saveState();
-  console.log('clearPot done, pot now:', state.pot);
 }
 
 
@@ -140,21 +180,17 @@ export function setChosenAnswerForBet(bet, chosen) {
     .map(a => a.playerId);
   bet.correctAuthors  = sameTextAuthors;
   bet.correctAuthorId = sameTextAuthors[0] || null;
-  console.log('setChosenAnswerForBet: chosen answer:', chosen.text, 'correctAuthors:', bet.correctAuthors);
 }
 
 export function chooseRandomAnswerForBet(bet) {
   if (!bet || !Array.isArray(bet.answers) || !bet.answers.length) return;
   const idx = Math.floor(Math.random() * bet.answers.length);
   setChosenAnswerForBet(bet, bet.answers[idx]);
-  console.log('chooseRandomAnswerForBet: picked index', idx, 'answer:', bet.answers[idx].text);
 }
 
 export function rerollChosenAnswer(betId) {
-  console.log('rerollChosenAnswer betId:', betId);
   const bet = state.bets.find(b => b.id === betId);
   if (!bet || !Array.isArray(bet.answers) || bet.answers.length < 2) {
-    console.log('rerollChosenAnswer: not enough answers to reroll');
     return null;
   }
   const alternatives = bet.answers.filter(a => a.id !== bet.chosenAnswerId);
@@ -162,7 +198,6 @@ export function rerollChosenAnswer(betId) {
   const next = alternatives[Math.floor(Math.random() * alternatives.length)];
   setChosenAnswerForBet(bet, next);
   saveState();
-  console.log('rerollChosenAnswer done: new answer:', next.text);
   return bet;
 }
 
@@ -179,14 +214,8 @@ export function rerollCurrentSelectedAnswer() {
 
 export function finalizeCreateBet({ attraction, land, question, hotRound, hotRoundBonus }) {
   console.log('finalizeCreateBet:', { attraction, land, question, hotRound, hotRoundBonus });
-  if (!state.players || state.players.length < 2) {
-    console.log('finalizeCreateBet: not enough players');
-    return null;
-  }
-  if (!attraction || !land || !question) {
-    console.log('finalizeCreateBet: missing required fields');
-    return null;
-  }
+  if (!state.players || state.players.length < 2) return null;
+  if (!attraction || !land || !question) return null;
 
   const betId     = uid();
   const nextIndex = state.bets.length
@@ -222,7 +251,6 @@ export function finalizeCreateBet({ attraction, land, question, hotRound, hotRou
 
   state.bets.unshift(bet);
   saveState();
-  console.log('finalizeCreateBet done, bet id:', betId, 'answerOrder:', bet.answerOrder);
   return bet;
 }
 
@@ -234,10 +262,7 @@ export function finalizeCreateBet({ attraction, land, question, hotRound, hotRou
 export function startAnswerPhase(betId) {
   console.log('startAnswerPhase betId:', betId);
   const bet = state.bets.find(b => b.id === betId);
-  if (!bet) {
-    console.log('startAnswerPhase: bet not found');
-    return null;
-  }
+  if (!bet) return null;
 
   bet.answers         = [];
   bet.status          = 'answering';
@@ -251,26 +276,23 @@ export function startAnswerPhase(betId) {
   }
 
   saveState();
-  console.log('startAnswerPhase done, answerOrder:', bet.answerOrder);
   return bet;
 }
 
 export function getNextAnswerPrompt(betId, currentAnswerIndex) {
   console.log('getNextAnswerPrompt betId:', betId, 'index:', currentAnswerIndex);
   const bet = state.bets.find(b => b.id === betId);
-  if (!bet) {
-    console.log('getNextAnswerPrompt: bet not found');
-    return { done: true, bet: null, player: null, nextIndex: currentAnswerIndex };
-  }
+  if (!bet) return { done: true, bet: null, player: null, nextIndex: currentAnswerIndex };
 
   const order = Array.isArray(bet.answerOrder) && bet.answerOrder.length
     ? bet.answerOrder
     : state.players.map(p => p.id);
 
   if (currentAnswerIndex >= order.length) {
-    console.log('getNextAnswerPrompt: all players answered, transitioning to guessing');
     bet.status = 'guessing';
-    if (!bet.chosenAnswerId && bet.answers.length) chooseRandomAnswerForBet(bet);
+    if (!bet.chosenAnswerId && bet.answers.length) {
+      chooseRandomAnswerForBet(bet);
+    }
     bet.wagerOrder = shuffle(state.players.map(p => p.id));
     saveState();
     return { done: true, bet, player: null, nextIndex: currentAnswerIndex };
@@ -278,18 +300,15 @@ export function getNextAnswerPrompt(betId, currentAnswerIndex) {
 
   const playerId = order[currentAnswerIndex];
   const player   = state.players.find(p => p.id === playerId);
-
   if (!player) {
-    console.log('getNextAnswerPrompt: player not found, skipping index', currentAnswerIndex);
     return getNextAnswerPrompt(betId, currentAnswerIndex + 1);
   }
 
-  console.log('getNextAnswerPrompt: next player is', player.name);
   return { done: false, bet, player, nextIndex: currentAnswerIndex };
 }
 
 export function savePlayerAnswer(betId, currentAnswerIndex, text, useGhost = false) {
-  console.log('savePlayerAnswer betId:', betId, 'index:', currentAnswerIndex, 'text:', text, 'ghost:', useGhost);
+  console.log('savePlayerAnswer betId:', betId, 'index:', currentAnswerIndex, 'ghost:', useGhost);
   const bet = state.bets.find(b => b.id === betId);
   if (!bet) return { bet: null, nextIndex: currentAnswerIndex };
 
@@ -310,23 +329,20 @@ export function savePlayerAnswer(betId, currentAnswerIndex, text, useGhost = fal
   if (useGhost) bet.ghostAnswerUsed = true;
 
   saveState();
-  console.log('savePlayerAnswer done, answers so far:', bet.answers.length);
   return { bet, nextIndex: currentAnswerIndex + 1 };
 }
 
 export function startGuessPhase(betId) {
   console.log('startGuessPhase betId:', betId);
   const bet = state.bets.find(b => b.id === betId);
-  if (!bet || !bet.answers?.length) {
-    console.log('startGuessPhase: bet not found or no answers');
-    return null;
-  }
+  if (!bet || !bet.answers?.length) return null;
+
   if (!bet.chosenAnswerId) chooseRandomAnswerForBet(bet);
   if (!Array.isArray(bet.wagerOrder) || !bet.wagerOrder.length) {
     bet.wagerOrder = shuffle(state.players.map(p => p.id));
   }
+
   saveState();
-  console.log('startGuessPhase done, chosenAnswerId:', bet.chosenAnswerId);
   return bet;
 }
 
@@ -363,16 +379,27 @@ export function normalizeGuesses(rawGuesses) {
     }
   }
 
-  console.log('normalizeGuesses done:', guesses);
   return guesses;
 }
 
 export function validateTableStakes(guesses) {
-  const active       = guesses.filter(g => g.wager > 0);
-  if (!active.length) return { ok: false, message: 'At least one player must wager points.' };
+  const active = guesses.filter(g => g.wager > 0);
+  if (!active.length) {
+    return { ok: false, message: 'At least one player must wager points.' };
+  }
+
+  // If table stakes is disabled, any wagers are fine.
+  if (!opt('tableStakes')) {
+    return { ok: true, target: null };
+  }
+
   const uniqueWagers = Array.from(new Set(active.map(g => g.wager)));
   console.log('validateTableStakes active wagers:', active.map(g => g.wager), 'unique:', uniqueWagers);
-  if (uniqueWagers.length === 1) return { ok: true, target: uniqueWagers[0] };
+
+  if (uniqueWagers.length === 1) {
+    return { ok: true, target: uniqueWagers[0] };
+  }
+
   return {
     ok: false,
     message: 'Table stakes: everyone who is in must wager the same amount before locking.'
@@ -382,46 +409,43 @@ export function validateTableStakes(guesses) {
 
 // ============================================================
 // RESOLVE — PHASE 1: WAGERS ONLY
+// Authors never win or lose points on wagers for their own round.
+// Their guesses are ignored for scoring purposes.
 // ============================================================
 
 export function resolveGuessingBet(betId) {
   console.log('--- resolveGuessingBet START ---');
   const bet = state.bets.find(b => b.id === betId);
-  if (!bet) {
-    console.log('resolveGuessingBet: bet not found');
-    return null;
-  }
+  if (!bet) return null;
 
   const correctAuthors = bet.correctAuthors?.length
     ? bet.correctAuthors
     : (bet.correctAuthorId ? [bet.correctAuthorId] : []);
 
-  if (!correctAuthors.length) {
-    console.log('resolveGuessingBet: no correct authors found');
-    return null;
-  }
+  if (!correctAuthors.length) return null;
 
   const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
 
-  const wagers = (bet.guesses || []).map(g => ({
-    playerId:        g.playerId,
-    guessedAuthorId: g.guessedAuthorId,
-    wager:           Math.max(0, Number(g.wager || 0))
-  }));
+  // Build wagers, then IGNORE any wager where the player is a correct author.
+  const wagers = (bet.guesses || [])
+    .map(g => ({
+      playerId:        g.playerId,
+      guessedAuthorId: g.guessedAuthorId,
+      wager:           Math.max(0, Number(g.wager || 0))
+    }))
+    .filter(w => !correctAuthors.includes(w.playerId));
 
   console.log('correctAuthors:', correctAuthors);
-  console.log('wagers:', wagers);
+  console.log('wagers (authors filtered out):', wagers);
   console.log('player scores BEFORE:', state.players.map(p => p.name + ':' + p.currentPoints).join(', '));
 
   const winners = wagers.filter(w =>
     w.wager > 0 &&
-    !correctAuthors.includes(w.playerId) &&
     correctAuthors.includes(w.guessedAuthorId)
   );
 
   const losers = wagers.filter(w =>
     w.wager > 0 &&
-    !correctAuthors.includes(w.playerId) &&
     !correctAuthors.includes(w.guessedAuthorId)
   );
 
@@ -429,23 +453,11 @@ export function resolveGuessingBet(betId) {
   const losersPot        = losers.reduce((sum, w) => sum + w.wager, 0);
   const totalWinnerWager = winners.reduce((sum, w) => sum + w.wager, 0);
 
-  console.log('winners:', winners.map(w => {
-    const p = state.players.find(pl => pl.id === w.playerId);
-    return (p ? p.name : w.playerId) + ' wager:' + w.wager;
-  }));
-  console.log('losers:', losers.map(w => {
-    const p = state.players.find(pl => pl.id === w.playerId);
-    return (p ? p.name : w.playerId) + ' wager:' + w.wager;
-  }));
-  console.log('anyCorrect:', anyCorrect, 'losersPot:', losersPot, 'totalWinnerWager:', totalWinnerWager);
-
   // Deduct losing wagers.
   losers.forEach(w => {
     const player = playerMap[w.playerId];
     if (player) {
-      const before = player.currentPoints;
       player.currentPoints = clampScore(player.currentPoints - w.wager);
-      console.log('LOSER:', player.name, 'before:', before, 'wager:', w.wager, 'after:', player.currentPoints);
     }
   });
 
@@ -455,16 +467,11 @@ export function resolveGuessingBet(betId) {
       const player = playerMap[w.playerId];
       if (!player) return;
       const share  = Math.round((losersPot * w.wager) / totalWinnerWager);
-      const before = player.currentPoints;
       player.currentPoints = clampScore(player.currentPoints + share);
-      console.log('WINNER:', player.name, 'before:', before, 'share:', share, 'after:', player.currentPoints);
     });
   } else if (!anyCorrect && losersPot > 0) {
-    const beforePot = state.pot;
+    // No winners — losers' wagers go to the Hunny Pot.
     state.pot += losersPot;
-    console.log('No winners — losersPot', losersPot, 'added to Hunny Pot:', beforePot, '->', state.pot);
-  } else {
-    console.log('No payout branch hit — anyCorrect:', anyCorrect, 'losersPot:', losersPot);
   }
 
   bet.status       = 'resolved';
@@ -507,18 +514,15 @@ export function resolveGuessingBet(betId) {
 
 // ============================================================
 // RESOLVE — PHASE 2: ADJUSTMENTS
+// Hot Round, auto bonuses, and catch-up — all governed by options.
 // ============================================================
 
 export function applyRoundAdjustments(betId) {
   console.log('--- applyRoundAdjustments START ---');
   const bet = state.bets.find(b => b.id === betId);
-  if (!bet || bet.status !== 'resolved') {
-    console.log('applyRoundAdjustments: bet not found or not resolved');
-    return null;
-  }
+  if (!bet || bet.status !== 'resolved') return null;
 
   if (bet.adjustmentsApplied) {
-    console.log('applyRoundAdjustments: already applied, returning cached summary');
     return bet.cachedAdjustments || null;
   }
 
@@ -555,77 +559,67 @@ export function applyRoundAdjustments(betId) {
     state.players.map(p => [p.id, clampScore(p.currentPoints)])
   );
 
-  console.log('applyRoundAdjustments scores BEFORE adjustments:', state.players.map(p => p.name + ':' + p.currentPoints).join(', '));
-
-  // ---- 1. Hot Round payout ----
-  if (bet.hotRound && bet.hotRoundBonus > 0 && anyCorrect && totalWinnerWager > 0 && state.pot > 0) {
+  // ---- 1. Hot Round payout (if enabled) ----
+  if (opt('hotRounds') && bet.hotRound && bet.hotRoundBonus > 0 &&
+      anyCorrect && totalWinnerWager > 0 && state.pot > 0) {
     const extraTotal = Math.min(clampScore(bet.hotRoundBonus), clampScore(state.pot));
-    console.log('Hot Round payout, extraTotal:', extraTotal);
     if (extraTotal > 0) {
       winners.forEach(w => {
         const player = playerMap[w.playerId];
         if (!player) return;
         const share = clampScore(Math.round((extraTotal * w.wager) / totalWinnerWager));
         if (share <= 0) return;
-        const before = player.currentPoints;
         player.currentPoints = clampScore(player.currentPoints + share);
         summary.hotRoundLines.push(`${player.name}: +${share} Hot Round bonus`);
-        console.log('Hot Round:', player.name, 'before:', before, 'share:', share, 'after:', player.currentPoints);
       });
       state.pot -= extraTotal;
     }
-  } else {
-    console.log('Hot Round skipped — hotRound:', bet.hotRound, 'bonus:', bet.hotRoundBonus, 'anyCorrect:', anyCorrect, 'pot:', state.pot);
   }
 
-  // ---- 2. Automatic bonuses ----
-  if (!bet.computedBonuses) {
-    bet.computedBonuses = computeBonusPointsForRound(betId);
-  }
-  const roundBonuses = bet.computedBonuses || [];
-  console.log('Auto bonuses computed:', roundBonuses);
+  // ---- 2. Automatic bonuses (if enabled) ----
+  if (opt('autoBonuses')) {
+    if (!bet.computedBonuses) {
+      bet.computedBonuses = computeBonusPointsForRound(betId);
+    }
+    const roundBonuses = bet.computedBonuses || [];
+    bet.bonusAwards = [];
 
-  bet.bonusAwards = [];
-  roundBonuses.forEach(bonus => {
-    const player = playerMap[bonus.playerId];
-    if (!player) return;
-    const before = player.currentPoints;
-    player.currentPoints = clampScore(player.currentPoints + bonus.amount);
-    summary.bonusLines.push(`${player.name}: +${bonus.amount} (${bonus.reason})`);
-    console.log('Bonus:', player.name, 'reason:', bonus.reason, 'before:', before, 'after:', player.currentPoints);
-  });
-
-  if (roundBonuses.length) {
-    const records = roundBonuses.map(b => {
-      const p = state.players.find(pl => pl.id === b.playerId);
-      return {
-        id:         uid(),
-        bonusId:    'auto',
-        bonusName:  'Automatic bonus',
-        points:     b.amount,
-        playerId:   b.playerId,
-        playerName: p ? p.name : 'Unknown',
-        roundId:    bet.id,
-        reason:     b.reason
-      };
+    roundBonuses.forEach(bonus => {
+      const player = playerMap[bonus.playerId];
+      if (!player) return;
+      player.currentPoints = clampScore(player.currentPoints + bonus.amount);
+      summary.bonusLines.push(`${player.name}: +${bonus.amount} (${bonus.reason})`);
     });
-    bet.bonusAwards = roundBonuses.map(b => ({
-      playerId: b.playerId,
-      amount:   b.amount,
-      reason:   b.reason
-    }));
-    state.awardedBonuses.unshift(...records);
+
+    if (roundBonuses.length) {
+      const records = roundBonuses.map(b => {
+        const p = state.players.find(pl => pl.id === b.playerId);
+        return {
+          id:         uid(),
+          bonusId:    'auto',
+          bonusName:  'Automatic bonus',
+          points:     b.amount,
+          playerId:   b.playerId,
+          playerName: p ? p.name : 'Unknown',
+          roundId:    bet.id,
+          reason:     b.reason
+        };
+      });
+      bet.bonusAwards = roundBonuses.map(b => ({
+        playerId: b.playerId,
+        amount:   b.amount,
+        reason:   b.reason
+      }));
+      state.awardedBonuses.unshift(...records);
+    }
   }
 
-  // ---- 3. Catch-up mechanic ----
-  const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
-  console.log('Catch-up check, ranked:', ranked.map(p => p.name + ':' + p.currentPoints).join(', '));
-
-  if (state.pot > 0 && ranked.length >= 2) {
+  // ---- 3. Catch-up mechanic (if enabled) ----
+  if (opt('catchUp') && state.pot > 0 && state.players.length >= 2) {
+    const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
     const leader = ranked[0];
     const last   = ranked[ranked.length - 1];
     const gap    = leader.currentPoints - last.currentPoints;
-    console.log('Gap between leader and last:', gap, '(needs >= 10 to trigger catch-up)');
 
     if (gap >= 10) {
       const secondLast        = ranked[ranked.length - 2];
@@ -635,15 +629,11 @@ export function applyRoundAdjustments(betId) {
       const maxToLeaderMinusOne = Math.max(0, leader.currentPoints - 1 - last.currentPoints);
       const hardCap = Math.min(5, state.pot, maxToSecondLast, maxToLeaderMinusOne);
 
-      console.log('Catch-up triggered: leader', leader.name, leader.currentPoints, 'last', last.name, last.currentPoints, 'gap', gap, 'hardCap', hardCap);
-
       if (hardCap > 0) {
-        const before = last.currentPoints;
         last.currentPoints  = clampScore(last.currentPoints + hardCap);
         state.pot          -= hardCap;
         summary.catchUpLine =
           `Gave ${hardCap} points from the Hunny Pot to ${last.name} to help them catch up.`;
-        console.log('Catch-up applied:', last.name, 'before:', before, 'after:', last.currentPoints, 'pot now:', state.pot);
       }
     }
   }
@@ -661,30 +651,21 @@ export function applyRoundAdjustments(betId) {
   bet.cachedAdjustments  = summary;
 
   saveState();
-
-  console.log('applyRoundAdjustments scores AFTER:', state.players.map(p => p.name + ':' + p.currentPoints).join(', '));
-  console.log('pot AFTER adjustments:', state.pot);
-  console.log('scoreChanges:', bet.scoreChanges);
   console.log('--- applyRoundAdjustments END ---');
-
   return summary;
 }
 
 
 // ============================================================
-// MANUAL BONUS AWARD
+// MANUAL BONUS AWARD (used by UI for ad-hoc rewards)
 // ============================================================
 
 export function awardBonus(bonusId, playerId) {
   console.log('awardBonus bonusId:', bonusId, 'playerId:', playerId);
   const bonus  = state.bonuses.find(b => b.id === bonusId);
   const player = state.players.find(p => p.id === playerId);
-  if (!bonus || !player) {
-    console.log('awardBonus: bonus or player not found');
-    return;
-  }
+  if (!bonus || !player) return;
 
-  const before = player.currentPoints;
   player.currentPoints = clampScore(player.currentPoints + bonus.points);
 
   const latest = state.bets.find(b => b.status === 'resolved');
@@ -700,6 +681,5 @@ export function awardBonus(bonusId, playerId) {
   });
 
   saveState();
-  console.log('awardBonus done:', player.name, 'before:', before, 'after:', player.currentPoints);
   return `+${bonus.points} to ${player.name} for "${bonus.name}".`;
 }
