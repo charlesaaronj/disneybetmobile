@@ -632,10 +632,21 @@
     })();
   </script>
 
-  <!-- existing scripts -->
   <script src="parks-data.js"></script>
-  <script src="questions.js"></script>
-  <script src="ghostRideFragments.js"></script>
-  <script type="module" src="ui.js"></script>
+<script src="questions.js"></script>
+<script src="ghostRideFragments.js"></script>
+
+<!-- Dynamically import ui.js so we can catch and log errors -->
+<script type="module">
+  console.log('Attempting to load ui.js...');
+  import('./ui.js')
+    .then(() => {
+      console.log('ui.js loaded successfully');
+    })
+    .catch(err => {
+      console.log('Error loading ui.js:', err && (err.message || err.toString()));
+    });
+</script>
+
 </body>
 </html>
