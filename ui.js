@@ -22,6 +22,7 @@
 // --- Lightweight in-page console for iOS debugging ---
 // Shows recent console.log messages in a fixed overlay.
 // Remove or disable for production builds.
+console.log('Who Said Diz UI module loaded');
 
 import {
   state,
