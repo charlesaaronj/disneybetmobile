@@ -18,10 +18,9 @@ import {
   getAvailablePoints
 } from './game-state.js';
 
-// Auto-bonus computation is disabled for now to avoid import issues.
-// If you re-enable it, import computeBonusPointsForRound from
-// ./game-logic-questions.js and restore the bonus section in
-// applyRoundAdjustments().
+import {
+  computeBonusPointsForRound
+} from './game-logic-questions.js';
 
 
 // ============================================================
@@ -383,8 +382,6 @@ export function validateTableStakes(guesses) {
 
 // ============================================================
 // RESOLVE — PHASE 1: WAGERS ONLY
-// Authors never win or lose points on wagers for their own round.
-// Their guesses are ignored for scoring purposes.
 // ============================================================
 
 export function resolveGuessingBet(betId) {
@@ -406,26 +403,25 @@ export function resolveGuessingBet(betId) {
 
   const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
 
-  // Build wagers, then IGNORE any wager where the player is a correct author.
-  const wagers = (bet.guesses || [])
-    .map(g => ({
-      playerId:        g.playerId,
-      guessedAuthorId: g.guessedAuthorId,
-      wager:           Math.max(0, Number(g.wager || 0))
-    }))
-    .filter(w => !correctAuthors.includes(w.playerId));
+  const wagers = (bet.guesses || []).map(g => ({
+    playerId:        g.playerId,
+    guessedAuthorId: g.guessedAuthorId,
+    wager:           Math.max(0, Number(g.wager || 0))
+  }));
 
   console.log('correctAuthors:', correctAuthors);
-  console.log('wagers (authors filtered out):', wagers);
+  console.log('wagers:', wagers);
   console.log('player scores BEFORE:', state.players.map(p => p.name + ':' + p.currentPoints).join(', '));
 
   const winners = wagers.filter(w =>
     w.wager > 0 &&
+    !correctAuthors.includes(w.playerId) &&
     correctAuthors.includes(w.guessedAuthorId)
   );
 
   const losers = wagers.filter(w =>
     w.wager > 0 &&
+    !correctAuthors.includes(w.playerId) &&
     !correctAuthors.includes(w.guessedAuthorId)
   );
 
@@ -511,7 +507,6 @@ export function resolveGuessingBet(betId) {
 
 // ============================================================
 // RESOLVE — PHASE 2: ADJUSTMENTS
-// (Hot Round + catch-up only; auto bonuses disabled)
 // ============================================================
 
 export function applyRoundAdjustments(betId) {
@@ -529,7 +524,7 @@ export function applyRoundAdjustments(betId) {
 
   const summary = {
     hotRoundLines: [],
-    bonusLines:    [],   // stays empty while auto bonuses are disabled
+    bonusLines:    [],
     catchUpLine:   null,
     potBefore:     state.pot,
     potAfter:      state.pot
@@ -584,7 +579,43 @@ export function applyRoundAdjustments(betId) {
   }
 
   // ---- 2. Automatic bonuses ----
-  // Disabled for now to avoid import issues; summary.bonusLines stays empty.
+  if (!bet.computedBonuses) {
+    bet.computedBonuses = computeBonusPointsForRound(betId);
+  }
+  const roundBonuses = bet.computedBonuses || [];
+  console.log('Auto bonuses computed:', roundBonuses);
+
+  bet.bonusAwards = [];
+  roundBonuses.forEach(bonus => {
+    const player = playerMap[bonus.playerId];
+    if (!player) return;
+    const before = player.currentPoints;
+    player.currentPoints = clampScore(player.currentPoints + bonus.amount);
+    summary.bonusLines.push(`${player.name}: +${bonus.amount} (${bonus.reason})`);
+    console.log('Bonus:', player.name, 'reason:', bonus.reason, 'before:', before, 'after:', player.currentPoints);
+  });
+
+  if (roundBonuses.length) {
+    const records = roundBonuses.map(b => {
+      const p = state.players.find(pl => pl.id === b.playerId);
+      return {
+        id:         uid(),
+        bonusId:    'auto',
+        bonusName:  'Automatic bonus',
+        points:     b.amount,
+        playerId:   b.playerId,
+        playerName: p ? p.name : 'Unknown',
+        roundId:    bet.id,
+        reason:     b.reason
+      };
+    });
+    bet.bonusAwards = roundBonuses.map(b => ({
+      playerId: b.playerId,
+      amount:   b.amount,
+      reason:   b.reason
+    }));
+    state.awardedBonuses.unshift(...records);
+  }
 
   // ---- 3. Catch-up mechanic ----
   const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
