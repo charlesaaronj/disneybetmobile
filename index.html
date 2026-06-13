@@ -5,20 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Who Said Diz</title>
 
+  <!-- Preconnect to font provider for faster load -->
   <link rel="preconnect" href="https://api.fontshare.com" />
   <link
     href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700&f[]=satoshi@400,500,700&display=swap"
     rel="stylesheet"
   />
+
+  <!-- Main stylesheet -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+
+  <!-- Skip link for keyboard / screen reader users -->
   <a class="sr-only" href="#main">Skip to content</a>
 
+  <!-- ============================================================
+       APP SHELL
+       .app        — outer max-width container
+       .screen-shell — flex column wrapping header + main
+  ============================================================ -->
   <div class="app">
     <div class="screen-shell">
+
+      <!-- ---- Top bar: branding only ---- -->
       <header class="topbar">
         <div class="brand">
+          <!-- Decorative SVG logo; aria-label gives screen readers context -->
           <svg
             class="logo"
             viewBox="0 0 64 64"
@@ -31,20 +44,8 @@
               stroke-width="4"
               stroke-linecap="round"
             />
-            <circle
-              cx="22"
-              cy="20"
-              r="6"
-              stroke="currentColor"
-              stroke-width="4"
-            />
-            <circle
-              cx="40"
-              cy="16"
-              r="5"
-              stroke="currentColor"
-              stroke-width="4"
-            />
+            <circle cx="22" cy="20" r="6" stroke="currentColor" stroke-width="4" />
+            <circle cx="40" cy="16" r="5" stroke="currentColor" stroke-width="4" />
             <path
               d="M18 50h30"
               stroke="currentColor"
@@ -52,26 +53,55 @@
               stroke-linecap="round"
             />
           </svg>
+
           <div>
             <h1>Who Said Diz</h1>
             <p class="sub">A family guessing game for passing time in line.</p>
           </div>
         </div>
+
+        <!-- Theme toggle button; aria-label updated by ui.js at runtime -->
+        <button
+          type="button"
+          class="btn btn-secondary btn-xs"
+          id="themeToggleBtn"
+          aria-label="Switch to dark mode"
+        >
+          🌙 Dark
+        </button>
       </header>
 
+      <!-- ============================================================
+           MAIN CONTENT
+           Six screens live here. Only one carries .screen--active at
+           a time; ui.js manages which one is visible.
+
+           Screen order / flow:
+             setup → question → wager → reveal → scores ↔ history
+             Next round loops back to question.
+      ============================================================ -->
       <main id="main" class="app-main">
+
+        <!-- ====================================================
+             SCREEN 1: SETUP
+             Add family members, view scores, manage Hunny Pot.
+        ==================================================== -->
         <section id="screen-setup" class="screen screen--active">
+
+          <!-- Live scoreboard shown before the game starts -->
           <article class="panel">
             <h2>Scores</h2>
             <div id="scoreboard" class="scoreboard"></div>
           </article>
 
+          <!-- Recently awarded bonuses -->
           <article class="panel">
             <h2>Bonus points</h2>
             <p class="hint">Recently awarded bonuses will show here.</p>
             <div id="qualifiedBonusPanel" class="bonus-earned-list"></div>
           </article>
 
+          <!-- Add / manage family members -->
           <article class="panel">
             <h2>Family setup</h2>
             <div class="grid-2">
@@ -105,12 +135,14 @@
             </p>
           </article>
 
+          <!-- Player list with inline Hunny Pot controls -->
           <article class="panel">
             <h2>Players</h2>
             <p class="hint">You can give someone a few points back so they can keep playing.</p>
             <div id="playersList" class="players"></div>
           </article>
 
+          <!-- Primary CTA -->
           <div class="primary-actions">
             <button type="button" class="btn btn-primary" id="startGameBtn">
               Start game
@@ -118,10 +150,17 @@
           </div>
         </section>
 
+        <!-- ====================================================
+             SCREEN 2: QUESTION
+             Pick or generate a question; tap Answer to collect
+             responses one player at a time.
+        ==================================================== -->
         <section id="screen-question" class="screen">
           <article class="panel">
             <h2>Pick a question</h2>
 
+            <!-- Attraction + land fields with datalist autocomplete
+                 (populated from parks-data.js at runtime) -->
             <div class="grid-2">
               <div class="field">
                 <label for="attractionName">Attraction</label>
@@ -146,6 +185,7 @@
               </div>
             </div>
 
+            <!-- Free-text question -->
             <div class="field">
               <label for="betDescription">Question about this ride</label>
               <textarea
@@ -159,12 +199,15 @@
             </p>
 
             <div class="small-actions">
+              <!-- Answer: begins the answer-collection phase -->
               <button class="btn btn-primary" type="button" id="createBetBtn">
                 Answer
               </button>
+              <!-- New question: fills in a random unused global question -->
               <button class="btn btn-secondary" type="button" id="randomBetBtn">
                 New question
               </button>
+              <!-- Clear: resets the question form -->
               <button class="btn btn-secondary" type="button" id="clearBetFormBtn">
                 Clear
               </button>
@@ -172,7 +215,14 @@
           </article>
         </section>
 
+        <!-- ====================================================
+             SCREEN 3: WAGER
+             Each player guesses who said it and wagers points.
+             Table stakes enforced before locking.
+        ==================================================== -->
         <section id="screen-wager" class="screen">
+
+          <!-- Shows the selected answer and question for this round -->
           <article class="panel">
             <h2>Selected answer</h2>
             <div id="selectedAnswerPanel" class="stack">
@@ -182,11 +232,12 @@
             </div>
           </article>
 
+          <!-- Per-player guess + wager inputs -->
           <article class="panel">
             <h2>Place your bets</h2>
             <p class="hint">
-             Each player guesses who said it and wagers points.
-            Table stakes: all players who are in must wager the same amount before you can lock.
+              Each player guesses who said it and wagers points.
+              Table stakes: all players who are in must wager the same amount before you can lock.
               Select "0" to opt out of round.
             </p>
             <div id="betPlayers" class="players">
@@ -203,16 +254,23 @@
           </article>
         </section>
 
+        <!-- ====================================================
+             SCREEN 4: REVEAL
+             Shows wager-based round result. Adjustments (Hot
+             Round, bonuses, catch-up) are a deliberate second
+             step via the "View adjustments" button.
+        ==================================================== -->
         <section id="screen-reveal" class="screen">
           <article class="panel">
             <h2>Round result</h2>
             <div id="revealSummary" class="reveal-summary"></div>
 
             <div class="small-actions">
+              <!-- Advance to scores screen -->
               <button type="button" class="btn btn-primary" id="toScoresBtn">
                 Review scores
               </button>
-              <!-- New: adjustments button -->
+              <!-- Open adjustments modal (Hot Round, bonuses, catch-up) -->
               <button type="button" class="btn btn-secondary" id="viewAdjustmentsBtn">
                 View adjustments
               </button>
@@ -220,7 +278,13 @@
           </article>
         </section>
 
+        <!-- ====================================================
+             SCREEN 5: SCORES
+             Full scoreboard after a round resolves. Jump to
+             history or start the next round from here.
+        ==================================================== -->
         <section id="screen-scores" class="screen">
+
           <article class="panel">
             <h2>Scores</h2>
             <div id="scoreboardScoresScreen" class="scoreboard"></div>
@@ -245,24 +309,31 @@
           </div>
         </section>
 
+        <!-- ====================================================
+             SCREEN 6: HISTORY
+             Resolved rounds, Hunny Pot controls, and bonus
+             library for manual awards.
+        ==================================================== -->
         <section id="screen-history" class="screen">
+
+          <!-- Active (unresolved) rounds summary -->
           <article class="panel">
             <h2>Rounds</h2>
             <div id="openBetMetrics" class="totals"></div>
             <div id="openBets" class="bet-list"></div>
           </article>
 
+          <!-- Resolved round history + Hunny Pot controls -->
           <article class="panel">
             <h2>Round history</h2>
             <p class="hint">This screen also shows Hunny Pot controls between questions.</p>
             <div id="historyList" class="history-list"></div>
           </article>
 
+          <!-- Manual bonus awards -->
           <article class="panel">
             <h2>Bonus library</h2>
-            <p class="hint">
-              Use these when someone qualifies for a bonus.
-            </p>
+            <p class="hint">Use these when someone qualifies for a bonus.</p>
             <div id="bonusLibrary" class="bonus-list"></div>
           </article>
 
@@ -272,15 +343,21 @@
             </button>
           </div>
         </section>
-      </main>
-    </div>
-  </div>
 
-  <div
-    id="clearHunnyModalBackdrop"
-    class="modal-backdrop"
-    style="display:none;"
-  >
+      </main>
+    </div><!-- /.screen-shell -->
+  </div><!-- /.app -->
+
+
+  <!-- ============================================================
+       MODALS
+       All modals use role="dialog" + aria-modal + aria-labelledby
+       for accessibility. They are hidden via style="display:none"
+       and shown/hidden by ui.js.
+  ============================================================ -->
+
+  <!-- ---- Clear Hunny Pot confirmation ---- -->
+  <div id="clearHunnyModalBackdrop" class="modal-backdrop" style="display:none;">
     <div
       class="modal"
       role="dialog"
@@ -291,29 +368,14 @@
       <h3 id="clearHunnyModalTitle" class="modal-title">Clear Hunny Pot</h3>
       <p class="hint" id="clearHunnyModalMessage"></p>
       <div class="small-actions">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          id="clearHunnyModalCancel"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          class="btn btn-danger"
-          id="clearHunnyModalConfirm"
-        >
-          Clear
-        </button>
+        <button type="button" class="btn btn-secondary" id="clearHunnyModalCancel">Cancel</button>
+        <button type="button" class="btn btn-danger" id="clearHunnyModalConfirm">Clear</button>
       </div>
     </div>
   </div>
 
-  <div
-    id="answerModalBackdrop"
-    class="modal-backdrop"
-    style="display:none;"
-  >
+  <!-- ---- Pass-the-phone answer collection ---- -->
+  <div id="answerModalBackdrop" class="modal-backdrop" style="display:none;">
     <div
       class="modal"
       role="dialog"
@@ -330,36 +392,23 @@
       </div>
 
       <div class="small-actions">
-        <button
-          type="button"
-          class="btn btn-primary"
-          id="answerModalSaveBtn"
-        >
+        <!-- Save answer and advance to next player -->
+        <button type="button" class="btn btn-primary" id="answerModalSaveBtn">
           Save and pass
         </button>
-        <button
-          type="button"
-          class="btn btn-secondary"
-          id="answerModalGhostBtn"
-        >
+        <!-- Insert a random ghost ride fragment instead of a real answer -->
+        <button type="button" class="btn btn-secondary" id="answerModalGhostBtn">
           Ghost answer
         </button>
-        <button
-          type="button"
-          class="btn btn-secondary"
-          id="answerModalCancelBtn"
-        >
+        <button type="button" class="btn btn-secondary" id="answerModalCancelBtn">
           Cancel
         </button>
       </div>
     </div>
   </div>
 
-  <div
-    id="giveHunnyModalBackdrop"
-    class="modal-backdrop"
-    style="display:none;"
-  >
+  <!-- ---- Give points from Hunny Pot to a player ---- -->
+  <div id="giveHunnyModalBackdrop" class="modal-backdrop" style="display:none;">
     <div
       class="modal"
       role="dialog"
@@ -383,29 +432,14 @@
       </div>
 
       <div class="small-actions">
-        <button
-          class="btn btn-secondary"
-          type="button"
-          id="giveHunnyModalCancel"
-        >
-          Cancel
-        </button>
-        <button
-          class="btn btn-primary"
-          type="button"
-          id="giveHunnyModalConfirm"
-        >
-          Give points
-        </button>
+        <button class="btn btn-secondary" type="button" id="giveHunnyModalCancel">Cancel</button>
+        <button class="btn btn-primary" type="button" id="giveHunnyModalConfirm">Give points</button>
       </div>
     </div>
   </div>
 
-  <div
-    id="addHunnyModalBackdrop"
-    class="modal-backdrop"
-    style="display:none;"
-  >
+  <!-- ---- Add points to the Hunny Pot ---- -->
+  <div id="addHunnyModalBackdrop" class="modal-backdrop" style="display:none;">
     <div
       class="modal"
       role="dialog"
@@ -427,29 +461,14 @@
       </div>
 
       <div class="small-actions">
-        <button
-          class="btn btn-secondary"
-          type="button"
-          id="addHunnyModalCancel"
-        >
-          Cancel
-        </button>
-        <button
-          class="btn btn-primary"
-          type="button"
-          id="addHunnyModalConfirm"
-        >
-          Add points
-        </button>
+        <button class="btn btn-secondary" type="button" id="addHunnyModalCancel">Cancel</button>
+        <button class="btn btn-primary" type="button" id="addHunnyModalConfirm">Add points</button>
       </div>
     </div>
   </div>
 
-  <div
-    id="revealModalBackdrop"
-    class="modal-backdrop"
-    style="display:none;"
-  >
+  <!-- ---- Wager-based round result (quick reveal) ---- -->
+  <div id="revealModalBackdrop" class="modal-backdrop" style="display:none;">
     <div
       class="modal"
       role="dialog"
@@ -463,23 +482,13 @@
         <div id="revealModalBody" class="hint"></div>
       </div>
       <div class="small-actions">
-        <button
-          type="button"
-          class="btn btn-primary"
-          id="revealModalCloseBtn"
-        >
-          OK
-        </button>
+        <button type="button" class="btn btn-primary" id="revealModalCloseBtn">OK</button>
       </div>
     </div>
   </div>
 
-  <!-- Hot Round modal -->
-  <div
-    id="hotRoundModalBackdrop"
-    class="modal-backdrop"
-    style="display:none;"
-  >
+  <!-- ---- Hunny Pot Hot Round: offer extra pot bonus to winner ---- -->
+  <div id="hotRoundModalBackdrop" class="modal-backdrop" style="display:none;">
     <div
       class="modal"
       role="dialog"
@@ -506,37 +515,24 @@
       </div>
 
       <div class="small-actions">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          id="hotRoundModalSkip"
-        >
+        <!-- Skip: proceed without a Hot Round bonus -->
+        <button type="button" class="btn btn-secondary" id="hotRoundModalSkip">
           Not this round
         </button>
-        <button
-          type="button"
-          class="btn btn-secondary"
-          id="hotRoundModalCancel"
-        >
+        <!-- Cancel: go back without starting the round -->
+        <button type="button" class="btn btn-secondary" id="hotRoundModalCancel">
           Cancel
         </button>
-        <button
-          type="button"
-          class="btn btn-primary"
-          id="hotRoundModalConfirm"
-        >
+        <!-- Confirm: lock in the Hot Round bonus amount -->
+        <button type="button" class="btn btn-primary" id="hotRoundModalConfirm">
           Make it Hot
         </button>
       </div>
     </div>
   </div>
 
-  <!-- New: Adjustments modal -->
-  <div
-    id="adjustmentsModalBackdrop"
-    class="modal-backdrop"
-    style="display:none;"
-  >
+  <!-- ---- Post-round adjustments: Hot Round payout, bonuses, catch-up ---- -->
+  <div id="adjustmentsModalBackdrop" class="modal-backdrop" style="display:none;">
     <div
       class="modal"
       role="dialog"
@@ -547,20 +543,24 @@
       <h3 id="adjustmentsModalTitle" class="modal-title">Round adjustments</h3>
       <div id="adjustmentsModalBody" class="hint"></div>
       <div class="small-actions">
-        <button
-          type="button"
-          class="btn btn-primary"
-          id="adjustmentsModalClose"
-        >
-          Done
-        </button>
+        <button type="button" class="btn btn-primary" id="adjustmentsModalClose">Done</button>
       </div>
     </div>
   </div>
 
+
+  <!-- ============================================================
+       SCRIPTS
+       Load order matters:
+         1. parks-data.js   — window.PARKS (attraction/land data)
+         2. questions.js    — window.DISNEY_LINE_QUESTIONS (question pool)
+         3. ghostRideFragments.js — window.getRandomRideFragment()
+         4. ui.js           — ES module; imports game-state + game-logic
+  ============================================================ -->
   <script src="parks-data.js"></script>
   <script src="questions.js"></script>
   <script src="ghostRideFragments.js"></script>
   <script type="module" src="ui.js"></script>
+
 </body>
 </html>
