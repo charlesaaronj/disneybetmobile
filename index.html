@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
@@ -211,6 +211,10 @@
             <div class="small-actions">
               <button type="button" class="btn btn-primary" id="toScoresBtn">
                 Review scores
+              </button>
+              <!-- New: adjustments button -->
+              <button type="button" class="btn btn-secondary" id="viewAdjustmentsBtn">
+                View adjustments
               </button>
             </div>
           </article>
@@ -522,6 +526,33 @@
           id="hotRoundModalConfirm"
         >
           Make it Hot
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New: Adjustments modal -->
+  <div
+    id="adjustmentsModalBackdrop"
+    class="modal-backdrop"
+    style="display:none;"
+  >
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="adjustmentsModalTitle"
+      aria-describedby="adjustmentsModalBody"
+    >
+      <h3 id="adjustmentsModalTitle" class="modal-title">Round adjustments</h3>
+      <div id="adjustmentsModalBody" class="hint"></div>
+      <div class="small-actions">
+        <button
+          type="button"
+          class="btn btn-primary"
+          id="adjustmentsModalClose"
+        >
+          Done
         </button>
       </div>
     </div>
