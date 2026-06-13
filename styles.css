@@ -1,5 +1,5 @@
 /* =========================================
-   CSS RESET / BASE
+   RESET + BASE
    ========================================= */
 
 *,
@@ -22,19 +22,35 @@ body {
   color: var(--color-text);
 }
 
-/* Scroll behavior for screen transitions */
-html {
-  scroll-behavior: smooth;
-}
-
 /* =========================================
-   THEMING (LIGHT / DARK)
-   data-theme="light" or "dark" on <html>
+   THEME VARIABLES
    ========================================= */
 
 :root {
+  --color-bg: #020617;
+  --color-bg-elevated: #030712;
+  --color-bg-header: #000000;
+  --color-bg-soft: #111827;
+  --color-text: #f9fafb;
+  --color-text-soft: #9ca3af;
+  --color-primary: #38bdf8;
+  --color-primary-hover: #0ea5e9;
+  --color-border: #1f2937;
+  --color-danger: #f97373;
+  --color-hunny: #fbbf24;
+  --color-hot: #f97316;
+
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --radius-sm: 0.6rem;
+  --radius-md: 0.9rem;
+  --radius-lg: 1.1rem;
+
+  --tap-size: 44px;
+}
+
+html[data-theme="light"] {
   --color-bg: #f3f4f6;
-  --color-bg-panel: #ffffff;
+  --color-bg-elevated: #f9fafb;
   --color-bg-header: #111827;
   --color-bg-soft: #e5e7eb;
   --color-text: #111827;
@@ -46,52 +62,36 @@ html {
   --color-hunny: #f59e0b;
   --color-hot: #ef4444;
 
-  --shadow-soft: 0 1px 3px rgba(15, 23, 42, 0.15);
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-}
-
-html[data-theme="dark"] {
-  --color-bg: #030712;
-  --color-bg-panel: #020617;
-  --color-bg-header: #000000;
-  --color-bg-soft: #111827;
-  --color-text: #e5e7eb;
-  --color-text-soft: #9ca3af;
-  --color-primary: #60a5fa;
-  --color-primary-hover: #3b82f6;
-  --color-border: #1f2937;
-  --color-danger: #f87171;
-  --color-hunny: #fbbf24;
-  --color-hot: #f97316;
-
-  --shadow-soft: 0 1px 3px rgba(15, 23, 42, 0.7);
+  --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.25);
 }
 
 /* =========================================
-   LAYOUT
+   APP SHELL
    ========================================= */
 
 .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
-  background: var(--color-bg-header);
+  padding: 0.9rem 1rem;
+  background: linear-gradient(to right, var(--color-bg-header), #020617);
   color: #f9fafb;
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.65);
 }
 
 .app-header h1 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.3rem;
+  letter-spacing: 0.03em;
 }
 
 main {
-  max-width: 900px;
+  max-width: 480px;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 1rem 0.9rem 4rem;
 }
 
 /* Screens */
@@ -106,18 +106,19 @@ main {
 }
 
 .screen h2 {
-  margin: 0 0 0.75rem;
-  font-size: 1.25rem;
+  margin: 0 0 0.7rem;
+  font-size: 1.2rem;
 }
 
-/* Panels */
+/* Panels (card-like sections) */
 
 .panel {
-  background: var(--color-bg-panel);
-  border-radius: var(--radius-lg);
-  padding: 1rem;
+  background: var(--color-bg-elevated);
+  border-radius: 1.25rem;
+  padding: 0.9rem 0.95rem;
   box-shadow: var(--shadow-soft);
   margin-bottom: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
 /* =========================================
@@ -125,22 +126,22 @@ main {
    ========================================= */
 
 h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1.05rem;
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
 }
 
 h4 {
-  margin: 0.75rem 0 0.25rem;
-  font-size: 0.95rem;
+  margin: 0.5rem 0 0.2rem;
+  font-size: 0.9rem;
 }
 
 .hint {
-  margin: 0.5rem 0;
-  font-size: 0.85rem;
+  margin: 0.3rem 0 0;
+  font-size: 0.82rem;
   color: var(--color-text-soft);
 }
 
-/* Lists (history, players) */
+/* Lists */
 
 .list {
   display: flex;
@@ -155,12 +156,17 @@ h4 {
 .input {
   width: 100%;
   display: block;
-  padding: 0.4rem 0.55rem;
+  padding: 0.55rem 0.7rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
-  background: var(--color-bg-panel);
+  background: #020617;
   color: var(--color-text);
   font: inherit;
+  min-height: 40px;
+}
+
+html[data-theme="light"] .input {
+  background: #ffffff;
 }
 
 .input:focus {
@@ -170,23 +176,23 @@ h4 {
 
 .input--textarea {
   resize: vertical;
-  min-height: 2.75rem;
+  min-height: 80px;
 }
 
 .input--small {
-  width: 4rem;
+  width: 4.2rem;
 }
+
+/* Form rows */
 
 .form-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: flex-end;
+  flex-direction: column;
+  gap: 0.6rem;
   margin-bottom: 0.75rem;
 }
 
 .form-row label {
-  flex: 1 1 120px;
   font-size: 0.85rem;
 }
 
@@ -195,17 +201,18 @@ h4 {
 .table-wrapper {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 
 .table th,
 .table td {
-  padding: 0.35rem 0.5rem;
+  padding: 0.4rem 0.45rem;
   border-bottom: 1px solid var(--color-border);
   vertical-align: middle;
 }
@@ -216,11 +223,6 @@ h4 {
   background: var(--color-bg-soft);
 }
 
-/* Responsive: keep table scrollable on narrow screens */
-.table-wrapper {
-  -webkit-overflow-scrolling: touch;
-}
-
 /* =========================================
    BUTTONS
    ========================================= */
@@ -229,8 +231,9 @@ h4 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.4rem 0.75rem;
-  border-radius: var(--radius-sm);
+  min-height: var(--tap-size);
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
   border: none;
   font: inherit;
   cursor: pointer;
@@ -265,7 +268,7 @@ h4 {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: 0.75rem;
+  margin-top: 0.8rem;
 }
 
 .actions--end {
@@ -277,14 +280,14 @@ h4 {
    ========================================= */
 
 .card {
-  border-radius: var(--radius-lg);
-  background: var(--color-bg-panel);
+  border-radius: 1rem;
+  background: var(--color-bg-elevated);
   box-shadow: var(--shadow-soft);
-  padding: 0.75rem 0.85rem;
+  padding: 0.7rem 0.8rem;
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.45rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
 }
 
 .card-main {
@@ -294,7 +297,7 @@ h4 {
 .card-title {
   font-size: 0.95rem;
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
 }
 
 .card-subtitle {
@@ -304,14 +307,10 @@ h4 {
 
 .card-actions {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-wrap: wrap;
   gap: 0.25rem;
+  justify-content: flex-end;
 }
-
-/* Specific card variations */
-.card--player {}
-.card--history {}
 
 /* =========================================
    PILLS
@@ -321,7 +320,7 @@ h4 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.15rem 0.5rem;
+  padding: 0.2rem 0.6rem;
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 500;
@@ -348,9 +347,9 @@ h4 {
 
 .mode-group {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin: 0.5rem 0;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0.4rem 0;
 }
 
 .mode-group label {
@@ -359,7 +358,7 @@ h4 {
 
 .mode-custom-options {
   margin-top: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.6rem 0.7rem;
   border-radius: var(--radius-md);
   background: var(--color-bg-soft);
   font-size: 0.85rem;
@@ -379,37 +378,44 @@ h4 {
 }
 
 /* =========================================
-   MODALS / BACKDROPS
+   MODALS / BACKDROPS (bottom-sheet style on mobile)
    ========================================= */
 
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 23, 42, 0.7);
   display: none;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   z-index: 9000;
 }
 
 .modal {
-  background: var(--color-bg-panel);
-  border-radius: var(--radius-lg);
-  padding: 1rem;
+  background: var(--color-bg-elevated);
+  border-radius: 1.25rem 1.25rem 0 0;
+  padding: 0.9rem 0.95rem 1.1rem;
   box-shadow: var(--shadow-soft);
+  width: 100%;
   max-width: 520px;
-  width: calc(100% - 2rem);
-  max-height: 80vh;
+  max-height: 85vh;
   overflow-y: auto;
+  border-top: 1px solid rgba(148, 163, 184, 0.4);
 }
 
 .modal--wide {
-  max-width: 640px;
+  max-width: 520px;
 }
 
-/* Answer modal textareas within modal should stretch full width */
-.modal textarea.input--textarea {
-  width: 100%;
+/* On wider screens, center the modal like a dialog */
+@media (min-width: 768px) {
+  .backdrop {
+    align-items: center;
+  }
+  .modal,
+  .modal--wide {
+    border-radius: 1.25rem;
+  }
 }
 
 /* =========================================
@@ -417,15 +423,15 @@ h4 {
    ========================================= */
 
 .reveal-card {
-  background: var(--color-bg-panel);
-  border-radius: var(--radius-lg);
+  background: var(--color-bg-elevated);
+  border-radius: 1.1rem;
   padding: 0.75rem 0.85rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(148, 163, 184, 0.35);
 }
 
 .reveal-question-text {
   font-weight: 600;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.2rem;
 }
 
 .reveal-author {
@@ -434,7 +440,7 @@ h4 {
 }
 
 .reveal-section-title {
-  margin-top: 0.5rem;
+  margin-top: 0.6rem;
   font-size: 0.85rem;
   font-weight: 600;
 }
@@ -448,9 +454,9 @@ h4 {
   left: 50%;
   bottom: 1.5rem;
   transform: translateX(-50%) translateY(150%);
-  background: #111827;
+  background: #020617;
   color: #f9fafb;
-  padding: 0.4rem 0.9rem;
+  padding: 0.5rem 1rem;
   border-radius: 999px;
   font-size: 0.8rem;
   box-shadow: var(--shadow-soft);
@@ -466,7 +472,6 @@ h4 {
 
 /* =========================================
    IN-PAGE CONSOLE
-   (container is created by JS; this just tweaks font)
    ========================================= */
 
 #inPageConsole {
@@ -477,30 +482,12 @@ h4 {
    RESPONSIVE TWEAKS
    ========================================= */
 
-@media (max-width: 640px) {
-  .app-header {
-    flex-direction: row;
-    gap: 0.5rem;
-  }
-
+@media (min-width: 600px) {
   .form-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .card {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .card-actions {
     flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: flex-start;
+    align-items: flex-end;
   }
-
-  .actions {
-    justify-content: flex-start;
+  .form-row label {
+    flex: 1 1 0;
   }
 }
