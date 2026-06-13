@@ -58,6 +58,19 @@ import {
   alertLike
 } from './ui-render.js';
 
+import {
+  addPlayer, removePlayer, giveFromPot, addToPot, clearPot,
+  getCurrentGuessingBet, finalizeCreateBet, startAnswerPhase,
+  getNextAnswerPrompt, savePlayerAnswer, normalizeGuesses,
+  resolveGuessingBet, rerollCurrentSelectedAnswer,
+  validateTableStakes, resetGameKeepingPlayers, applyRoundAdjustments
+} from './game-logic-rounds.js';
+
+import {
+  getRandomUnusedGlobalQuestion,
+  getRandomQuestionForAttractionWithFallback,
+  awardBonus
+} from './game-logic-questions.js';
 
 // ============================================================
 // SCREEN NAVIGATION
