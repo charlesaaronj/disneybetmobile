@@ -557,6 +557,90 @@
          3. ghostRideFragments.js — window.getRandomRideFragment()
          4. ui.js           — ES module; imports game-state + game-logic
   ============================================================ -->
+    <!-- In-page console for iOS debugging (remove for production) -->
+  <script>
+    (function setupInPageConsole() {
+      try {
+        var logContainer = document.createElement('div');
+        logContainer.id = 'inPageConsole';
+        logContainer.textContent = 'In-page console ready';
+        Object.assign(logContainer.style, {
+          position: 'fixed',
+          left: '0',
+          bottom: '0',
+          width: '100%',
+          maxHeight: '40vh',
+          overflowY: 'auto',
+          background: 'rgba(0,0,0,0.85)',
+          color: '#0f0',
+          fontFamily: 'monospace',
+          fontSize: '11px',
+          padding: '4px 6px',
+          zIndex: '9999',
+          boxSizing: 'border-box'
+        });
+
+        // Simple toggle button to hide/show logs
+        var toggle = document.createElement('button');
+        toggle.textContent = 'Logs';
+        Object.assign(toggle.style, {
+          position: 'fixed',
+          right: '8px',
+          bottom: '8px',
+          zIndex: '10000',
+          padding: '4px 8px',
+          fontSize: '11px',
+          borderRadius: '4px',
+          border: 'none',
+          background: '#111827',
+          color: '#e5e7eb'
+        });
+
+        toggle.addEventListener('click', function () {
+          var isHidden = logContainer.style.display === 'none';
+          logContainer.style.display = isHidden ? 'block' : 'none';
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+          document.body.appendChild(logContainer);
+          document.body.appendChild(toggle);
+        });
+
+        var originalLog = console.log.bind(console);
+
+        console.log = function () {
+          var args = Array.prototype.slice.call(arguments);
+          try {
+            var line = args.map(function (a) {
+              if (typeof a === 'string') return a;
+              try { return JSON.stringify(a); } catch (e) { return String(a); }
+            }).join(' ');
+            var entry = document.createElement('div');
+            entry.textContent = line;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+          } catch (e) {
+            // ignore serialization errors
+          }
+          originalLog.apply(console, args);
+        };
+
+        console.log('In-page console initialized');
+      } catch (e) {
+        // If anything goes wrong here, don't break the page
+      }
+    })();
+  </script>
+
+  <!-- existing scripts -->
+  <script src="parks-data.js"></script>
+  <script src="questions.js"></script>
+  <script src="ghostRideFragments.js"></script>
+  <script type="module" src="ui.js"></script>
+</body>
+</html>
+
+  
   <script src="parks-data.js"></script>
   <script src="questions.js"></script>
   <script src="ghostRideFragments.js"></script>
