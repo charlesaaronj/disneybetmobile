@@ -1,7 +1,6 @@
 // ============================================================
-// ui.js  (entry point)
-// Who Said Diz — DOM wiring, event handlers, modal logic,
-// screen navigation, and app bootstrap.
+// ui.js
+// Who Said Diz — DOM wiring, event handlers, screen navigation.
 // ============================================================
 
 import {
@@ -47,7 +46,7 @@ import {
   alertLike
 } from './ui-render.js';
 
-console.log('Who Said Diz UI module loaded');
+console.log('Who Said Diz UI loaded');
 
 
 // ============================================================
@@ -76,12 +75,12 @@ function showScreen(id) {
   }, 50);
 }
 
-function goToSetup()    { showScreen('setup'); }
+function goToSetup()    { showScreen('setup');    }
 function goToQuestion() { showScreen('question'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-function goToWager()    { showScreen('wager');   window.scrollTo({ top: 0, behavior: 'smooth' }); }
-function goToReveal()   { showScreen('reveal');  window.scrollTo({ top: 0, behavior: 'smooth' }); }
-function goToScores()   { showScreen('scores');  window.scrollTo({ top: 0, behavior: 'smooth' }); }
-function goToHistory()  { showScreen('history'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function goToWager()    { showScreen('wager');    window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function goToReveal()   { showScreen('reveal');   window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function goToScores()   { showScreen('scores');   window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function goToHistory()  { showScreen('history');  window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
 function resetQuestionForm() {
   els.attractionName.value  = '';
@@ -91,7 +90,7 @@ function resetQuestionForm() {
 
 
 // ============================================================
-// THEME TOGGLE
+// THEME
 // ============================================================
 
 const THEME_KEY = 'disney-line-theme';
@@ -101,10 +100,6 @@ function applyTheme(theme) {
   localStorage.setItem(THEME_KEY, theme);
   if (els.themeToggleBtn) {
     els.themeToggleBtn.textContent = theme === 'dark' ? '☀️ Light' : '🌙 Dark';
-    els.themeToggleBtn.setAttribute(
-      'aria-label',
-      theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
-    );
   }
 }
 
@@ -121,17 +116,7 @@ els.themeToggleBtn?.addEventListener('click', () => {
 
 
 // ============================================================
-// GAME MODE + OPTIONS UI
-// ============================================================
-//
-// HTML expectations:
-// - Radio buttons with name="gameMode" and ids:
-//     gameMode-simple, gameMode-competitive, gameMode-custom
-// - Custom-mode checkboxes:
-//     option-tableStakes, option-catchUp,
-//     option-hotRounds,   option-autoBonuses
-// - A small hint element:
-//     id="gameModeDescription"
+// GAME MODE + OPTIONS
 // ============================================================
 
 const modeRadios = {
@@ -156,25 +141,19 @@ function describeMode(mode, opts) {
     : mode === 'competitive'
     ? 'Competitive: strict scoring, no catch-up.'
     : 'Custom: you choose all scoring rules.');
-
   pieces.push(opts.tableStakes
     ? 'Everyone who wagers must wager the same amount.'
     : 'Players can wager different amounts.');
-
   pieces.push(opts.catchUp
-    ? 'Catch-up is ON (pot can boost last place).'
-    : 'Catch-up is OFF.');
-
+    ? 'Catch-up ON.'
+    : 'Catch-up OFF.');
   pieces.push(opts.hotRounds
-    ? 'Hot Rounds are offered when the pot is big.'
-    : 'Hot Rounds are disabled.');
-
+    ? 'Hot Rounds enabled.'
+    : 'Hot Rounds disabled.');
   pieces.push(opts.autoBonuses
-    ? 'Automatic bonuses are enabled.'
-    : 'Automatic bonuses are disabled.');
-
-  pieces.push('Authors never gain or lose points from wagers in their own round.');
-
+    ? 'Automatic bonuses enabled.'
+    : 'Automatic bonuses disabled.');
+  pieces.push('Authors never gain or lose points from their own round.');
   return pieces.join(' ');
 }
 
@@ -182,18 +161,14 @@ function syncModeUIFromState() {
   const mode = state.gameMode || 'competitive';
   const opts = state.gameOptions || DEFAULT_OPTIONS.competitive;
 
-  if (modeRadios[mode]) {
-    modeRadios[mode].checked = true;
-  }
+  if (modeRadios[mode]) modeRadios[mode].checked = true;
 
-  // Enable/disable custom toggles based on mode.
   const customEnabled = mode === 'custom';
   Object.values(customOptionEls).forEach(el => {
     if (!el) return;
     el.disabled = !customEnabled;
   });
 
-  // Reflect options into custom checkboxes.
   if (customOptionEls.tableStakes) customOptionEls.tableStakes.checked = !!opts.tableStakes;
   if (customOptionEls.catchUp)     customOptionEls.catchUp.checked     = !!opts.catchUp;
   if (customOptionEls.hotRounds)   customOptionEls.hotRounds.checked   = !!opts.hotRounds;
@@ -205,7 +180,6 @@ function syncModeUIFromState() {
 }
 
 function onModeChanged(newMode) {
-  // Apply preset for non-custom modes; keep current options for custom.
   let modeOptions = state.gameOptions;
   if (newMode === 'simple' || newMode === 'competitive') {
     modeOptions = { ...DEFAULT_OPTIONS[newMode] };
@@ -225,7 +199,6 @@ Object.entries(modeRadios).forEach(([mode, el]) => {
 Object.entries(customOptionEls).forEach(([key, el]) => {
   if (!el) return;
   el.addEventListener('change', () => {
-    // Only meaningful in custom mode; we still save for consistency.
     updateGameOptions({ [key]: !!el.checked });
     syncModeUIFromState();
     render();
@@ -240,14 +213,11 @@ Object.entries(customOptionEls).forEach(([key, el]) => {
 function openGiveFromPotModal(playerId) {
   const player = state.players.find(p => p.id === playerId);
   if (!player) return;
-  if (state.pot <= 0) {
-    alertLike('No points in the Hunny Pot right now.');
-    return;
-  }
+  if (state.pot <= 0) { alertLike('No points in the Hunny Pot right now.'); return; }
 
   const max = state.pot;
   els.giveHunnyMessage.textContent =
-    `How many points to give ${player.name} from the Hunny Pot? (Max ${max})`;
+    `How many points to give ${player.name}? (Max ${max})`;
   els.giveHunnyInput.value = String(max);
   els.giveHunnyInput.min   = '1';
   els.giveHunnyInput.max   = String(max);
@@ -257,12 +227,8 @@ function openGiveFromPotModal(playerId) {
     els.giveHunnyConfirm.removeEventListener('click', onConfirm);
     els.giveHunnyCancel.removeEventListener('click', onCancel);
   };
-  const onConfirm = () => {
-    giveFromPot(playerId, Number(els.giveHunnyInput.value));
-    render();
-    close();
-  };
-  const onCancel = () => close();
+  const onConfirm = () => { giveFromPot(playerId, Number(els.giveHunnyInput.value)); render(); close(); };
+  const onCancel  = () => close();
   els.giveHunnyConfirm.addEventListener('click', onConfirm);
   els.giveHunnyCancel.addEventListener('click', onCancel);
   els.giveHunnyBackdrop.style.display = 'flex';
@@ -278,12 +244,8 @@ function openAddToPotModal() {
     els.addHunnyConfirm.removeEventListener('click', onConfirm);
     els.addHunnyCancel.removeEventListener('click', onCancel);
   };
-  const onConfirm = () => {
-    addToPot(Number(els.addHunnyInput.value));
-    render();
-    close();
-  };
-  const onCancel = () => close();
+  const onConfirm = () => { addToPot(Number(els.addHunnyInput.value)); render(); close(); };
+  const onCancel  = () => close();
   els.addHunnyConfirm.addEventListener('click', onConfirm);
   els.addHunnyCancel.addEventListener('click', onCancel);
   els.addHunnyBackdrop.style.display = 'flex';
@@ -299,12 +261,8 @@ function openClearPotModal() {
     els.clearHunnyConfirm.removeEventListener('click', onConfirm);
     els.clearHunnyCancel.removeEventListener('click', onCancel);
   };
-  const onConfirm = () => {
-    clearPot();
-    render();
-    close();
-  };
-  const onCancel = () => close();
+  const onConfirm = () => { clearPot(); render(); close(); };
+  const onCancel  = () => close();
   els.clearHunnyConfirm.addEventListener('click', onConfirm);
   els.clearHunnyCancel.addEventListener('click', onCancel);
   els.clearHunnyBackdrop.style.display = 'flex';
@@ -312,16 +270,14 @@ function openClearPotModal() {
 
 
 // ============================================================
-// HOT ROUND MODAL (mode-aware)
+// HOT ROUND MODAL
 // ============================================================
 
 function openHotRoundModal(onSubmit) {
-  // If hotRounds option is off, skip entirely.
   if (!state.gameOptions?.hotRounds) {
     onSubmit({ hotRound: false, hotRoundBonus: 0 });
     return;
   }
-
   if (!els.hotRoundBackdrop || !els.hotRoundInput) {
     onSubmit({ hotRound: false, hotRoundBonus: 0 });
     return;
@@ -329,7 +285,7 @@ function openHotRoundModal(onSubmit) {
 
   const max = state.pot;
   els.hotRoundMessage.textContent =
-    `The Hunny Pot has ${max} points. Make this a Hot Round?`;
+    `The Hunny Pot has ${max} pts. Make this a Hot Round?`;
   els.hotRoundInput.value = String(Math.min(5, max));
   els.hotRoundInput.min   = '1';
   els.hotRoundInput.max   = String(max);
@@ -340,18 +296,13 @@ function openHotRoundModal(onSubmit) {
     els.hotRoundSkip.removeEventListener('click', onSkip);
     els.hotRoundCancel.removeEventListener('click', onCancel);
   };
-
   const onConfirm = () => {
     let amount = Number(els.hotRoundInput.value);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      alertLike('Enter a number greater than 0.');
-      return;
-    }
+    if (!Number.isFinite(amount) || amount <= 0) { alertLike('Enter a number greater than 0.'); return; }
     if (amount > max) amount = max;
     close();
     onSubmit({ hotRound: true, hotRoundBonus: clampScore(amount) });
   };
-
   const onSkip   = () => { close(); onSubmit({ hotRound: false, hotRoundBonus: 0 }); };
   const onCancel = () => close();
 
@@ -400,10 +351,10 @@ function nextAnswerPromptUI() {
   const metaParts = [];
   if (bet.attraction) metaParts.push(bet.attraction);
   if (bet.land)       metaParts.push(bet.land);
-  const meta = metaParts.length ? `(${metaParts.join(' • ')})` : '';
+  const meta = metaParts.length ? ` (${metaParts.join(' • ')})` : '';
 
   els.answerPrompt.textContent =
-    `Hand the phone to ${player.name}. Only they should see this.\n\nQuestion: ${bet.description} ${meta}`;
+    `Hand the phone to ${player.name}.\n\n${bet.description}${meta}`;
   els.answerPlayerLabel.textContent = `${player.name}, type your answer`;
   els.answerInput.value = '';
 
@@ -451,39 +402,6 @@ els.answerGhostBtn?.addEventListener('click',  () => saveAnswerUI(true));
 // WAGER GUARDS
 // ============================================================
 
-export function attachWagerGuards() {
-  const rows = [...document.querySelectorAll('[data-bet-player-row]')];
-  rows.forEach(row => {
-    const playerId = row.dataset.playerId;
-    const input    = row.querySelector('[data-amount]');
-    if (!input) return;
-
-    input.addEventListener('input', () => {
-      const available = clampScore(
-        state.players.find(p => p.id === playerId)?.currentPoints ?? 0
-      );
-      const value = Number(input.value);
-      if (Number.isFinite(value) && value > available) {
-        input.value = String(available);
-        alertLike(`Max wager for this player is ${available} points.`);
-      }
-    });
-
-    input.addEventListener('blur', () => {
-      const available = clampScore(
-        state.players.find(p => p.id === playerId)?.currentPoints ?? 0
-      );
-      const raw   = input.value.trim();
-      const value = Number(raw);
-      if (raw === '' || !Number.isFinite(value) || value < 0) {
-        input.value = '1';
-        return;
-      }
-      if (value > available) input.value = String(available);
-    });
-  });
-}
-
 function buildRawGuessesForBet() {
   return [...document.querySelectorAll('[data-bet-player-row]')].map(row => ({
     playerId:        row.dataset.playerId,
@@ -500,44 +418,36 @@ function buildRawGuessesForBet() {
 let lastResolvedBetId = null;
 
 function openAdjustmentsModal() {
-  if (!lastResolvedBetId) {
-    alertLike('No round has just been resolved.');
-    return;
-  }
+  if (!lastResolvedBetId) { alertLike('No round has just been resolved.'); return; }
 
   const summary = applyRoundAdjustments(lastResolvedBetId);
-  if (!summary) {
-    alertLike('No adjustments to apply for this round.');
-    return;
-  }
+  if (!summary) { alertLike('No adjustments to apply for this round.'); return; }
+
+  const esc = s => String(s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]
+  );
 
   const parts = [];
 
   if (summary.hotRoundLines?.length) {
     parts.push('<div class="reveal-section-title">Hot Round</div>');
-    parts.push(`<div class="hint">${summary.hotRoundLines.map(l =>
-      l.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c])
-    ).join('<br>')}</div>`);
+    parts.push(`<div class="hint">${summary.hotRoundLines.map(esc).join('<br>')}</div>`);
   }
 
   if (summary.bonusLines?.length) {
     parts.push('<div class="reveal-section-title" style="margin-top:.75rem;">Bonuses</div>');
-    parts.push(`<div class="hint">${summary.bonusLines.map(l =>
-      l.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c])
-    ).join('<br>')}</div>`);
+    parts.push(`<div class="hint">${summary.bonusLines.map(esc).join('<br>')}</div>`);
   }
 
   if (summary.catchUpLine) {
     parts.push('<div class="reveal-section-title" style="margin-top:.75rem;">Catch-up</div>');
-    parts.push(`<div class="hint">${summary.catchUpLine}</div>`);
+    parts.push(`<div class="hint">${esc(summary.catchUpLine)}</div>`);
   }
 
   parts.push('<div class="reveal-section-title" style="margin-top:.75rem;">Hunny Pot</div>');
   parts.push(`<div class="hint">Before: ${summary.potBefore} · After: ${summary.potAfter}</div>`);
 
-  if (!parts.length) {
-    parts.push('<div class="hint">No adjustments this round.</div>');
-  }
+  if (!parts.length) parts.push('<div class="hint">No adjustments this round.</div>');
 
   els.adjustmentsBody.innerHTML = parts.join('');
   els.adjustmentsBackdrop.style.display = 'flex';
@@ -547,16 +457,14 @@ function openAdjustmentsModal() {
 els.adjustmentsClose?.addEventListener('click', () => {
   els.adjustmentsBackdrop.style.display = 'none';
 });
-
 els.adjustmentsBackdrop?.addEventListener('click', e => {
-  if (e.target === els.adjustmentsBackdrop) {
+  if (e.target === els.adjustmentsBackdrop)
     els.adjustmentsBackdrop.style.display = 'none';
-  }
 });
 
 
 // ============================================================
-// EVENT DELEGATION — SETUP & HISTORY
+// EVENT DELEGATION — SETUP & HISTORY LISTS
 // ============================================================
 
 els.playersList?.addEventListener('click', e => {
@@ -571,14 +479,10 @@ els.playersList?.addEventListener('click', e => {
 });
 
 els.historyList?.addEventListener('click', e => {
-  const btn      = e.target.closest('[data-action]');
+  const btn    = e.target.closest('[data-action]');
   if (!btn) return;
-  const action   = btn.dataset.action;
-  const playerId = btn.dataset.playerId;
-  const betId    = btn.dataset.betId;
-  if (action === 'add-to-pot')     openAddToPotModal();
-  if (action === 'clear-pot')      openClearPotModal();
-  if (action === 'give-from-pot')  openGiveFromPotModal(playerId);
+  const action = btn.dataset.action;
+  const betId  = btn.dataset.betId;
   if (action === 'reuse-question') reuseQuestion(betId);
 });
 
@@ -634,7 +538,7 @@ function setupAttractionSuggestions() {
     if (!name) return;
     const match = attractions.find(a => a.name.toLowerCase() === name);
     if (!match) return;
-    if (match.land) els.landName.value = match.land;
+    if (match.land && !els.landName.value.trim()) els.landName.value = match.land;
     if (!els.betDescription.value.trim()) {
       const question = getRandomQuestionForAttractionWithFallback(match.name);
       if (question) els.betDescription.value = question;
@@ -648,7 +552,7 @@ function setupAttractionSuggestions() {
 
 
 // ============================================================
-// BUTTON EVENT LISTENERS
+// BUTTON WIRING
 // ============================================================
 
 document.getElementById('addPlayerBtn')?.addEventListener('click', () => {
@@ -663,37 +567,23 @@ document.getElementById('addPlayerBtn')?.addEventListener('click', () => {
 });
 
 els.playerName?.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    document.getElementById('addPlayerBtn')?.click();
-  }
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addPlayerBtn')?.click(); }
 });
 
 document.getElementById('createBetBtn')?.addEventListener('click', () => {
-  if (state.players.length < 2) {
-    return alertLike('You need at least two family members to play.');
-  }
+  if (state.players.length < 2) return alertLike('You need at least two family members to play.');
   const attraction = els.attractionName.value.trim();
   const land       = els.landName.value.trim();
   const question   = els.betDescription.value.trim();
-  if (!attraction || !land || !question) {
-    return alertLike('Attraction, Land, and Question are all required.');
-  }
+  if (!attraction || !land || !question) return alertLike('Attraction, Land, and Question are all required.');
 
   const launchRound = selection => {
-    const bet = finalizeCreateBet({
-      attraction,
-      land,
-      question,
-      hotRound:      selection.hotRound,
-      hotRoundBonus: selection.hotRoundBonus
-    });
+    const bet = finalizeCreateBet({ attraction, land, question, ...selection });
     if (!bet) return;
     render();
     startAnswerPhaseUI(bet.id);
   };
 
-  // Only bother with Hot Round flow if option is on and pot is large.
   if (state.gameOptions?.hotRounds && state.pot > 10) {
     openHotRoundModal(launchRound);
   } else {
@@ -703,13 +593,11 @@ document.getElementById('createBetBtn')?.addEventListener('click', () => {
 
 document.getElementById('randomBetBtn')?.addEventListener('click', () => {
   const q = getRandomUnusedGlobalQuestion();
-  if (!q) return alertLike('No global question ideas available yet.');
+  if (!q) return alertLike('No question ideas available yet.');
   els.betDescription.value = q;
 });
 
-document.getElementById('clearBetFormBtn')?.addEventListener('click', () => {
-  resetQuestionForm();
-});
+document.getElementById('clearBetFormBtn')?.addEventListener('click', () => resetQuestionForm());
 
 document.getElementById('lockGuessesBtn')?.addEventListener('click', () => {
   const bet = getCurrentGuessingBet();
@@ -726,7 +614,7 @@ document.getElementById('lockGuessesBtn')?.addEventListener('click', () => {
   saveState();
 
   const result = resolveGuessingBet(bet.id);
-  if (!result) return alertLike('Could not resolve this round. Please check the wager screen.');
+  if (!result) return alertLike('Could not resolve this round. Check the wager screen.');
 
   lastResolvedBetId = bet.id;
   renderSimpleReveal(result);
@@ -745,17 +633,17 @@ document.getElementById('clearAllBtn')?.addEventListener('click', () => {
 });
 
 document.getElementById('startGameBtn')?.addEventListener('click', () => {
-  if (state.players.length < 2) {
-    return alertLike('Add at least two family members first.');
-  }
+  if (state.players.length < 2) return alertLike('Add at least two family members first.');
   resetQuestionForm();
   goToQuestion();
 });
 
+// Navigation
 document.getElementById('toScoresBtn')?.addEventListener('click',       () => goToScores());
 document.getElementById('nextRoundBtn')?.addEventListener('click',      () => { resetQuestionForm(); goToQuestion(); });
 document.getElementById('viewHistoryBtn')?.addEventListener('click',    () => { render(); goToHistory(); });
-document.getElementById('backToScoresBtn')?.addEventListener('click',   () => goToScores());
+document.getElementById('scoresBackToSetupBtn')?.addEventListener('click', () => goToSetup());
+document.getElementById('historyBackToScoresBtn')?.addEventListener('click', () => goToScores());
 document.getElementById('restartGameBtn')?.addEventListener('click',    () => { resetGameKeepingPlayers(); render(); goToSetup(); });
 document.getElementById('viewAdjustmentsBtn')?.addEventListener('click',() => openAdjustmentsModal());
 
@@ -777,6 +665,7 @@ window.addEventListener('load', () => {
   if (potChanged) saveState();
   initTheme();
   syncModeUIFromState();
+  setupAttractionSuggestions();
   render();
   goToSetup();
   els.playerName?.focus();
