@@ -2,14 +2,6 @@
 // game-logic-rounds.js
 // Who Said Diz — player management, Hunny Pot, round lifecycle,
 // wagering, and round resolution.
-//
-// This file owns:
-//   - how points move
-//   - how rounds progress (answering → guessing → resolved)
-//   - how gameOptions (simple/competitive/custom) affect logic
-//
-// Author rule: authors NEVER gain or lose points from wagers
-// in their own round, regardless of mode.
 // ============================================================
 
 import {
@@ -91,14 +83,12 @@ export function resetGameKeepingPlayers() {
 
 // ============================================================
 // GAME MODE / OPTIONS
-// (mode selection UI lives in ui.js; these are helpers)
 // ============================================================
 
 export function setGameMode(mode, optionsFromUI = null) {
   const valid = ['simple', 'competitive', 'custom'];
   state.gameMode = valid.includes(mode) ? mode : 'competitive';
 
-  // If UI passed custom options, use them; otherwise load defaults.
   if (optionsFromUI && typeof optionsFromUI === 'object') {
     state.gameOptions = {
       ...state.gameOptions,
@@ -106,9 +96,7 @@ export function setGameMode(mode, optionsFromUI = null) {
     };
   }
 
-  // Authors never wager, regardless of mode.
   state.gameOptions.authorsWager = false;
-
   saveState();
 }
 
@@ -190,9 +178,7 @@ export function chooseRandomAnswerForBet(bet) {
 
 export function rerollChosenAnswer(betId) {
   const bet = state.bets.find(b => b.id === betId);
-  if (!bet || !Array.isArray(bet.answers) || bet.answers.length < 2) {
-    return null;
-  }
+  if (!bet || !Array.isArray(bet.answers) || bet.answers.length < 2) return null;
   const alternatives = bet.answers.filter(a => a.id !== bet.chosenAnswerId);
   if (!alternatives.length) return null;
   const next = alternatives[Math.floor(Math.random() * alternatives.length)];
@@ -388,7 +374,6 @@ export function validateTableStakes(guesses) {
     return { ok: false, message: 'At least one player must wager points.' };
   }
 
-  // If table stakes is disabled, any wagers are fine.
   if (!opt('tableStakes')) {
     return { ok: true, target: null };
   }
@@ -408,9 +393,7 @@ export function validateTableStakes(guesses) {
 
 
 // ============================================================
-// RESOLVE — PHASE 1: WAGERS ONLY
-// Authors never win or lose points on wagers for their own round.
-// Their guesses are ignored for scoring purposes.
+// RESOLVE — PHASE 1: WAGERS
 // ============================================================
 
 export function resolveGuessingBet(betId) {
@@ -426,7 +409,6 @@ export function resolveGuessingBet(betId) {
 
   const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
 
-  // Build wagers, then IGNORE any wager where the player is a correct author.
   const wagers = (bet.guesses || [])
     .map(g => ({
       playerId:        g.playerId,
@@ -453,7 +435,6 @@ export function resolveGuessingBet(betId) {
   const losersPot        = losers.reduce((sum, w) => sum + w.wager, 0);
   const totalWinnerWager = winners.reduce((sum, w) => sum + w.wager, 0);
 
-  // Deduct losing wagers.
   losers.forEach(w => {
     const player = playerMap[w.playerId];
     if (player) {
@@ -461,7 +442,6 @@ export function resolveGuessingBet(betId) {
     }
   });
 
-  // Pay out winners.
   if (anyCorrect && losersPot > 0 && totalWinnerWager > 0) {
     winners.forEach(w => {
       const player = playerMap[w.playerId];
@@ -470,7 +450,6 @@ export function resolveGuessingBet(betId) {
       player.currentPoints = clampScore(player.currentPoints + share);
     });
   } else if (!anyCorrect && losersPot > 0) {
-    // No winners — losers' wagers go to the Hunny Pot.
     state.pot += losersPot;
   }
 
@@ -496,6 +475,9 @@ export function resolveGuessingBet(betId) {
     })
     .filter(Boolean);
 
+  const chosenAnswer     = bet.answers?.find(a => a.id === bet.chosenAnswerId) || null;
+  const chosenAnswerText = chosenAnswer ? chosenAnswer.text : '';
+
   return {
     betId:            bet.id,
     description:      bet.description,
@@ -507,14 +489,14 @@ export function resolveGuessingBet(betId) {
     winners:          winnerLines,
     anyCorrect,
     losersPot,
-    totalWinnerWager
+    totalWinnerWager,
+    chosenAnswerText
   };
 }
 
 
 // ============================================================
 // RESOLVE — PHASE 2: ADJUSTMENTS
-// Hot Round, auto bonuses, and catch-up — all governed by options.
 // ============================================================
 
 export function applyRoundAdjustments(betId) {
@@ -559,7 +541,7 @@ export function applyRoundAdjustments(betId) {
     state.players.map(p => [p.id, clampScore(p.currentPoints)])
   );
 
-  // ---- 1. Hot Round payout (if enabled) ----
+  // 1. Hot Round
   if (opt('hotRounds') && bet.hotRound && bet.hotRoundBonus > 0 &&
       anyCorrect && totalWinnerWager > 0 && state.pot > 0) {
     const extraTotal = Math.min(clampScore(bet.hotRoundBonus), clampScore(state.pot));
@@ -576,7 +558,7 @@ export function applyRoundAdjustments(betId) {
     }
   }
 
-  // ---- 2. Automatic bonuses (if enabled) ----
+  // 2. Auto bonuses
   if (opt('autoBonuses')) {
     if (!bet.computedBonuses) {
       bet.computedBonuses = computeBonusPointsForRound(betId);
@@ -614,7 +596,7 @@ export function applyRoundAdjustments(betId) {
     }
   }
 
-  // ---- 3. Catch-up mechanic (if enabled) ----
+  // 3. Catch-up
   if (opt('catchUp') && state.pot > 0 && state.players.length >= 2) {
     const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
     const leader = ranked[0];
@@ -622,8 +604,8 @@ export function applyRoundAdjustments(betId) {
     const gap    = leader.currentPoints - last.currentPoints;
 
     if (gap >= 10) {
-      const secondLast        = ranked[ranked.length - 2];
-      const maxToSecondLast   = secondLast
+      const secondLast          = ranked[ranked.length - 2];
+      const maxToSecondLast     = secondLast
         ? Math.max(0, secondLast.currentPoints - last.currentPoints)
         : gap;
       const maxToLeaderMinusOne = Math.max(0, leader.currentPoints - 1 - last.currentPoints);
@@ -657,7 +639,7 @@ export function applyRoundAdjustments(betId) {
 
 
 // ============================================================
-// MANUAL BONUS AWARD (used by UI for ad-hoc rewards)
+// MANUAL BONUS AWARD
 // ============================================================
 
 export function awardBonus(bonusId, playerId) {
