@@ -31,8 +31,7 @@ import {
 } from './game-state.js';
 
 import {
-  getCurrentGuessingBet,
-  applyRoundAdjustments
+  getCurrentGuessingBet
 } from './game-logic-rounds.js';
 
 
