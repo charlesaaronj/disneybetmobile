@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Who Said Diz? — Line Game</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <link href="styles.css" rel="stylesheet">
 </head>
 <body>
@@ -16,89 +16,49 @@
 
   <main>
 
-    <!-- =========================
-         SETUP SCREEN
-         ========================= -->
+    <!-- SETUP -->
     <section id="screen-setup" class="screen screen--active">
       <h2>Set up your game</h2>
 
-      <!-- Game mode selection -->
       <section class="panel">
         <h3>Game style</h3>
-        <p class="hint">
-          Choose how strict or relaxed scoring should be. You can always change this between games.
-        </p>
-
+        <p class="hint">Choose how strict or relaxed scoring should be.</p>
         <div class="mode-group">
-          <label>
-            <input type="radio" name="gameMode" id="gameMode-simple">
-            Simple (family friendly)
-          </label>
-          <label>
-            <input type="radio" name="gameMode" id="gameMode-competitive">
-            Competitive (strict)
-          </label>
-          <label>
-            <input type="radio" name="gameMode" id="gameMode-custom">
-            Custom (you choose)
-          </label>
+          <label><input type="radio" name="gameMode" id="gameMode-simple"> Simple</label>
+          <label><input type="radio" name="gameMode" id="gameMode-competitive"> Competitive</label>
+          <label><input type="radio" name="gameMode" id="gameMode-custom"> Custom</label>
         </div>
-
         <div class="mode-custom-options">
-          <h4>Custom game rules</h4>
-          <p class="hint">
-            These options apply when Custom is selected. Simple and Competitive use presets.
-          </p>
-          <label>
-            <input type="checkbox" id="option-tableStakes">
-            Table stakes (everyone who wagers must wager the same amount)
-          </label>
-          <label>
-            <input type="checkbox" id="option-catchUp">
-            Catch-up mechanic (Hunny Pot may help last place when they fall behind)
-          </label>
-          <label>
-            <input type="checkbox" id="option-hotRounds">
-            Offer Hot Rounds (extra pot bonus on some rounds)
-          </label>
-          <label>
-            <input type="checkbox" id="option-autoBonuses">
-            Automatic bonuses (streaks, hidden author, multi-land wins)
-          </label>
+          <h4>Custom rules</h4>
+          <label><input type="checkbox" id="option-tableStakes"> Table stakes</label>
+          <label><input type="checkbox" id="option-catchUp"> Catch-up mechanic</label>
+          <label><input type="checkbox" id="option-hotRounds"> Hot Rounds</label>
+          <label><input type="checkbox" id="option-autoBonuses"> Automatic bonuses</label>
         </div>
-
         <p id="gameModeDescription" class="hint"></p>
       </section>
 
-      <!-- Players -->
       <section class="panel">
         <h3>Family members</h3>
         <div class="form-row">
           <label>Name
             <input id="playerName" class="input" type="text" autocomplete="off">
           </label>
-          <label>Starting points
+          <label>Starting pts
             <input id="playerPoints" class="input" type="number" value="10" min="0">
           </label>
-          <button id="addPlayerBtn" class="btn" type="button">Add player</button>
+          <button id="addPlayerBtn" class="btn btn--primary" type="button">Add</button>
         </div>
-
         <div id="playersList" class="list"></div>
-
         <div class="actions actions--end">
-          <button id="startGameBtn" class="btn btn--primary" type="button">
-            Start game
-          </button>
+          <button id="startGameBtn" class="btn btn--primary" type="button">Start game</button>
         </div>
       </section>
     </section>
 
-    <!-- =========================
-         QUESTION SCREEN
-         ========================= -->
+    <!-- QUESTION -->
     <section id="screen-question" class="screen">
       <h2>Write the question</h2>
-
       <section class="panel">
         <div class="form-row">
           <label>Attraction
@@ -108,12 +68,10 @@
             <input id="landName" class="input" list="landSuggestions" autocomplete="off">
           </label>
         </div>
-
         <label>Question
           <textarea id="betDescription" class="input input--textarea" rows="3"
             placeholder="What would they say about this ride?"></textarea>
         </label>
-
         <div class="actions">
           <button id="randomBetBtn" class="btn btn--ghost" type="button">Random idea</button>
           <button id="clearBetFormBtn" class="btn btn--ghost" type="button">Clear</button>
@@ -122,16 +80,12 @@
       </section>
     </section>
 
-    <!-- suggestion lists -->
     <datalist id="attractionSuggestions"></datalist>
     <datalist id="landSuggestions"></datalist>
 
-    <!-- =========================
-         WAGER SCREEN
-         ========================= -->
+    <!-- WAGER -->
     <section id="screen-wager" class="screen">
       <h2>Who said it? Place your bets</h2>
-
       <section class="panel">
         <div class="table-wrapper">
           <table class="table table--wager">
@@ -140,116 +94,85 @@
                 <th>Player</th>
                 <th>Guess</th>
                 <th>Wager</th>
-                <th>Available</th>
+                <th>Avail</th>
               </tr>
             </thead>
             <tbody id="wagerTableBody"></tbody>
           </table>
         </div>
-
         <p id="wagerHints" class="hint"></p>
-
         <div class="actions actions--end">
-          <button id="lockGuessesBtn" class="btn btn--primary" type="button">
-            Lock in guesses
-          </button>
+          <button id="lockGuessesBtn" class="btn btn--primary" type="button">Lock in guesses</button>
         </div>
       </section>
     </section>
 
-    <!-- =========================
-         REVEAL SCREEN
-         ========================= -->
+    <!-- REVEAL -->
     <section id="screen-reveal" class="screen">
       <h2>Reveal</h2>
-
       <section class="panel">
         <div id="selectedAnswerPanel" class="selected-answer-panel"></div>
-
         <div class="actions">
-          <button id="viewAdjustmentsBtn" class="btn btn--ghost" type="button">
-            View adjustments
-          </button>
-          <button id="toScoresBtn" class="btn" type="button">
-            View scores
-          </button>
-          <button id="nextRoundBtn" class="btn btn--primary" type="button">
-            Next round
-          </button>
+          <button id="viewAdjustmentsBtn" class="btn btn--ghost" type="button">Adjustments</button>
+          <button id="toScoresBtn" class="btn btn--ghost" type="button">Scores</button>
+          <button id="nextRoundBtn" class="btn btn--primary" type="button">Next round</button>
         </div>
       </section>
     </section>
 
-    <!-- =========================
-         SCORES SCREEN
-         ========================= -->
+    <!-- SCORES -->
     <section id="screen-scores" class="screen">
       <h2>Scores</h2>
-
       <section class="panel">
         <div class="scores-header">
           <span id="hunnyPotLabel" class="pill pill--hunny">Hunny Pot: 0 pts</span>
           <div class="actions">
             <button id="viewHistoryBtn" class="btn btn--ghost" type="button">History</button>
-            <button id="restartGameBtn" class="btn btn--ghost" type="button">Restart game</button>
+            <button id="restartGameBtn" class="btn btn--ghost" type="button">Restart</button>
           </div>
         </div>
-
         <div class="table-wrapper">
           <table class="table table--scores">
             <thead>
-              <tr>
-                <th>Place</th>
-                <th>Player</th>
-                <th>Points</th>
-              </tr>
+              <tr><th>Place</th><th>Player</th><th>Points</th></tr>
             </thead>
             <tbody id="scoresTableBody"></tbody>
           </table>
         </div>
-
         <div class="actions actions--end">
-          <button id="backToScoresBtn" class="btn" type="button">Back</button>
+          <button id="scoresBackToSetupBtn" class="btn" type="button">Back to setup</button>
         </div>
       </section>
     </section>
 
-    <!-- =========================
-         HISTORY SCREEN
-         ========================= -->
+    <!-- HISTORY -->
     <section id="screen-history" class="screen">
       <h2>Round history</h2>
-
       <section class="panel">
         <div id="historyList" class="list"></div>
-
         <div class="actions actions--end">
-          <button id="backToScoresBtn" class="btn" type="button">Back to scores</button>
+          <button id="historyBackToScoresBtn" class="btn" type="button">Back to scores</button>
         </div>
       </section>
     </section>
 
   </main>
 
-  <!-- =========================
-       MODALS
-       ========================= -->
-
-  <!-- Answer modal -->
+  <!-- ANSWER MODAL -->
   <div id="answerBackdrop" class="backdrop">
     <div class="modal">
       <h3 id="answerPlayerLabel">Your answer</h3>
       <p id="answerPrompt" class="hint"></p>
       <textarea id="answerInput" class="input input--textarea" rows="3"></textarea>
       <div class="actions">
-        <button id="answerGhostBtn" class="btn btn--ghost" type="button">Use ride fragment</button>
+        <button id="answerGhostBtn" class="btn btn--ghost" type="button">Ride fragment</button>
         <button id="answerCancelBtn" class="btn" type="button">Cancel</button>
-        <button id="answerSaveBtn" class="btn btn--primary" type="button">Save answer</button>
+        <button id="answerSaveBtn" class="btn btn--primary" type="button">Save</button>
       </div>
     </div>
   </div>
 
-  <!-- Give from Hunny Pot -->
+  <!-- GIVE HUNNY -->
   <div id="giveHunnyBackdrop" class="backdrop">
     <div class="modal">
       <p id="giveHunnyMessage" class="hint"></p>
@@ -261,7 +184,7 @@
     </div>
   </div>
 
-  <!-- Add to Hunny Pot -->
+  <!-- ADD TO POT -->
   <div id="addHunnyBackdrop" class="backdrop">
     <div class="modal">
       <p class="hint">Add points to the Hunny Pot.</p>
@@ -273,7 +196,7 @@
     </div>
   </div>
 
-  <!-- Clear Hunny Pot -->
+  <!-- CLEAR POT -->
   <div id="clearHunnyBackdrop" class="backdrop">
     <div class="modal">
       <p id="clearHunnyMessage" class="hint"></p>
@@ -284,7 +207,7 @@
     </div>
   </div>
 
-  <!-- Hot Round modal -->
+  <!-- HOT ROUND -->
   <div id="hotRoundBackdrop" class="backdrop">
     <div class="modal">
       <p id="hotRoundMessage" class="hint"></p>
@@ -292,12 +215,12 @@
       <div class="actions">
         <button id="hotRoundCancel" class="btn" type="button">Cancel</button>
         <button id="hotRoundSkip" class="btn" type="button">Skip</button>
-        <button id="hotRoundConfirm" class="btn btn--primary" type="button">Make it hot</button>
+        <button id="hotRoundConfirm" class="btn btn--primary" type="button">Make it hot 🔥</button>
       </div>
     </div>
   </div>
 
-  <!-- Reveal overlay -->
+  <!-- REVEAL OVERLAY -->
   <div id="revealBackdrop" class="backdrop">
     <div class="modal modal--wide">
       <div id="revealContent"></div>
@@ -307,7 +230,7 @@
     </div>
   </div>
 
-  <!-- Adjustments modal -->
+  <!-- ADJUSTMENTS -->
   <div id="adjustmentsBackdrop" class="backdrop">
     <div class="modal modal--wide">
       <h3>Round adjustments</h3>
@@ -318,62 +241,41 @@
     </div>
   </div>
 
-  <!-- Toast -->
+  <!-- TOAST -->
   <div id="toast" class="toast"></div>
 
-  <!-- =========================
-       IN-PAGE CONSOLE (LIGHTWEIGHT)
-       ========================= -->
+  <!-- IN-PAGE CONSOLE -->
   <script>
-    (function setupInPageConsole() {
+    (function () {
       try {
-        var logContainer = document.createElement('div');
-        logContainer.id = 'inPageConsole';
-        logContainer.textContent = '';
-        Object.assign(logContainer.style, {
-          position:   'fixed',
-          left:       '0',
-          bottom:     '0',
-          width:      '100%',
-          maxHeight:  '30vh',
-          overflowY:  'auto',
-          background: 'rgba(0,0,0,0.9)',
-          color:      '#0f0',
-          fontFamily: 'monospace',
-          fontSize:   '11px',
-          padding:    '2px 4px',
-          zIndex:     '9999',
-          boxSizing:  'border-box',
-          display:    'none'
+        var box = document.createElement('div');
+        box.id  = 'inPageConsole';
+        Object.assign(box.style, {
+          position:'fixed',left:'0',bottom:'0',width:'100%',
+          maxHeight:'30vh',overflowY:'auto',
+          background:'rgba(0,0,0,0.9)',color:'#0f0',
+          fontFamily:'monospace',fontSize:'11px',
+          padding:'2px 4px',zIndex:'9999',
+          boxSizing:'border-box',display:'none'
         });
 
-        var toggle = document.createElement('button');
-        toggle.textContent = 'Logs';
-        Object.assign(toggle.style, {
-          position:     'fixed',
-          right:        '8px',
-          bottom:       '8px',
-          zIndex:       '10000',
-          padding:      '2px 6px',
-          fontSize:     '11px',
-          borderRadius: '4px',
-          border:       'none',
-          background:   '#111827',
-          color:        '#e5e7eb',
-          opacity:      '0.7'
+        var btn = document.createElement('button');
+        btn.textContent = 'Logs';
+        Object.assign(btn.style, {
+          position:'fixed',right:'8px',bottom:'8px',zIndex:'10000',
+          padding:'4px 10px',fontSize:'11px',borderRadius:'999px',
+          border:'none',background:'#111827',color:'#e5e7eb',opacity:'0.8'
         });
-
-        toggle.addEventListener('click', function () {
-          logContainer.style.display =
-            logContainer.style.display === 'none' ? 'block' : 'none';
+        btn.addEventListener('click', function () {
+          box.style.display = box.style.display === 'none' ? 'block' : 'none';
         });
 
         document.addEventListener('DOMContentLoaded', function () {
-          document.body.appendChild(logContainer);
-          document.body.appendChild(toggle);
+          document.body.appendChild(box);
+          document.body.appendChild(btn);
         });
 
-        var originalLog = console.log.bind(console);
+        var origLog = console.log.bind(console);
         console.log = function () {
           var args = Array.prototype.slice.call(arguments);
           try {
@@ -381,31 +283,23 @@
               if (typeof a === 'string') return a;
               try { return JSON.stringify(a); } catch (e) { return String(a); }
             }).join(' ');
-            var entry = document.createElement('div');
-            entry.textContent = line;
-            logContainer.appendChild(entry);
-            logContainer.scrollTop = logContainer.scrollHeight;
+            var el = document.createElement('div');
+            el.textContent = line;
+            box.appendChild(el);
+            box.scrollTop = box.scrollHeight;
           } catch (e) {}
-          originalLog.apply(console, args);
+          origLog.apply(console, args);
         };
-
-        console.log('In-page console initialized');
-      } catch (e) {
-        // ignore
-      }
+        console.log('Console ready');
+      } catch (e) {}
     })();
   </script>
 
-  <!-- =========================
-       SCRIPT MODULES
-       ========================= -->
+  <!-- SCRIPTS -->
   <script src="parks-data.js"></script>
   <script src="questions.js"></script>
   <script src="ghostRideFragments.js"></script>
-  <script type="module" src="game-state.js"></script>
-  <script type="module" src="game-logic-questions.js"></script>
-  <script type="module" src="game-logic-rounds.js"></script>
-  <script type="module" src="ui-render.js"></script>
   <script type="module" src="ui.js"></script>
+
 </body>
 </html>
