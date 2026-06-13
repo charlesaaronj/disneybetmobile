@@ -29,28 +29,6 @@ import {
 } from './game-state.js';
 
 import {
-  addPlayer,
-  removePlayer,
-  giveFromPot,
-  addToPot,
-  clearPot,
-  getCurrentGuessingBet,
-  finalizeCreateBet,
-  startAnswerPhase,
-  getNextAnswerPrompt,
-  savePlayerAnswer,
-  normalizeGuesses,
-  awardBonus,
-  getRandomUnusedGlobalQuestion,
-  resolveGuessingBet,
-  getRandomQuestionForAttractionWithFallback,
-  rerollCurrentSelectedAnswer,
-  validateTableStakes,
-  resetGameKeepingPlayers,
-  applyRoundAdjustments
-} from './game-logic.js';
-
-import {
   els,
   render,
   renderHistory,
