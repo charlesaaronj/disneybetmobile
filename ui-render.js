@@ -33,10 +33,7 @@ import {
 import {
   getCurrentGuessingBet,
   applyRoundAdjustments
-} from './game-logic.js';
-
-import { getCurrentGuessingBet, applyRoundAdjustments } from './game-logic-rounds.js';
-
+} from './game-logic-rounds.js';
 
 
 // ============================================================
