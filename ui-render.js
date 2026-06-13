@@ -35,6 +35,9 @@ import {
   applyRoundAdjustments
 } from './game-logic.js';
 
+import { getCurrentGuessingBet, applyRoundAdjustments } from './game-logic-rounds.js';
+
+
 
 // ============================================================
 // DOM ELEMENT REFERENCES
