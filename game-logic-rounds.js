@@ -3,34 +3,9 @@
 // Who Said Diz — player management, Hunny Pot, round lifecycle,
 // wagering, and round resolution.
 //
-// This file owns how points move and how rounds advance through
-// their three phases: answering → guessing → resolved.
-//
-// It does NOT touch the DOM. All user-facing messages are
-// returned as error strings rather than calling alertLike()
-// directly, keeping this file testable outside a browser.
-//
-// Exports:
-//   addPlayer()                 — add a family member
-//   removePlayer()              — remove a player safely
-//   resetGameKeepingPlayers()   — clear rounds/pot, keep players
-//   giveFromPot()               — transfer pot points to a player
-//   addToPot()                  — add arbitrary points to pot
-//   clearPot()                  — reset pot to zero (floor applies)
-//   getCurrentGuessingBet()     — find the active guessing round
-//   setChosenAnswerForBet()     — mark a canonical answer
-//   chooseRandomAnswerForBet()  — pick a random answer for a bet
-//   rerollChosenAnswer()        — swap to a different answer
-//   rerollCurrentSelectedAnswer() — reroll the active round
-//   finalizeCreateBet()         — build and insert a new round
-//   startAnswerPhase()          — reset a round for answering
-//   getNextAnswerPrompt()       — advance the answer sequence
-//   savePlayerAnswer()          — record one player's answer
-//   startGuessPhase()           — initialize guessing phase
-//   normalizeGuesses()          — validate + sanitize raw guesses
-//   validateTableStakes()       — enforce equal wager rule
-//   resolveGuessingBet()        — apply wager payouts (phase 1)
-//   applyRoundAdjustments()     — apply bonuses + catch-up (phase 2)
+// DEBUG LOGGING: console.log statements are added throughout
+// to surface state at each critical step via the in-page console.
+// Remove all console.log calls before production release.
 // ============================================================
 
 import {
@@ -52,8 +27,8 @@ import {
 // PLAYERS
 // ============================================================
 
-// Add a new family member with a starting point balance.
 export function addPlayer(name, startingPoints) {
+  console.log('addPlayer:', name, startingPoints);
   state.players.push({
     id:             uid(),
     name:           name.trim(),
@@ -62,38 +37,21 @@ export function addPlayer(name, startingPoints) {
   });
   enforceMinPot();
   saveState();
+  console.log('addPlayer done, players now:', state.players.map(p => p.name + ':' + p.currentPoints).join(', '));
 }
 
-// Remove a player and clean up any in-progress rounds they
-// were part of. Resolved rounds are preserved for history.
-//
-// FIX: previously deleted entire bets where the player had
-// placed any guess, including resolved history. Now only
-// strips the player from active (non-resolved) rounds.
 export function removePlayer(playerId) {
-  // Remove the player from the roster.
+  console.log('removePlayer:', playerId);
   state.players = state.players.filter(p => p.id !== playerId);
 
-  // Clean up active rounds — remove their guess/answer entries
-  // but do not delete the round itself.
   state.bets.forEach(bet => {
-    if (bet.status === 'resolved') return; // preserve history
-
-    if (bet.guesses) {
-      bet.guesses = bet.guesses.filter(g => g.playerId !== playerId);
-    }
-    if (bet.answerOrder) {
-      bet.answerOrder = bet.answerOrder.filter(id => id !== playerId);
-    }
-    if (bet.wagerOrder) {
-      bet.wagerOrder = bet.wagerOrder.filter(id => id !== playerId);
-    }
-    if (bet.answers) {
-      bet.answers = bet.answers.filter(a => a.playerId !== playerId);
-    }
+    if (bet.status === 'resolved') return;
+    if (bet.guesses)     bet.guesses     = bet.guesses.filter(g => g.playerId !== playerId);
+    if (bet.answerOrder) bet.answerOrder = bet.answerOrder.filter(id => id !== playerId);
+    if (bet.wagerOrder)  bet.wagerOrder  = bet.wagerOrder.filter(id => id !== playerId);
+    if (bet.answers)     bet.answers     = bet.answers.filter(a => a.playerId !== playerId);
   });
 
-  // Remove any in-progress bets that now have fewer than 2 participants.
   state.bets = state.bets.filter(bet => {
     if (bet.status === 'resolved') return true;
     const remaining = (bet.answerOrder || []).filter(id =>
@@ -104,19 +62,20 @@ export function removePlayer(playerId) {
 
   enforceMinPot();
   saveState();
+  console.log('removePlayer done, players remaining:', state.players.map(p => p.name).join(', '));
 }
 
-// Reset all round data and scores back to starting points.
-// Players are kept so the group doesn't need to re-enter names.
 export function resetGameKeepingPlayers() {
+  console.log('resetGameKeepingPlayers');
   state.players.forEach(p => {
     p.currentPoints = clampScore(p.startingPoints || 0);
   });
-  state.bets         = [];
-  state.pot          = 0;
+  state.bets          = [];
+  state.pot           = 0;
   state.awardedBonuses = [];
   enforceMinPot();
   saveState();
+  console.log('resetGameKeepingPlayers done, player scores reset to starting points');
 }
 
 
@@ -124,41 +83,42 @@ export function resetGameKeepingPlayers() {
 // HUNNY POT
 // ============================================================
 
-// Transfer points from the pot to a specific player.
-// Returns an error string on failure, null on success.
 export function giveFromPot(playerId, amount) {
+  console.log('giveFromPot playerId:', playerId, 'amount:', amount);
   const player = state.players.find(p => p.id === playerId);
   if (!player) return 'Player not found.';
   if (state.pot <= 0) return 'No points in the Hunny Pot right now.';
 
   let amt = Number(amount);
   if (!Number.isFinite(amt) || amt <= 0) return 'Enter a number greater than 0.';
-  if (amt > state.pot) amt = state.pot; // silently cap to pot total
+  if (amt > state.pot) amt = state.pot;
 
-  state.pot             -= amt;
-  player.currentPoints   = clampScore(player.currentPoints + amt);
+  state.pot            -= amt;
+  player.currentPoints  = clampScore(player.currentPoints + amt);
   enforceMinPot();
   saveState();
-  return null; // success
+  console.log('giveFromPot done:', player.name, 'now has', player.currentPoints, 'pot now', state.pot);
+  return null;
 }
 
-// Add arbitrary points into the Hunny Pot.
-// Returns an error string on failure, null on success.
 export function addToPot(amount) {
+  console.log('addToPot amount:', amount);
   const amt = Number(amount);
   if (!Number.isFinite(amt) || amt <= 0) return 'Enter a number greater than 0.';
   state.pot += amt;
   enforceMinPot();
   saveState();
-  return null; // success
+  console.log('addToPot done, pot now:', state.pot);
+  return null;
 }
 
-// Reset the pot to zero (enforceMinPot will apply the floor).
 export function clearPot() {
+  console.log('clearPot, pot was:', state.pot);
   if (!state.pot) return;
   state.pot = 0;
   enforceMinPot();
   saveState();
+  console.log('clearPot done, pot now:', state.pot);
 }
 
 
@@ -166,53 +126,46 @@ export function clearPot() {
 // ROUND HELPERS
 // ============================================================
 
-// Return the round currently in "guessing" phase, or null.
-// There should only ever be one guessing round at a time.
 export function getCurrentGuessingBet() {
-  return state.bets.find(b => b.status === 'guessing') || null;
-}
-
-// Mark a specific answer as the canonical one for a round.
-// If multiple players gave identical text, all are treated
-// as correct authors (prevents unfair losses from duplicates).
-export function setChosenAnswerForBet(bet, chosen) {
-  if (!bet || !chosen) return;
-
-  bet.chosenAnswerId = chosen.id;
-
-  const sameTextAuthors = bet.answers
-    .filter(a => a.text === chosen.text)
-    .map(a => a.playerId);
-
-  bet.correctAuthors  = sameTextAuthors;
-  bet.correctAuthorId = sameTextAuthors[0] || null;
-}
-
-// Randomly pick one of the round's answers as the canonical one.
-export function chooseRandomAnswerForBet(bet) {
-  if (!bet || !Array.isArray(bet.answers) || !bet.answers.length) return;
-  const idx    = Math.floor(Math.random() * bet.answers.length);
-  setChosenAnswerForBet(bet, bet.answers[idx]);
-}
-
-// Swap to a different answer than the currently chosen one.
-// Returns the updated bet on success, null on failure.
-export function rerollChosenAnswer(betId) {
-  const bet = state.bets.find(b => b.id === betId);
-  if (!bet || !Array.isArray(bet.answers) || bet.answers.length < 2) {
-    return null;
-  }
-
-  const alternatives = bet.answers.filter(a => a.id !== bet.chosenAnswerId);
-  if (!alternatives.length) return null;
-
-  const next = alternatives[Math.floor(Math.random() * alternatives.length)];
-  setChosenAnswerForBet(bet, next);
-  saveState();
+  const bet = state.bets.find(b => b.status === 'guessing') || null;
+  console.log('getCurrentGuessingBet:', bet ? bet.id : 'none');
   return bet;
 }
 
-// Convenience: reroll for the currently active guessing round.
+export function setChosenAnswerForBet(bet, chosen) {
+  if (!bet || !chosen) return;
+  bet.chosenAnswerId = chosen.id;
+  const sameTextAuthors = bet.answers
+    .filter(a => a.text === chosen.text)
+    .map(a => a.playerId);
+  bet.correctAuthors  = sameTextAuthors;
+  bet.correctAuthorId = sameTextAuthors[0] || null;
+  console.log('setChosenAnswerForBet: chosen answer:', chosen.text, 'correctAuthors:', bet.correctAuthors);
+}
+
+export function chooseRandomAnswerForBet(bet) {
+  if (!bet || !Array.isArray(bet.answers) || !bet.answers.length) return;
+  const idx = Math.floor(Math.random() * bet.answers.length);
+  setChosenAnswerForBet(bet, bet.answers[idx]);
+  console.log('chooseRandomAnswerForBet: picked index', idx, 'answer:', bet.answers[idx].text);
+}
+
+export function rerollChosenAnswer(betId) {
+  console.log('rerollChosenAnswer betId:', betId);
+  const bet = state.bets.find(b => b.id === betId);
+  if (!bet || !Array.isArray(bet.answers) || bet.answers.length < 2) {
+    console.log('rerollChosenAnswer: not enough answers to reroll');
+    return null;
+  }
+  const alternatives = bet.answers.filter(a => a.id !== bet.chosenAnswerId);
+  if (!alternatives.length) return null;
+  const next = alternatives[Math.floor(Math.random() * alternatives.length)];
+  setChosenAnswerForBet(bet, next);
+  saveState();
+  console.log('rerollChosenAnswer done: new answer:', next.text);
+  return bet;
+}
+
 export function rerollCurrentSelectedAnswer() {
   const bet = getCurrentGuessingBet();
   if (!bet) return null;
@@ -224,11 +177,16 @@ export function rerollCurrentSelectedAnswer() {
 // CREATING A ROUND
 // ============================================================
 
-// Build and insert a new bet (round) into state.
-// Returns the new bet object, or null on validation failure.
 export function finalizeCreateBet({ attraction, land, question, hotRound, hotRoundBonus }) {
-  if (!state.players || state.players.length < 2) return null;
-  if (!attraction || !land || !question) return null;
+  console.log('finalizeCreateBet:', { attraction, land, question, hotRound, hotRoundBonus });
+  if (!state.players || state.players.length < 2) {
+    console.log('finalizeCreateBet: not enough players');
+    return null;
+  }
+  if (!attraction || !land || !question) {
+    console.log('finalizeCreateBet: missing required fields');
+    return null;
+  }
 
   const betId     = uid();
   const nextIndex = state.bets.length
@@ -236,37 +194,35 @@ export function finalizeCreateBet({ attraction, land, question, hotRound, hotRou
     : 1;
 
   const bet = {
-    id:                  betId,
-    index:               nextIndex,
-    description:         question,
-    createdAt:           new Date().toLocaleString(),
+    id:                 betId,
+    index:              nextIndex,
+    description:        question,
+    createdAt:          new Date().toLocaleString(),
     attraction,
     land,
-    status:              'answering',  // answering → guessing → resolved
-    answers:             [],
-    chosenAnswerId:      null,
-    correctAuthorId:     null,
-    correctAuthors:      [],
-    guesses:             [],
-    roundWinners:        [],
-    bonusAwards:         [],
-    answerOrder:         shuffle(state.players.map(p => p.id)),
-    wagerOrder:          [],
-    ghostAnswerUsed:     false,
-    hotRound:            !!hotRound,
-    hotRoundBonus:       clampScore(hotRoundBonus || 0),
-    resolvedAt:          null,
-    scoreChanges:        [],
-    // Idempotency guard: prevents applyRoundAdjustments from
-    // re-awarding bonuses if the adjustments modal is opened twice.
-    adjustmentsApplied:  false,
-    cachedAdjustments:   null,
-    // Cache for computeBonusPointsForRound (avoids O(n²) rescan).
-    computedBonuses:     null
+    status:             'answering',
+    answers:            [],
+    chosenAnswerId:     null,
+    correctAuthorId:    null,
+    correctAuthors:     [],
+    guesses:            [],
+    roundWinners:       [],
+    bonusAwards:        [],
+    answerOrder:        shuffle(state.players.map(p => p.id)),
+    wagerOrder:         [],
+    ghostAnswerUsed:    false,
+    hotRound:           !!hotRound,
+    hotRoundBonus:      clampScore(hotRoundBonus || 0),
+    resolvedAt:         null,
+    scoreChanges:       [],
+    adjustmentsApplied: false,
+    cachedAdjustments:  null,
+    computedBonuses:    null
   };
 
   state.bets.unshift(bet);
   saveState();
+  console.log('finalizeCreateBet done, bet id:', betId, 'answerOrder:', bet.answerOrder);
   return bet;
 }
 
@@ -275,33 +231,35 @@ export function finalizeCreateBet({ attraction, land, question, hotRound, hotRou
 // ANSWER PHASE
 // ============================================================
 
-// Reset a round's answer state and mark it as 'answering'.
-// Called when a new round is started.
 export function startAnswerPhase(betId) {
+  console.log('startAnswerPhase betId:', betId);
   const bet = state.bets.find(b => b.id === betId);
-  if (!bet) return null;
+  if (!bet) {
+    console.log('startAnswerPhase: bet not found');
+    return null;
+  }
 
-  bet.answers          = [];
-  bet.status           = 'answering';
-  bet.ghostAnswerUsed  = false;
-  bet.chosenAnswerId   = null;
-  bet.correctAuthorId  = null;
-  bet.correctAuthors   = [];
+  bet.answers         = [];
+  bet.status          = 'answering';
+  bet.ghostAnswerUsed = false;
+  bet.chosenAnswerId  = null;
+  bet.correctAuthorId = null;
+  bet.correctAuthors  = [];
 
   if (!Array.isArray(bet.answerOrder) || !bet.answerOrder.length) {
     bet.answerOrder = shuffle(state.players.map(p => p.id));
   }
 
   saveState();
+  console.log('startAnswerPhase done, answerOrder:', bet.answerOrder);
   return bet;
 }
 
-// Determine the next player who should provide an answer.
-// Returns { done, bet, player, nextIndex }.
-// When done is true, the round has transitioned to 'guessing'.
 export function getNextAnswerPrompt(betId, currentAnswerIndex) {
+  console.log('getNextAnswerPrompt betId:', betId, 'index:', currentAnswerIndex);
   const bet = state.bets.find(b => b.id === betId);
   if (!bet) {
+    console.log('getNextAnswerPrompt: bet not found');
     return { done: true, bet: null, player: null, nextIndex: currentAnswerIndex };
   }
 
@@ -309,41 +267,35 @@ export function getNextAnswerPrompt(betId, currentAnswerIndex) {
     ? bet.answerOrder
     : state.players.map(p => p.id);
 
-  // All players have answered — transition to guessing phase.
   if (currentAnswerIndex >= order.length) {
+    console.log('getNextAnswerPrompt: all players answered, transitioning to guessing');
     bet.status = 'guessing';
-
-    if (!bet.chosenAnswerId && bet.answers.length) {
-      chooseRandomAnswerForBet(bet);
-    }
-
+    if (!bet.chosenAnswerId && bet.answers.length) chooseRandomAnswerForBet(bet);
     bet.wagerOrder = shuffle(state.players.map(p => p.id));
     saveState();
-
     return { done: true, bet, player: null, nextIndex: currentAnswerIndex };
   }
 
   const playerId = order[currentAnswerIndex];
   const player   = state.players.find(p => p.id === playerId);
 
-  // Player was removed mid-round — skip silently.
   if (!player) {
+    console.log('getNextAnswerPrompt: player not found, skipping index', currentAnswerIndex);
     return getNextAnswerPrompt(betId, currentAnswerIndex + 1);
   }
 
+  console.log('getNextAnswerPrompt: next player is', player.name);
   return { done: false, bet, player, nextIndex: currentAnswerIndex };
 }
 
-// Record one player's answer and advance the index.
-// Returns { bet, nextIndex }.
 export function savePlayerAnswer(betId, currentAnswerIndex, text, useGhost = false) {
+  console.log('savePlayerAnswer betId:', betId, 'index:', currentAnswerIndex, 'text:', text, 'ghost:', useGhost);
   const bet = state.bets.find(b => b.id === betId);
   if (!bet) return { bet: null, nextIndex: currentAnswerIndex };
 
   const order    = Array.isArray(bet.answerOrder) && bet.answerOrder.length
     ? bet.answerOrder
     : state.players.map(p => p.id);
-
   const playerId = order[currentAnswerIndex];
   const player   = state.players.find(p => p.id === playerId);
   if (!player) return { bet, nextIndex: currentAnswerIndex + 1 };
@@ -358,23 +310,23 @@ export function savePlayerAnswer(betId, currentAnswerIndex, text, useGhost = fal
   if (useGhost) bet.ghostAnswerUsed = true;
 
   saveState();
+  console.log('savePlayerAnswer done, answers so far:', bet.answers.length);
   return { bet, nextIndex: currentAnswerIndex + 1 };
 }
 
-// Explicitly initialize guessing phase for a bet.
-// Usually called automatically by getNextAnswerPrompt when all
-// players have answered, but available as a direct call if needed.
 export function startGuessPhase(betId) {
+  console.log('startGuessPhase betId:', betId);
   const bet = state.bets.find(b => b.id === betId);
-  if (!bet || !bet.answers?.length) return null;
-
+  if (!bet || !bet.answers?.length) {
+    console.log('startGuessPhase: bet not found or no answers');
+    return null;
+  }
   if (!bet.chosenAnswerId) chooseRandomAnswerForBet(bet);
-
   if (!Array.isArray(bet.wagerOrder) || !bet.wagerOrder.length) {
     bet.wagerOrder = shuffle(state.players.map(p => p.id));
   }
-
   saveState();
+  console.log('startGuessPhase done, chosenAnswerId:', bet.chosenAnswerId);
   return bet;
 }
 
@@ -383,15 +335,13 @@ export function startGuessPhase(betId) {
 // WAGER VALIDATION
 // ============================================================
 
-// Sanitize raw guesses from the DOM into normalized guess objects.
-// Returns the normalized array, or null if validation fails.
-// Returning null signals ui.js to show an error and abort.
 export function normalizeGuesses(rawGuesses) {
+  console.log('normalizeGuesses rawGuesses:', rawGuesses);
   const guesses = rawGuesses.map(g => {
-    let wager = Number(g.wager) || 0;
+    let wager     = Number(g.wager) || 0;
     if (!Number.isFinite(wager) || wager < 0) wager = 0;
     const available = getAvailablePoints(g.playerId);
-    if (wager > available) wager = available; // silently cap
+    if (wager > available) wager = available;
     return {
       playerId:        g.playerId,
       guessedAuthorId: g.guessedAuthorId,
@@ -399,28 +349,30 @@ export function normalizeGuesses(rawGuesses) {
     };
   });
 
-  // At least one player must be wagering to proceed.
   const active = guesses.filter(g => g.wager > 0);
-  if (!active.length) return null; // ui.js shows the error
-
-  // Double-check no one is over their limit after capping.
-  for (const g of active) {
-    const available = getAvailablePoints(g.playerId);
-    if (g.wager > available) return null;
+  if (!active.length) {
+    console.log('normalizeGuesses: no active wagers');
+    return null;
   }
 
+  for (const g of active) {
+    const available = getAvailablePoints(g.playerId);
+    if (g.wager > available) {
+      console.log('normalizeGuesses: wager exceeds available for', g.playerId);
+      return null;
+    }
+  }
+
+  console.log('normalizeGuesses done:', guesses);
   return guesses;
 }
 
-// Enforce table stakes: all players who are in must wager
-// the same amount. Returns { ok, target?, message? }.
 export function validateTableStakes(guesses) {
-  const active        = guesses.filter(g => g.wager > 0);
+  const active       = guesses.filter(g => g.wager > 0);
   if (!active.length) return { ok: false, message: 'At least one player must wager points.' };
-
-  const uniqueWagers  = Array.from(new Set(active.map(g => g.wager)));
+  const uniqueWagers = Array.from(new Set(active.map(g => g.wager)));
+  console.log('validateTableStakes active wagers:', active.map(g => g.wager), 'unique:', uniqueWagers);
   if (uniqueWagers.length === 1) return { ok: true, target: uniqueWagers[0] };
-
   return {
     ok: false,
     message: 'Table stakes: everyone who is in must wager the same amount before locking.'
@@ -430,30 +382,24 @@ export function validateTableStakes(guesses) {
 
 // ============================================================
 // RESOLVE — PHASE 1: WAGERS ONLY
-// Applies wager payouts and marks the round as 'resolved'.
-// Does NOT apply Hot Round, bonuses, or catch-up — those are
-// phase 2 (applyRoundAdjustments).
-//
-// Payout model:
-//   - Authors never win or lose points from wagers.
-//   - Losers (wrong guess, non-author) lose their wager.
-//   - Winners (correct guess, non-author) share losers' pot
-//     proportionally to their wager size.
-//   - If no one guesses correctly, all losing wagers go to
-//     the Hunny Pot instead.
-//
-// Returns a result object for ui.js to render, or null on error.
 // ============================================================
 
 export function resolveGuessingBet(betId) {
+  console.log('--- resolveGuessingBet START ---');
   const bet = state.bets.find(b => b.id === betId);
-  if (!bet) return null;
+  if (!bet) {
+    console.log('resolveGuessingBet: bet not found');
+    return null;
+  }
 
   const correctAuthors = bet.correctAuthors?.length
     ? bet.correctAuthors
     : (bet.correctAuthorId ? [bet.correctAuthorId] : []);
 
-  if (!correctAuthors.length) return null; // no answer chosen
+  if (!correctAuthors.length) {
+    console.log('resolveGuessingBet: no correct authors found');
+    return null;
+  }
 
   const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
 
@@ -463,7 +409,10 @@ export function resolveGuessingBet(betId) {
     wager:           Math.max(0, Number(g.wager || 0))
   }));
 
-  // Authors are excluded from winning/losing on their own answer.
+  console.log('correctAuthors:', correctAuthors);
+  console.log('wagers:', wagers);
+  console.log('player scores BEFORE:', state.players.map(p => p.name + ':' + p.currentPoints).join(', '));
+
   const winners = wagers.filter(w =>
     w.wager > 0 &&
     !correctAuthors.includes(w.playerId) &&
@@ -480,36 +429,55 @@ export function resolveGuessingBet(betId) {
   const losersPot        = losers.reduce((sum, w) => sum + w.wager, 0);
   const totalWinnerWager = winners.reduce((sum, w) => sum + w.wager, 0);
 
+  console.log('winners:', winners.map(w => {
+    const p = state.players.find(pl => pl.id === w.playerId);
+    return (p ? p.name : w.playerId) + ' wager:' + w.wager;
+  }));
+  console.log('losers:', losers.map(w => {
+    const p = state.players.find(pl => pl.id === w.playerId);
+    return (p ? p.name : w.playerId) + ' wager:' + w.wager;
+  }));
+  console.log('anyCorrect:', anyCorrect, 'losersPot:', losersPot, 'totalWinnerWager:', totalWinnerWager);
+
   // Deduct losing wagers.
   losers.forEach(w => {
     const player = playerMap[w.playerId];
-    if (player) player.currentPoints = clampScore(player.currentPoints - w.wager);
+    if (player) {
+      const before = player.currentPoints;
+      player.currentPoints = clampScore(player.currentPoints - w.wager);
+      console.log('LOSER:', player.name, 'before:', before, 'wager:', w.wager, 'after:', player.currentPoints);
+    }
   });
 
-  // Distribute losers' pot among winners proportionally.
-  // FIX: use Math.round() explicitly before clampScore to ensure
-  // floating-point remainders don't silently disappear.
+  // Pay out winners.
   if (anyCorrect && losersPot > 0 && totalWinnerWager > 0) {
     winners.forEach(w => {
       const player = playerMap[w.playerId];
       if (!player) return;
-      const share = Math.round((losersPot * w.wager) / totalWinnerWager);
+      const share  = Math.round((losersPot * w.wager) / totalWinnerWager);
+      const before = player.currentPoints;
       player.currentPoints = clampScore(player.currentPoints + share);
+      console.log('WINNER:', player.name, 'before:', before, 'share:', share, 'after:', player.currentPoints);
     });
   } else if (!anyCorrect && losersPot > 0) {
-    // No winners — losing wagers go to the Hunny Pot.
+    const beforePot = state.pot;
     state.pot += losersPot;
+    console.log('No winners — losersPot', losersPot, 'added to Hunny Pot:', beforePot, '->', state.pot);
+  } else {
+    console.log('No payout branch hit — anyCorrect:', anyCorrect, 'losersPot:', losersPot);
   }
 
-  // Mark as resolved AFTER wager payouts but BEFORE bonuses.
-  bet.status      = 'resolved';
-  bet.resolvedAt  = new Date().toLocaleString();
+  bet.status       = 'resolved';
+  bet.resolvedAt   = new Date().toLocaleString();
   bet.roundWinners = winners.map(w => w.playerId);
 
   enforceMinPot();
   saveState();
 
-  // Build result object for ui.js to render.
+  console.log('player scores AFTER:', state.players.map(p => p.name + ':' + p.currentPoints).join(', '));
+  console.log('pot AFTER:', state.pot);
+  console.log('--- resolveGuessingBet END ---');
+
   const authorNames = correctAuthors
     .map(id => state.players.find(p => p.id === id)?.name)
     .filter(Boolean);
@@ -539,28 +507,18 @@ export function resolveGuessingBet(betId) {
 
 // ============================================================
 // RESOLVE — PHASE 2: ADJUSTMENTS
-// Applied after wager payouts when the player opens the
-// "View adjustments" modal on the reveal screen.
-//
-// Applies in order:
-//   1. Hot Round bonus (from Hunny Pot to winners)
-//   2. Automatic bonuses (hidden author, streak, multi-land)
-//   3. Catch-up (small pot transfer to last-place player)
-//
-// FIX: now idempotent. If adjustmentsApplied is true, returns
-// the cached summary without re-applying anything. This means
-// opening the adjustments modal twice after one round will
-// never double-award bonuses.
-//
-// Returns an adjustments summary object for ui.js to render.
 // ============================================================
 
 export function applyRoundAdjustments(betId) {
+  console.log('--- applyRoundAdjustments START ---');
   const bet = state.bets.find(b => b.id === betId);
-  if (!bet || bet.status !== 'resolved') return null;
+  if (!bet || bet.status !== 'resolved') {
+    console.log('applyRoundAdjustments: bet not found or not resolved');
+    return null;
+  }
 
-  // IDEMPOTENCY GUARD — return cached result if already applied.
   if (bet.adjustmentsApplied) {
+    console.log('applyRoundAdjustments: already applied, returning cached summary');
     return bet.cachedAdjustments || null;
   }
 
@@ -593,46 +551,51 @@ export function applyRoundAdjustments(betId) {
   const anyCorrect       = winners.length > 0;
   const totalWinnerWager = winners.reduce((sum, w) => sum + w.wager, 0);
 
-  // Snapshot scores before any adjustments.
   const beforeScores = Object.fromEntries(
     state.players.map(p => [p.id, clampScore(p.currentPoints)])
   );
 
+  console.log('applyRoundAdjustments scores BEFORE adjustments:', state.players.map(p => p.name + ':' + p.currentPoints).join(', '));
+
   // ---- 1. Hot Round payout ----
   if (bet.hotRound && bet.hotRoundBonus > 0 && anyCorrect && totalWinnerWager > 0 && state.pot > 0) {
     const extraTotal = Math.min(clampScore(bet.hotRoundBonus), clampScore(state.pot));
+    console.log('Hot Round payout, extraTotal:', extraTotal);
     if (extraTotal > 0) {
       winners.forEach(w => {
         const player = playerMap[w.playerId];
         if (!player) return;
         const share = clampScore(Math.round((extraTotal * w.wager) / totalWinnerWager));
         if (share <= 0) return;
+        const before = player.currentPoints;
         player.currentPoints = clampScore(player.currentPoints + share);
         summary.hotRoundLines.push(`${player.name}: +${share} Hot Round bonus`);
+        console.log('Hot Round:', player.name, 'before:', before, 'share:', share, 'after:', player.currentPoints);
       });
       state.pot -= extraTotal;
     }
+  } else {
+    console.log('Hot Round skipped — hotRound:', bet.hotRound, 'bonus:', bet.hotRoundBonus, 'anyCorrect:', anyCorrect, 'pot:', state.pot);
   }
 
   // ---- 2. Automatic bonuses ----
-  // Use cached bonuses if available (set by a previous call that
-  // was interrupted before adjustmentsApplied was set to true).
-  // Otherwise compute and cache them now.
   if (!bet.computedBonuses) {
     bet.computedBonuses = computeBonusPointsForRound(betId);
   }
   const roundBonuses = bet.computedBonuses || [];
-  bet.bonusAwards    = [];
+  console.log('Auto bonuses computed:', roundBonuses);
 
+  bet.bonusAwards = [];
   roundBonuses.forEach(bonus => {
     const player = playerMap[bonus.playerId];
     if (!player) return;
+    const before = player.currentPoints;
     player.currentPoints = clampScore(player.currentPoints + bonus.amount);
     summary.bonusLines.push(`${player.name}: +${bonus.amount} (${bonus.reason})`);
+    console.log('Bonus:', player.name, 'reason:', bonus.reason, 'before:', before, 'after:', player.currentPoints);
   });
 
   if (roundBonuses.length) {
-    // Record in the awarded bonuses log for display.
     const records = roundBonuses.map(b => {
       const p = state.players.find(pl => pl.id === b.playerId);
       return {
@@ -646,90 +609,82 @@ export function applyRoundAdjustments(betId) {
         reason:     b.reason
       };
     });
-
     bet.bonusAwards = roundBonuses.map(b => ({
       playerId: b.playerId,
       amount:   b.amount,
       reason:   b.reason
     }));
-
     state.awardedBonuses.unshift(...records);
   }
 
   // ---- 3. Catch-up mechanic ----
-  // If the gap between leader and last place is >= 10, transfer
-  // a small number of pot points to last place — but never enough
-  // to let them pass the second-to-last player or the leader.
   const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
+  console.log('Catch-up check, ranked:', ranked.map(p => p.name + ':' + p.currentPoints).join(', '));
 
   if (state.pot > 0 && ranked.length >= 2) {
     const leader = ranked[0];
     const last   = ranked[ranked.length - 1];
     const gap    = leader.currentPoints - last.currentPoints;
+    console.log('Gap between leader and last:', gap, '(needs >= 10 to trigger catch-up)');
 
     if (gap >= 10) {
-      const secondLast = ranked[ranked.length - 2];
-
-      // Never let catch-up push last place past second-to-last.
-      const maxToSecondLast = secondLast
+      const secondLast        = ranked[ranked.length - 2];
+      const maxToSecondLast   = secondLast
         ? Math.max(0, secondLast.currentPoints - last.currentPoints)
         : gap;
+      const maxToLeaderMinusOne = Math.max(0, leader.currentPoints - 1 - last.currentPoints);
+      const hardCap = Math.min(5, state.pot, maxToSecondLast, maxToLeaderMinusOne);
 
-      // Never let catch-up push last place to equal the leader.
-      const maxToLeaderMinusOne = Math.max(
-        0,
-        leader.currentPoints - 1 - last.currentPoints
-      );
-
-      const hardCap = Math.min(
-        5,                    // max 5 points at once
-        state.pot,            // limited by pot balance
-        maxToSecondLast,
-        maxToLeaderMinusOne
-      );
+      console.log('Catch-up triggered: leader', leader.name, leader.currentPoints, 'last', last.name, last.currentPoints, 'gap', gap, 'hardCap', hardCap);
 
       if (hardCap > 0) {
-        last.currentPoints = clampScore(last.currentPoints + hardCap);
-        state.pot         -= hardCap;
+        const before = last.currentPoints;
+        last.currentPoints  = clampScore(last.currentPoints + hardCap);
+        state.pot          -= hardCap;
         summary.catchUpLine =
-          `Gave ${hardCap} points from the Hunny Pot to ${last.name} ` +
-          `to help them catch up without passing anyone.`;
+          `Gave ${hardCap} points from the Hunny Pot to ${last.name} to help them catch up.`;
+        console.log('Catch-up applied:', last.name, 'before:', before, 'after:', last.currentPoints, 'pot now:', state.pot);
       }
     }
   }
 
   enforceMinPot();
 
-  // Record per-player score deltas on the bet for history display.
   bet.scoreChanges = state.players.map(p => {
     const before = beforeScores[p.id] ?? 0;
     const after  = clampScore(p.currentPoints);
     return { playerId: p.id, before, after, delta: after - before };
   });
 
-  summary.potAfter = state.pot;
-
-  // Mark as applied and cache the summary so re-opening the modal
-  // returns the same result without re-running any of the above.
+  summary.potAfter       = state.pot;
   bet.adjustmentsApplied = true;
   bet.cachedAdjustments  = summary;
 
   saveState();
+
+  console.log('applyRoundAdjustments scores AFTER:', state.players.map(p => p.name + ':' + p.currentPoints).join(', '));
+  console.log('pot AFTER adjustments:', state.pot);
+  console.log('scoreChanges:', bet.scoreChanges);
+  console.log('--- applyRoundAdjustments END ---');
+
   return summary;
 }
 
 
 // ============================================================
 // MANUAL BONUS AWARD
-// Called from the bonus library on the history screen when a
-// host manually awards a bonus to a player.
 // ============================================================
 
 export function awardBonus(bonusId, playerId) {
+  console.log('awardBonus bonusId:', bonusId, 'playerId:', playerId);
   const bonus  = state.bonuses.find(b => b.id === bonusId);
   const player = state.players.find(p => p.id === playerId);
-  if (!bonus || !player) return;
+  if (!bonus || !player) {
+    console.log('awardBonus: bonus or player not found');
+    return;
+  }
 
+  const before = player.currentPoints;
   player.currentPoints = clampScore(player.currentPoints + bonus.points);
 
   const latest = state.bets.find(b => b.status === 'resolved');
@@ -745,5 +700,6 @@ export function awardBonus(bonusId, playerId) {
   });
 
   saveState();
+  console.log('awardBonus done:', player.name, 'before:', before, 'after:', player.currentPoints);
   return `+${bonus.points} to ${player.name} for "${bonus.name}".`;
 }
