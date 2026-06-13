@@ -1,83 +1,145 @@
+/* ============================================================
+   styles.css
+   Who Said Diz — main stylesheet
+
+   Structure:
+     1.  Design tokens (CSS custom properties)
+     2.  Dark theme overrides
+     3.  Global resets
+     4.  App shell & screen system
+     5.  Topbar
+     6.  Typography
+     7.  Buttons
+     8.  Panels & stacks
+     9.  Form fields
+     10. Players & scoreboard
+     11. Pills / status chips
+     12. Bets & history
+     13. Bonus panels
+     14. Empty states
+     15. Small-actions rows
+     16. Metrics / totals
+     17. Modals
+     18. Misc utilities
+     19. Responsive overrides
+============================================================ */
+
+
+/* ============================================================
+   1. DESIGN TOKENS — light theme (default)
+   All sizes, colors, radii, and shadows are defined here.
+   Dark theme only overrides the color tokens below.
+============================================================ */
+
 :root,
 [data-theme="light"] {
-  /* Typography scale */
-  --text-xs: clamp(0.8rem, 0.75rem + 0.25vw, 0.9rem);
-  --text-sm: clamp(0.9rem, 0.85rem + 0.4vw, 1.05rem);
-  --text-base: clamp(1.05rem, 1rem + 0.35vw, 1.2rem);
-  --text-lg: clamp(1.3rem, 1.1rem + 0.9vw, 1.7rem);
-  --text-xl: clamp(1.7rem, 1.4rem + 1.5vw, 2.5rem);
 
-  /* Spacing scale */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-10: 2.5rem;
-  --space-12: 3rem;
+  /* -- Fluid typography scale --
+     Each size clamps between a min and max value based on
+     viewport width. No breakpoints needed for text sizing. */
+  --text-xs:   clamp(0.8rem,  0.75rem + 0.25vw, 0.9rem);
+  --text-sm:   clamp(0.9rem,  0.85rem + 0.40vw, 1.05rem);
+  --text-base: clamp(1.05rem, 1.00rem + 0.35vw, 1.2rem);
+  --text-lg:   clamp(1.3rem,  1.10rem + 0.90vw, 1.7rem);
+  --text-xl:   clamp(1.7rem,  1.40rem + 1.50vw, 2.5rem);
 
-  /* Light theme colors */
-  --color-bg: #f7f6f2;
-  --color-surface: #ffffff;
-  --color-surface-2: #fbfaf7;
+  /* -- Spacing scale --
+     Named by rough rem value for easy mental mapping. */
+  --space-1:  0.25rem;
+  --space-2:  0.50rem;
+  --space-3:  0.75rem;
+  --space-4:  1.00rem;
+  --space-5:  1.25rem;
+  --space-6:  1.50rem;
+  --space-8:  2.00rem;
+  --space-10: 2.50rem;
+  --space-12: 3.00rem;
+
+  /* -- Surface colors --
+     Multiple surface levels allow layering without harsh
+     borders. surface-2 is slightly warmer than surface. */
+  --color-bg:             #f7f6f2;
+  --color-surface:        #ffffff;
+  --color-surface-2:      #fbfaf7;
   --color-surface-offset: #f3f0ec;
-  --color-surface-soft: #f6f3ee;
-  --color-border: #ddd6ca;
+  --color-surface-soft:   #f6f3ee;
+  --color-border:         #ddd6ca;
 
-  --color-text: #1f1d18;
-  --color-text-muted: #6f6d67;
-  --color-text-faint: #9d9a92;
-  --color-text-inverse: #f9f8f4;
+  /* -- Text colors -- */
+  --color-text:         #1f1d18;
+  --color-text-muted:   #6f6d67;
+  --color-text-faint:   #9d9a92;
+  --color-text-inverse: #f9f8f4;  /* used on dark button backgrounds */
 
-  --color-primary: #235b8c;
+  /* -- Brand / semantic colors -- */
+  --color-primary:       #235b8c;
   --color-primary-hover: #29689f;
-  --color-success: #166534;
-  --color-warning: #b45309;
-  --color-error: #b42318;
-  --color-gold: #a16207;
+  --color-success:       #166534;
+  --color-warning:       #b45309;
+  --color-error:         #b42318;
+  --color-gold:          #a16207;  /* Hunny Pot accent */
 
-  /* Radii */
-  --radius-sm: 0.5rem;
-  --radius-md: 0.85rem;
-  --radius-lg: 1.25rem;
-  --radius-full: 9999px;
+  /* -- Border radii -- */
+  --radius-sm:   0.5rem;
+  --radius-md:   0.85rem;
+  --radius-lg:   1.25rem;
+  --radius-full: 9999px;  /* pill shape */
 
-  /* Shadows */
+  /* -- Shadows -- */
   --shadow-sm: 0 1px 2px rgba(24, 24, 24, 0.05);
   --shadow-md: 0 10px 30px rgba(24, 24, 24, 0.09);
 
-  /* Fonts */
+  /* -- Fonts --
+     Cabinet Grotesk: headings (display weight, tight leading)
+     Satoshi: body copy (readable, slightly warm) */
   --font-display: 'Cabinet Grotesk', 'Inter', sans-serif;
-  --font-body: 'Satoshi', 'Inter', sans-serif;
+  --font-body:    'Satoshi', 'Inter', sans-serif;
 }
 
-[data-theme="dark"] {
-  --color-bg: #171614;
-  --color-surface: #1c1b19;
-  --color-surface-2: #201f1d;
-  --color-surface-offset: #22211f;
-  --color-surface-soft: #1f1e1c;
-  --color-border: #393836;
 
-  --color-text: #e2dfd8;
-  --color-text-muted: #b1aea7;
-  --color-text-faint: #7d7a73;
+/* ============================================================
+   2. DARK THEME OVERRIDES
+   Only color tokens are overridden here. Everything else
+   (spacing, typography, radii) stays the same.
+   Activated by data-theme="dark" on <html>.
+   FIX: Previously, modals and inputs hardcoded #ffffff which
+   broke dark mode. All surfaces now use CSS variables.
+============================================================ */
+
+[data-theme="dark"] {
+
+  /* Surfaces — warm dark neutrals rather than cold grey */
+  --color-bg:             #171614;
+  --color-surface:        #1c1b19;
+  --color-surface-2:      #201f1d;
+  --color-surface-offset: #22211f;
+  --color-surface-soft:   #1f1e1c;
+  --color-border:         #393836;
+
+  /* Text */
+  --color-text:         #e2dfd8;
+  --color-text-muted:   #b1aea7;
+  --color-text-faint:   #7d7a73;
   --color-text-inverse: #211f1c;
 
-  --color-primary: #4f98a3;
+  /* Brand / semantic — adjusted for dark backgrounds */
+  --color-primary:       #4f98a3;
   --color-primary-hover: #227f8b;
-  --color-success: #6daa45;
-  --color-warning: #bb653b;
-  --color-error: #d163a7;
-  --color-gold: #e8af34;
+  --color-success:       #6daa45;
+  --color-warning:       #bb653b;
+  --color-error:         #d163a7;
+  --color-gold:          #e8af34;
 
+  /* Shadows — deeper on dark backgrounds */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
   --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.36);
 }
 
-/* ---------- Global resets ---------- */
+
+/* ============================================================
+   3. GLOBAL RESETS
+   Minimal resets; browser defaults are mostly kept.
+============================================================ */
 
 *,
 *::before,
@@ -88,23 +150,29 @@
 }
 
 html {
+  /* Prevent iOS font size inflation on orientation change */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-behavior: smooth;
 }
 
 body {
+  /* 100dvh accounts for mobile browser chrome (address bar, etc.) */
   min-height: 100dvh;
   font-family: var(--font-body);
   font-size: var(--text-base);
   line-height: 1.55;
   color: var(--color-text);
+
+  /* Subtle two-tone radial gradient behind all content */
   background:
-    radial-gradient(circle at top left, color-mix(in oklab, var(--color-gold) 12%, transparent), transparent 32%),
+    radial-gradient(circle at top left,  color-mix(in oklab, var(--color-gold)    12%, transparent), transparent 32%),
     radial-gradient(circle at top right, color-mix(in oklab, var(--color-primary) 14%, transparent), transparent 36%),
     var(--color-bg);
 }
 
+/* Inherit font into all interactive elements so nothing
+   accidentally renders in the browser's default font */
 button,
 input,
 textarea,
@@ -119,12 +187,15 @@ button {
   background: none;
 }
 
+/* ---- Form inputs ----
+   FIX: background was hardcoded #fff, breaking dark mode.
+   Now uses var(--color-surface) so it adapts to the theme. */
 input,
 textarea,
 select {
   width: 100%;
   border: 1px solid color-mix(in oklab, var(--color-text) 12%, transparent);
-  background: #fff;
+  background: var(--color-surface);
   border-radius: var(--radius-md);
   padding: 0.85rem 0.95rem;
 }
@@ -134,12 +205,19 @@ textarea {
   resize: vertical;
 }
 
+/* Visible focus ring for keyboard navigation */
 :focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
-/* ---------- App shell ---------- */
+
+/* ============================================================
+   4. APP SHELL & SCREEN SYSTEM
+   .app         — outer max-width container, centers on desktop
+   .screen-shell — flex column: topbar + main area
+   .screen      — hidden by default; shown via .screen--active
+============================================================ */
 
 .app {
   max-width: 1300px;
@@ -151,7 +229,7 @@ textarea {
   gap: var(--space-3);
 }
 
-/* Top + main container mimics an app frame */
+/* Wraps header + main; fills available height */
 .screen-shell {
   flex: 1;
   display: flex;
@@ -166,8 +244,8 @@ textarea {
   gap: var(--space-3);
 }
 
-/* Each screen is a vertical stack that fills the width.
-   Only one is visible at a time via .screen--active. */
+/* Each screen is a vertical stack.
+   Only .screen--active is shown; all others are display:none. */
 .screen {
   display: none;
   flex-direction: column;
@@ -178,7 +256,7 @@ textarea {
   display: flex;
 }
 
-/* For things like Start game / Next round buttons at the bottom of a screen */
+/* Bottom-of-screen CTA group (Start game, Next round, etc.) */
 .primary-actions {
   margin-top: auto;
   display: flex;
@@ -190,7 +268,13 @@ textarea {
   width: 100%;
 }
 
-/* ---------- Topbar ---------- */
+
+/* ============================================================
+   5. TOPBAR
+   Branding strip at the top of every screen.
+   backdrop-filter provides a frosted-glass effect where
+   supported; degrades gracefully on older browsers.
+============================================================ */
 
 .topbar {
   display: flex;
@@ -203,6 +287,8 @@ textarea {
   border: 1px solid var(--color-border);
   border-radius: 20px;
   box-shadow: var(--shadow-md);
+
+  /* Frosted-glass blur — no @supports needed; degrades silently */
   backdrop-filter: blur(14px);
 }
 
@@ -218,7 +304,10 @@ textarea {
   color: var(--color-primary);
 }
 
-/* Typography */
+
+/* ============================================================
+   6. TYPOGRAPHY
+============================================================ */
 
 h1,
 h2,
@@ -227,33 +316,42 @@ h3 {
   line-height: 1.08;
 }
 
-h1 {
-  font-size: var(--text-xl);
-}
-
+h1 { font-size: var(--text-xl); }
 h2 {
   font-size: var(--text-lg);
   margin-bottom: var(--space-3);
 }
+h3 { font-size: 1.1rem; }
 
-h3 {
-  font-size: 1.1rem;
-}
-
+/* Subtitle / tagline text under the h1 in the topbar */
 .sub {
   color: var(--color-text-muted);
   font-size: var(--text-sm);
   max-width: 60ch;
 }
 
-/* ---------- Buttons ---------- */
+/* Inline muted hint text used throughout panels */
+.hint {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+
+/* ============================================================
+   7. BUTTONS
+   Base .btn class + three modifier variants:
+     .btn-primary   — filled brand blue, main CTAs
+     .btn-secondary — ghost / muted, secondary actions
+     .btn-danger    — red tint, destructive actions
+     .btn-xs        — compact size for inline actions
+============================================================ */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  min-height: 44px;
+  min-height: 44px;  /* WCAG 2.5.5 minimum touch target */
   padding: 0.8rem 1rem;
   border-radius: var(--radius-full);
   border: 1px solid transparent;
@@ -261,16 +359,17 @@ h3 {
   font-size: var(--text-sm);
   transition:
     background-color 180ms ease,
-    color 180ms ease,
-    border-color 180ms ease,
-    transform 180ms ease,
-    box-shadow 180ms ease;
+    color            180ms ease,
+    border-color     180ms ease,
+    transform        180ms ease,
+    box-shadow       180ms ease;
 }
 
 .btn:hover {
   transform: translateY(-1px);
 }
 
+/* Primary: filled brand color */
 .btn-primary {
   background: var(--color-primary);
   color: var(--color-text-inverse);
@@ -281,32 +380,44 @@ h3 {
   background: var(--color-primary-hover);
 }
 
+/* Secondary: subtle offset surface with border */
 .btn-secondary {
   background: var(--color-surface-offset);
   border-color: color-mix(in oklab, var(--color-text) 12%, transparent);
 }
 
+/* Danger: red tint background, red text — used for destructive actions.
+   FIX: previously this relied on color-mix which would fall back to
+   solid red on unsupported browsers. The tint is intentional; the
+   solid red fallback is acceptable but worth noting. */
 .btn-danger {
   background: color-mix(in oklab, var(--color-error) 14%, var(--color-surface));
   color: var(--color-error);
   border-color: color-mix(in oklab, var(--color-error) 30%, transparent);
 }
 
-/* Tiny button variant for inline actions */
+/* Extra-small variant for tight inline spots (player chip actions, etc.) */
 .btn-xs {
   min-height: 32px;
   padding: 0.3rem 0.7rem;
   font-size: var(--text-xs);
 }
 
-/* ---------- Panels & simple stacks ---------- */
 
+/* ============================================================
+   8. PANELS & STACKS
+   .panel — primary card container for each section
+   .stack — simple CSS grid for vertical spacing
+   .grid-2 — two-column layout for paired fields
+============================================================ */
+
+/* Generic vertical-gap grid */
 .stack {
   display: grid;
   gap: var(--space-3);
 }
 
-/* Primary card container for each section */
+/* Primary card — warm gradient surface with border + shadow */
 .panel {
   background: linear-gradient(180deg, var(--color-surface), var(--color-surface-2));
   border: 1px solid var(--color-border);
@@ -315,39 +426,59 @@ h3 {
   box-shadow: var(--shadow-md);
 }
 
-/* Grid helpers */
-
+/* Two-column grid for paired fields (Attraction + Land, etc.) */
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
 }
 
-/* ---------- Form fields ---------- */
+
+/* ============================================================
+   9. FORM FIELDS
+   .field       — label + input vertical stack
+   .field-group — side-by-side pair of fields (wager rows)
+============================================================ */
 
 .field {
   display: grid;
   gap: 0.45rem;
 }
 
-.field label {
+.field label,
+.field__label {
   font-size: var(--text-sm);
   font-weight: 700;
   margin-top: 4px;
 }
 
-.hint {
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
+/* Paired fields rendered side by side inside a wager row */
+.field-group {
+  display: grid;
+  gap: var(--space-3);
 }
 
-/* ---------- Players & scoreboard ---------- */
+@media (min-width: 400px) {
+  .field-group {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+/* ============================================================
+   10. PLAYERS & SCOREBOARD
+   .players      — grid wrapper for player chips
+   .player-chip  — individual player card (avatar + stats + actions)
+   .scoreboard   — ranked score card grid
+   .score-card   — individual score cell
+============================================================ */
 
 .players {
   display: grid;
   gap: var(--space-3);
 }
 
+/* Shared card base for players, scores, history, bets, bonuses */
 .player-chip,
 .score-card,
 .history-item,
@@ -359,7 +490,7 @@ h3 {
   border-radius: 16px;
 }
 
-/* Player card with avatar + stats */
+/* Player chip: name/avatar on the left, action buttons on the right */
 .player-chip {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -374,6 +505,10 @@ h3 {
   gap: var(--space-2);
 }
 
+/* Gold radial avatar badge showing player initials.
+   NOTE: hardcoded gold gradient looks best on light backgrounds;
+   contrast is borderline in dark mode — monitor if dark mode is
+   ever promoted to a first-class feature. */
 .player-chip__avatar {
   width: 32px;
   height: 32px;
@@ -385,11 +520,10 @@ h3 {
   justify-content: center;
   font-size: 0.78rem;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
-.player-chip__name {
-  font-weight: 600;
-}
+.player-chip__name { font-weight: 600; }
 
 .player-chip__meta {
   font-size: 0.75rem;
@@ -403,6 +537,7 @@ h3 {
   align-items: flex-end;
 }
 
+/* Scoreboard: auto-fit columns so any number of players looks good */
 .scoreboard {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -415,10 +550,9 @@ h3 {
   gap: 0.35rem;
 }
 
-.score-name {
-  font-weight: 700;
-}
+.score-name { font-weight: 700; }
 
+/* tabular-nums prevents the scoreboard shifting as digits change */
 .score-points {
   font-size: 1.7rem;
   font-weight: 700;
@@ -426,7 +560,13 @@ h3 {
   color: var(--color-primary);
 }
 
-/* ---------- Pills / chips ---------- */
+
+/* ============================================================
+   11. PILLS / STATUS CHIPS
+   Small inline badges for round status, Hot Round, pot total.
+   FIX: .pill-open and .pot-pill-total previously used hardcoded
+   hex values that broke dark mode. Now derived via color-mix.
+============================================================ */
 
 .pill {
   display: inline-flex;
@@ -440,22 +580,32 @@ h3 {
   color: var(--color-text-muted);
 }
 
+/* "Collecting answers" / "Guessing & wagering" status pill */
 .pill-open {
-  background: #dff7ef;
+  background: color-mix(in oklab, var(--color-success) 15%, var(--color-surface));
   color: var(--color-success);
 }
 
+/* Win indicator */
 .pill-won {
   background: color-mix(in oklab, var(--color-success) 18%, var(--color-surface));
   color: var(--color-success);
 }
 
+/* Hunny Pot total displayed inline */
 .pot-pill-total {
-  background: #fff4d6;
-  color: var(--color-warning);
+  background: color-mix(in oklab, var(--color-gold) 18%, var(--color-surface));
+  color: var(--color-gold);
 }
 
-/* ---------- Bets / history ---------- */
+
+/* ============================================================
+   12. BETS & HISTORY
+   .bet-list / .history-list — grid wrappers
+   .bet-card / .history-item — individual round cards
+   .bet-head                 — flex row: title + meta pills
+   .player-bet-row           — per-player wager input row
+============================================================ */
 
 .bet-list,
 .history-list {
@@ -470,6 +620,7 @@ h3 {
   gap: var(--space-3);
 }
 
+/* Title + status pill row — wraps on narrow screens via flex-wrap */
 .bet-head {
   display: flex;
   justify-content: space-between;
@@ -483,7 +634,9 @@ h3 {
   gap: 0.45rem;
 }
 
-/* Wager rows: stack on mobile, side-by-side on larger devices */
+/* Per-player row in the wager screen:
+   player name / available points on top,
+   guess select + wager input below */
 .player-bet-row {
   padding: 0.85rem;
   display: grid;
@@ -491,9 +644,7 @@ h3 {
   align-items: center;
 }
 
-.player-bet-row strong {
-  font-size: var(--text-sm);
-}
+.player-bet-row strong { font-size: var(--text-sm); }
 
 .player-bet-row > div:first-child {
   display: flex;
@@ -501,18 +652,13 @@ h3 {
   align-items: baseline;
 }
 
-.player-bet-row .field-group {
-  display: grid;
-  gap: var(--space-3);
-}
 
-@media (min-width: 400px) {
-  .player-bet-row .field-group {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* ---------- Bonus panels ---------- */
+/* ============================================================
+   13. BONUS PANELS
+   .bonus-list / .bonus-earned-list — grid wrappers
+   .bonus-card / .earned-card       — individual bonus items
+   .bonus-head / .earned-head       — name + points row
+============================================================ */
 
 .bonus-list,
 .bonus-earned-list {
@@ -533,6 +679,7 @@ h3 {
   align-items: flex-start;
 }
 
+/* Large gold point value on the right of each bonus card */
 .bonus-points {
   font-family: var(--font-display);
   font-size: 1.5rem;
@@ -540,7 +687,11 @@ h3 {
   color: var(--color-gold);
 }
 
-/* ---------- Empty state ---------- */
+
+/* ============================================================
+   14. EMPTY STATES
+   Shown when a list has no items yet (no players, no history).
+============================================================ */
 
 .empty {
   color: var(--color-text-muted);
@@ -550,7 +701,12 @@ h3 {
   border-radius: 16px;
 }
 
-/* ---------- Small actions row ---------- */
+
+/* ============================================================
+   15. SMALL-ACTIONS ROWS
+   Inline button groups used throughout panels.
+   On mobile these stack vertically (see responsive section).
+============================================================ */
 
 .small-actions {
   display: flex;
@@ -565,7 +721,14 @@ h3 {
   padding: 0.6rem 0.9rem;
 }
 
-/* Smaller buttons in Hunny Pot row */
+/* Compact Hunny Pot control row (Add / Clear buttons) */
+.small-actions-hunny {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
 .small-actions-hunny .btn {
   min-height: 32px;
   padding: 0.3rem 0.7rem;
@@ -573,11 +736,19 @@ h3 {
   margin-top: 10px;
 }
 
-/* ---------- Totals / metrics ---------- */
+
+/* ============================================================
+   16. METRICS / TOTALS
+   Four-column stats row shown at the top of the history screen.
+   FIX: was a fixed 4-column grid that collapsed to 1 column at
+   900px, skipping mid-size layouts. Now uses auto-fit so it
+   reflows gracefully at any width.
+============================================================ */
 
 .totals {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* auto-fit: fills available space, minimum 120px per cell */
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: var(--space-3);
 }
 
@@ -585,9 +756,10 @@ h3 {
   padding: var(--space-3);
   background: var(--color-surface-offset);
   border-radius: var(--radius-md);
-  min-width: 0;
+  min-width: 0;  /* prevents overflow in narrow grids */
 }
 
+/* tabular-nums keeps metrics from shifting as values change */
 .metric-value {
   display: block;
   font-size: 1.2rem;
@@ -595,35 +767,20 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
-/* Misc text */
 
-.footer-note {
-  margin-top: var(--space-4);
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-}
-
-.reveal-section-title {
-  font-weight: 700;
-  margin-top: 0.5rem;
-  margin-bottom: 0.25rem;
-}
-
-/* ---------- Modal ---------- */
+/* ============================================================
+   17. MODALS
+   .modal-backdrop — fixed full-screen overlay with flex centering
+   .modal          — content card, max 420px wide
+   FIX: .modal previously hardcoded background: #ffffff, breaking
+   dark mode. Now uses var(--color-surface).
+============================================================ */
 
 .modal-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
+  /* display is controlled by ui.js (none / flex) */
   display: none;
   align-items: center;
   justify-content: center;
@@ -632,7 +789,8 @@ h3 {
 }
 
 .modal {
-  background: #ffffff;
+  /* FIX: was background: #ffffff — now theme-aware */
+  background: var(--color-surface);
   border-radius: 18px;
   padding: var(--space-4);
   box-shadow: var(--shadow-md);
@@ -648,21 +806,59 @@ h3 {
   font-size: var(--text-lg);
 }
 
-/* ---------- Responsive ---------- */
+
+/* ============================================================
+   18. MISC UTILITIES
+============================================================ */
+
+/* Footer note below setup panel */
+.footer-note {
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+/* Screen-reader only — visually hidden but accessible */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* Section title within reveal / adjustments modal body */
+.reveal-section-title {
+  font-weight: 700;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+
+/* ============================================================
+   19. RESPONSIVE OVERRIDES
+   Two breakpoints:
+     ≤ 900px — collapse multi-column layouts to single column
+     ≤ 600px — tighten padding, stack all action buttons
+============================================================ */
 
 @media (max-width: 900px) {
+
+  /* Collapse two-column form grids to single column */
   .grid-2,
-  .player-chip,
-  .totals {
+  .player-chip {
     grid-template-columns: 1fr;
   }
 
+  /* Stack topbar and bet-head vertically */
   .topbar,
   .bet-head {
     flex-direction: column;
     align-items: flex-start;
   }
 
+  /* Allow small-action buttons to stretch and wrap */
   .small-actions {
     width: 100%;
     flex-wrap: wrap;
@@ -672,12 +868,14 @@ h3 {
     flex: 1 1 auto;
   }
 
+  /* Tighter outer padding */
   .app {
     padding: var(--space-3);
   }
 }
 
 @media (max-width: 600px) {
+
   .app {
     padding: var(--space-2);
     min-height: 100dvh;
@@ -691,18 +889,13 @@ h3 {
     padding: var(--space-3);
   }
 
-  h1 {
-    font-size: var(--text-lg);
-  }
+  /* Scale down headings on small screens */
+  h1 { font-size: var(--text-lg); }
+  h2 { font-size: var(--text-base); }
 
-  h2 {
-    font-size: var(--text-base);
-  }
+  .sub { max-width: 100%; }
 
-  .sub {
-    max-width: 100%;
-  }
-
+  /* Stack all action buttons vertically and stretch full width */
   .small-actions {
     flex-direction: column;
     align-items: stretch;
@@ -721,10 +914,12 @@ h3 {
     padding: var(--space-3);
   }
 
+  /* Metrics grid: each cell fills full width on tiny screens */
   .metric {
     width: 100%;
   }
 
+  /* Slightly smaller score number to prevent overflow */
   .score-points {
     font-size: 1.45rem;
   }
