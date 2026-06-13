@@ -1,11 +1,6 @@
 // ============================================================
 // ui-render.js
-// Who Said Diz — pure rendering helpers and cached element lookups.
-//
-// Rules for this file:
-//   - NO game logic (no point math, no state decisions).
-//   - Reads from state and formats DOM only.
-//   - All mutations of state happen in game-logic-rounds.js.
+// Who Said Diz — pure rendering helpers and element cache.
 // ============================================================
 
 import {
@@ -25,75 +20,64 @@ import {
 // ============================================================
 
 export const els = {
-  // Setup
-  playerName:       document.getElementById('playerName'),
-  playerPoints:     document.getElementById('playerPoints'),
-  playersList:      document.getElementById('playersList'),
+  playerName:          document.getElementById('playerName'),
+  playerPoints:        document.getElementById('playerPoints'),
+  playersList:         document.getElementById('playersList'),
 
-  // Question
-  attractionName:   document.getElementById('attractionName'),
-  landName:         document.getElementById('landName'),
-  betDescription:   document.getElementById('betDescription'),
+  attractionName:      document.getElementById('attractionName'),
+  landName:            document.getElementById('landName'),
+  betDescription:      document.getElementById('betDescription'),
 
-  // Wager
-  wagerTableBody:   document.getElementById('wagerTableBody'),
-  wagerHints:       document.getElementById('wagerHints'),
+  wagerTableBody:      document.getElementById('wagerTableBody'),
+  wagerHints:          document.getElementById('wagerHints'),
 
-  // Reveal
-  revealBackdrop:   document.getElementById('revealBackdrop'),
-  revealContent:    document.getElementById('revealContent'),
-  revealCloseBtn:   document.getElementById('revealCloseBtn'),
+  revealBackdrop:      document.getElementById('revealBackdrop'),
+  revealContent:       document.getElementById('revealContent'),
+  revealCloseBtn:      document.getElementById('revealCloseBtn'),
   selectedAnswerPanel: document.getElementById('selectedAnswerPanel'),
 
-  // Scores & history
-  scoresTableBody:  document.getElementById('scoresTableBody'),
-  hunnyPotLabel:    document.getElementById('hunnyPotLabel'),
-  historyList:      document.getElementById('historyList'),
+  scoresTableBody:     document.getElementById('scoresTableBody'),
+  hunnyPotLabel:       document.getElementById('hunnyPotLabel'),
+  historyList:         document.getElementById('historyList'),
 
-  // Theme
-  themeToggleBtn:   document.getElementById('themeToggleBtn'),
+  themeToggleBtn:      document.getElementById('themeToggleBtn'),
 
-  // Answer modal
-  answerBackdrop:   document.getElementById('answerBackdrop'),
-  answerPrompt:     document.getElementById('answerPrompt'),
-  answerPlayerLabel:document.getElementById('answerPlayerLabel'),
-  answerInput:      document.getElementById('answerInput'),
-  answerSaveBtn:    document.getElementById('answerSaveBtn'),
-  answerCancelBtn:  document.getElementById('answerCancelBtn'),
-  answerGhostBtn:   document.getElementById('answerGhostBtn'),
+  answerBackdrop:      document.getElementById('answerBackdrop'),
+  answerPrompt:        document.getElementById('answerPrompt'),
+  answerPlayerLabel:   document.getElementById('answerPlayerLabel'),
+  answerInput:         document.getElementById('answerInput'),
+  answerSaveBtn:       document.getElementById('answerSaveBtn'),
+  answerCancelBtn:     document.getElementById('answerCancelBtn'),
+  answerGhostBtn:      document.getElementById('answerGhostBtn'),
 
-  // Hunny Pot modals
-  giveHunnyBackdrop: document.getElementById('giveHunnyBackdrop'),
-  giveHunnyMessage:  document.getElementById('giveHunnyMessage'),
-  giveHunnyInput:    document.getElementById('giveHunnyInput'),
-  giveHunnyConfirm:  document.getElementById('giveHunnyConfirm'),
-  giveHunnyCancel:   document.getElementById('giveHunnyCancel'),
+  giveHunnyBackdrop:   document.getElementById('giveHunnyBackdrop'),
+  giveHunnyMessage:    document.getElementById('giveHunnyMessage'),
+  giveHunnyInput:      document.getElementById('giveHunnyInput'),
+  giveHunnyConfirm:    document.getElementById('giveHunnyConfirm'),
+  giveHunnyCancel:     document.getElementById('giveHunnyCancel'),
 
-  addHunnyBackdrop:  document.getElementById('addHunnyBackdrop'),
-  addHunnyInput:     document.getElementById('addHunnyInput'),
-  addHunnyConfirm:   document.getElementById('addHunnyConfirm'),
-  addHunnyCancel:    document.getElementById('addHunnyCancel'),
+  addHunnyBackdrop:    document.getElementById('addHunnyBackdrop'),
+  addHunnyInput:       document.getElementById('addHunnyInput'),
+  addHunnyConfirm:     document.getElementById('addHunnyConfirm'),
+  addHunnyCancel:      document.getElementById('addHunnyCancel'),
 
-  clearHunnyBackdrop: document.getElementById('clearHunnyBackdrop'),
-  clearHunnyMessage:  document.getElementById('clearHunnyMessage'),
-  clearHunnyConfirm:  document.getElementById('clearHunnyConfirm'),
-  clearHunnyCancel:   document.getElementById('clearHunnyCancel'),
+  clearHunnyBackdrop:  document.getElementById('clearHunnyBackdrop'),
+  clearHunnyMessage:   document.getElementById('clearHunnyMessage'),
+  clearHunnyConfirm:   document.getElementById('clearHunnyConfirm'),
+  clearHunnyCancel:    document.getElementById('clearHunnyCancel'),
 
-  // Hot Round modal
-  hotRoundBackdrop:  document.getElementById('hotRoundBackdrop'),
-  hotRoundMessage:   document.getElementById('hotRoundMessage'),
-  hotRoundInput:     document.getElementById('hotRoundInput'),
-  hotRoundConfirm:   document.getElementById('hotRoundConfirm'),
-  hotRoundSkip:      document.getElementById('hotRoundSkip'),
-  hotRoundCancel:    document.getElementById('hotRoundCancel'),
+  hotRoundBackdrop:    document.getElementById('hotRoundBackdrop'),
+  hotRoundMessage:     document.getElementById('hotRoundMessage'),
+  hotRoundInput:       document.getElementById('hotRoundInput'),
+  hotRoundConfirm:     document.getElementById('hotRoundConfirm'),
+  hotRoundSkip:        document.getElementById('hotRoundSkip'),
+  hotRoundCancel:      document.getElementById('hotRoundCancel'),
 
-  // Adjustments modal
   adjustmentsBackdrop: document.getElementById('adjustmentsBackdrop'),
   adjustmentsBody:     document.getElementById('adjustmentsBody'),
   adjustmentsClose:    document.getElementById('adjustmentsClose'),
 
-  // Misc
-  toast:             document.getElementById('toast')
+  toast:               document.getElementById('toast')
 };
 
 
@@ -104,10 +88,7 @@ export const els = {
 let toastTimeout = null;
 
 export function alertLike(message) {
-  if (!els.toast) {
-    window.alert(message);
-    return;
-  }
+  if (!els.toast) { window.alert(message); return; }
   els.toast.textContent = message;
   els.toast.classList.add('toast--visible');
   if (toastTimeout) clearTimeout(toastTimeout);
@@ -118,7 +99,7 @@ export function alertLike(message) {
 
 
 // ============================================================
-// PRIMARY RENDER ENTRY POINT
+// PRIMARY RENDER
 // ============================================================
 
 export function render() {
@@ -149,10 +130,10 @@ function renderPlayers() {
       <div class="card card--player">
         <div class="card-main">
           <div class="card-title">${escapedName}</div>
-          <div class="card-subtitle">Starting points: ${player.startingPoints}</div>
+          <div class="card-subtitle">Starting: ${player.startingPoints} pts</div>
         </div>
         <div class="card-actions">
-          <span class="pill pill--score">${pts}</span>
+          <span class="pill pill--score">${pts} pts</span>
           <button class="btn btn--ghost" data-action="give-from-pot" data-player-id="${player.id}">Give Hunny</button>
           <button class="btn btn--ghost" data-action="remove-player" data-player-id="${player.id}">Remove</button>
         </div>
@@ -161,9 +142,7 @@ function renderPlayers() {
   });
 
   const pot = clampScore(state.pot);
-  const potLabel = pot > 0
-    ? `Hunny Pot · ${pot} pts`
-    : 'Hunny Pot';
+  const potLabel = pot > 0 ? `Hunny Pot · ${pot} pts` : 'Hunny Pot';
 
   const potControls = `
     <div class="hunny-summary">
@@ -191,11 +170,8 @@ function renderScores() {
     const place = index + 1;
     const isLeader = leader && player.id === leader.id;
     const placeLabel = place === 1 ? '1st' : place === 2 ? '2nd' : place === 3 ? '3rd' : `${place}th`;
-    const classes = ['score-row'];
-    if (isLeader) classes.push('score-row--leader');
-
     return `
-      <tr class="${classes.join(' ')}">
+      <tr class="${isLeader ? 'score-row--leader' : ''}">
         <td>${placeLabel}</td>
         <td>${escapeHtml(player.name)}</td>
         <td>${clampScore(player.currentPoints)}</td>
@@ -217,33 +193,15 @@ function renderScores() {
 function describeWagerMode() {
   const opts = state.gameOptions || {};
   const parts = [];
-
   parts.push('Authors never gain or lose points from wagers on their own question.');
-
   if (opts.tableStakes) {
-    parts.push('Table stakes is ON: everyone who wagers must wager the same amount.');
+    parts.push('Table stakes ON: everyone who wagers must wager the same amount.');
   } else {
-    parts.push('Table stakes is OFF: players may wager different amounts.');
+    parts.push('Table stakes OFF: players may wager different amounts.');
   }
-
-  if (opts.catchUp) {
-    parts.push('Catch-up is ON: if someone falls far behind, the Hunny Pot may help them.');
-  } else {
-    parts.push('Catch-up is OFF: no automatic help for last place.');
-  }
-
-  if (opts.hotRounds) {
-    parts.push('Hot Rounds may add extra pot points to winners when the pot is large.');
-  } else {
-    parts.push('Hot Rounds are disabled.');
-  }
-
-  if (opts.autoBonuses) {
-    parts.push('Automatic bonuses are enabled for special accomplishments.');
-  } else {
-    parts.push('Automatic bonuses are disabled.');
-  }
-
+  if (opts.catchUp)     parts.push('Catch-up is ON.');
+  if (opts.hotRounds)   parts.push('Hot Rounds may add bonus pot points to winners.');
+  if (opts.autoBonuses) parts.push('Automatic bonuses are enabled.');
   return parts.join(' ');
 }
 
@@ -262,7 +220,6 @@ function renderWagerScreen() {
   const rows = players.map(player => {
     const available = getAvailablePoints(player.id);
     const escaped   = escapeHtml(player.name);
-
     const options = players.map(p =>
       `<option value="${p.id}">${escapeHtml(p.name)}</option>`
     ).join('');
@@ -294,7 +251,7 @@ function renderWagerScreen() {
 
 
 // ============================================================
-// REVEAL SCREEN (simple rendering)
+// REVEAL
 // ============================================================
 
 export function renderSimpleReveal(result) {
@@ -308,7 +265,8 @@ export function renderSimpleReveal(result) {
     winners,
     anyCorrect,
     losersPot,
-    totalWinnerWager
+    totalWinnerWager,
+    chosenAnswerText
   } = result;
 
   const metaParts = [];
@@ -320,13 +278,20 @@ export function renderSimpleReveal(result) {
     ? `Correct author${authorNames.length > 1 ? 's' : ''}: ${authorNames.map(escapeHtml).join(', ')}`
     : 'Correct author unknown';
 
+  const chosenBlock = chosenAnswerText
+    ? `
+      <div class="reveal-section-title">Chosen answer</div>
+      <div class="hint">${escapeHtml(chosenAnswerText)}</div>
+    `
+    : '';
+
   let winnerBlock = '';
   if (anyCorrect && winners?.length) {
     winnerBlock = `
       <div class="reveal-section-title">Winners</div>
       <div class="hint">${winners.map(escapeHtml).join('<br>')}</div>
     `;
-  } else if (!anyCorrect) {
+  } else {
     winnerBlock = `
       <div class="reveal-section-title">Winners</div>
       <div class="hint">No one guessed correctly this time.</div>
@@ -335,11 +300,9 @@ export function renderSimpleReveal(result) {
 
   const potLine = losersPot > 0
     ? anyCorrect
-      ? `Losers contributed ${losersPot} point${losersPot === 1 ? '' : 's'} to the payout pool.`
-      : `Losers contributed ${losersPot} point${losersPot === 1 ? '' : 's'} to the Hunny Pot.`
+      ? `Losers contributed ${losersPot} pt${losersPot === 1 ? '' : 's'} to the payout pool.`
+      : `Losers contributed ${losersPot} pt${losersPot === 1 ? '' : 's'} to the Hunny Pot.`
     : 'No points were wagered this round.';
-
-  const optionsHint = describeWagerMode();
 
   els.revealContent.innerHTML = `
     <div class="reveal-card">
@@ -347,11 +310,12 @@ export function renderSimpleReveal(result) {
         <div class="reveal-question-text">${escapeHtml(description)}${meta}</div>
         <div class="reveal-author">${authorLine}</div>
       </div>
+      ${chosenBlock}
       ${winnerBlock}
       <div class="reveal-section-title" style="margin-top:.75rem;">Points</div>
       <div class="hint">${escapeHtml(potLine)}</div>
-      <div class="reveal-section-title" style="margin-top:.75rem;">How this round scored</div>
-      <div class="hint">${escapeHtml(optionsHint)}</div>
+      <div class="reveal-section-title" style="margin-top:.75rem;">Scoring rules</div>
+      <div class="hint">${escapeHtml(describeWagerMode())}</div>
     </div>
   `;
 
@@ -391,7 +355,7 @@ function renderHistory() {
 
       const scoreLines = Array.isArray(bet.scoreChanges)
         ? bet.scoreChanges.map(sc => {
-            const name = state.players.find(p => p.id === sc.playerId)?.name || 'Unknown';
+            const name  = state.players.find(p => p.id === sc.playerId)?.name || 'Unknown';
             const delta = sc.delta || 0;
             if (!delta) return null;
             const sign = delta > 0 ? '+' : '';
@@ -400,37 +364,32 @@ function renderHistory() {
         : [];
 
       const scoresHtml = scoreLines.length
-        ? `<div class="hint">${scoreLines.map(escapeHtml).join('<br>')}</div>`
+        ? `<div class="hint">${scoreLines.join(' · ')}</div>`
         : '';
 
       const hotBadge = bet.hotRound
-        ? '<span class="pill pill--hot">Hot Round</span>'
+        ? '<span class="pill pill--hot">🔥 Hot Round</span>'
         : '';
 
       return `
         <div class="card card--history">
           <div class="card-main">
             <div class="card-title">${escapeHtml(bet.description)}${meta}</div>
-            <div class="card-subtitle">
-              ${winnerLine} ${hotBadge}
-            </div>
+            <div class="card-subtitle">${winnerLine} ${hotBadge}</div>
             ${scoresHtml}
           </div>
           <div class="card-actions">
             <button class="btn btn--ghost"
                     data-action="reuse-question"
                     data-bet-id="${bet.id}">
-              Reuse this question
+              Reuse
             </button>
           </div>
         </div>
       `;
     });
 
-  if (!items.length) {
-    els.historyList.innerHTML =
-      '<p class="hint">No resolved rounds yet.</p>';
-  } else {
-    els.historyList.innerHTML = items.join('');
-  }
+  els.historyList.innerHTML = items.length
+    ? items.join('')
+    : '<p class="hint">No resolved rounds yet.</p>';
 }
