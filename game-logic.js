@@ -499,13 +499,13 @@ export function computeBonusPointsForRound(betId) {
   return bonuses;
 }
 
-// ---------- Resolve one round ----------
+// ---------- Resolve one round (phase 1: wagers only) ----------
 
-// Resolve the guessing phase for a round, applying:
+// Resolve the guessing phase for a round, applying ONLY:
 // - wagers and payouts (losers pay, winners gain that amount, authors unaffected)
-// - Hunny Pot updates (including Hot Round)
-// - automatic catch-up
-// Returns an object describing summary text to render.
+// - Hunny Pot updates from losers (if no one is correct)
+// It does NOT apply Hot Round, automatic bonuses, or catch-up.
+// Returns an object describing the wager-based result for UI.
 export function resolveGuessingBet(betId) {
   const bet = state.bets.find(b => b.id === betId);
   if (!bet) return null;
@@ -519,17 +519,14 @@ export function resolveGuessingBet(betId) {
     return null;
   }
 
-  // Snapshot scores before this round.
-  const beforeScores = Object.fromEntries(
-    state.players.map(p => [p.id, clampScore(p.currentPoints)])
-  );
-
   const guesses = bet.guesses || [];
   const wagers = guesses.map(g => ({
     playerId: g.playerId,
     guessedAuthorId: g.guessedAuthorId,
     wager: Math.max(0, Number(g.wager || 0))
   }));
+
+  const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
 
   // Winners and losers are ONLY non-authors.
   const winners = wagers.filter(
@@ -547,8 +544,6 @@ export function resolveGuessingBet(betId) {
   );
 
   const anyCorrect = winners.length > 0;
-
-  const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
 
   // Subtract losing wagers from losers only (authors never lose points).
   losers.forEach(w => {
@@ -576,8 +571,91 @@ export function resolveGuessingBet(betId) {
     state.pot += losersPot;
   }
 
-  // Hot Round extra payout from Hunny Pot (still only to non-author winners).
-  const hotRoundLines = [];
+  // Mark round as resolved AFTER wager payouts, but before bonuses.
+  bet.status = 'resolved';
+  bet.resolvedAt = new Date().toLocaleString();
+  bet.roundWinners = winners.map(w => w.playerId);
+
+  enforceMinPot();
+  saveState();
+
+  const authorNames = correctAuthors
+    .map(id => {
+      const p = state.players.find(pl => pl.id === id);
+      return p ? p.name : null;
+    })
+    .filter(Boolean);
+
+  const winnerLines = winners
+    .map(w => {
+      const p = state.players.find(pl => pl.id === w.playerId);
+      return p ? `${p.name} (wagered ${w.wager})` : null;
+    })
+    .filter(Boolean);
+
+  return {
+    betId: bet.id,
+    description: bet.description,
+    attraction: bet.attraction,
+    land: bet.land,
+    createdAt: bet.createdAt,
+    resolvedAt: bet.resolvedAt,
+    authorNames,
+    winners: winnerLines,
+    anyCorrect,
+    losersPot,
+    totalWinnerWager
+  };
+}
+
+// ---------- Round adjustments (phase 2: Hot Round, bonuses, catch-up) ----------
+
+// Apply post-wager adjustments for a resolved round:
+// - Hot Round bonus from Hunny Pot
+// - automatic bonuses (hidden author, streak, multi-land)
+// - catch-up from Hunny Pot
+// Also records per-player score deltas on the bet.
+// Returns an object for the "Adjustments" modal.
+export function applyRoundAdjustments(betId) {
+  const bet = state.bets.find(b => b.id === betId);
+  if (!bet || bet.status !== 'resolved') return null;
+
+  const adjustments = {
+    hotRoundLines: [],
+    bonusLines: [],
+    catchUpLine: null,
+    potBefore: state.pot,
+    potAfter: state.pot
+  };
+
+  const correctAuthors = (bet.correctAuthors && bet.correctAuthors.length
+    ? bet.correctAuthors
+    : (bet.correctAuthorId ? [bet.correctAuthorId] : [])) || [];
+
+  const guesses = bet.guesses || [];
+  const wagers = guesses.map(g => ({
+    playerId: g.playerId,
+    guessedAuthorId: g.guessedAuthorId,
+    wager: Math.max(0, Number(g.wager || 0))
+  }));
+
+  const playerMap = Object.fromEntries(state.players.map(p => [p.id, p]));
+
+  const winners = wagers.filter(
+    w =>
+      w.wager > 0 &&
+      !correctAuthors.includes(w.playerId) &&
+      correctAuthors.includes(w.guessedAuthorId)
+  );
+  const anyCorrect = winners.length > 0;
+  const totalWinnerWager = winners.reduce((sum, w) => sum + w.wager, 0);
+
+  // Snapshot scores before adjustments.
+  const beforeScores = Object.fromEntries(
+    state.players.map(p => [p.id, clampScore(p.currentPoints)])
+  );
+
+  // 1) Hot Round extra payout from Hunny Pot (non-author winners only).
   if (bet.hotRound && bet.hotRoundBonus > 0 && anyCorrect && totalWinnerWager > 0 && state.pot > 0) {
     const extraTotal = Math.min(clampScore(bet.hotRoundBonus), clampScore(state.pot));
     if (extraTotal > 0) {
@@ -588,20 +666,16 @@ export function resolveGuessingBet(betId) {
         const award = clampScore(share);
         if (award <= 0) return;
         player.currentPoints = clampScore(player.currentPoints + award);
-        hotRoundLines.push(`${player.name}: +${award} Hot Round bonus`);
+        adjustments.hotRoundLines.push(`${player.name}: +${award} Hot Round bonus`);
       });
       state.pot -= extraTotal;
     }
   }
 
-  // Mark round as resolved before computing bonuses.
-  bet.status = 'resolved';
-  bet.resolvedAt = new Date().toLocaleString();
-  bet.roundWinners = winners.map(w => w.playerId);
-
+  // 2) Automatic bonuses (hidden author, streak, multi-land).
   const roundBonuses = computeBonusPointsForRound(betId);
+  bet.bonusAwards = [];
 
-  // Apply automatic bonus points and record them in state.
   if (roundBonuses.length) {
     roundBonuses.forEach(bonus => {
       const player = playerMap[bonus.playerId];
@@ -611,6 +685,11 @@ export function resolveGuessingBet(betId) {
 
     const records = roundBonuses.map(b => {
       const p = state.players.find(pl => pl.id === b.playerId);
+      const line = p
+        ? `${p.name}: +${b.amount} (${b.reason})`
+        : `Unknown player: +${b.amount} (${b.reason})`;
+      adjustments.bonusLines.push(line);
+
       return {
         id: uid(),
         bonusId: 'auto',
@@ -630,73 +709,9 @@ export function resolveGuessingBet(betId) {
     }));
 
     state.awardedBonuses.unshift(...records);
-  } else {
-    bet.bonusAwards = [];
   }
 
-  // Persist the state after payouts and bonuses, before catch-up.
-  enforceMinPot();
-  saveState();
-
-  const authorNames = correctAuthors
-    .map(id => {
-      const p = state.players.find(pl => pl.id === id);
-      return p ? p.name : null;
-    })
-    .filter(Boolean);
-
-  const winnerLines = winners
-    .map(w => {
-      const p = state.players.find(pl => pl.id === w.playerId);
-      return p ? `${p.name} (wagered ${w.wager})` : null;
-    })
-    .filter(Boolean);
-
-  const parts = [];
-
-  // Author section
-  parts.push(`<div class="reveal-section-title">Author${authorNames.length > 1 ? 's' : ''}</div>`);
-  parts.push(`<div class="hint">${escapeHtml(authorNames.join(', ') || 'Unknown')}</div>`);
-
-  // Attraction / land section
-  if (bet.attraction || bet.land) {
-    parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Attraction</div>`);
-    parts.push(
-      `<div class="hint" >${escapeHtml(bet.attraction || 'Unknown')} ${
-        bet.land ? '(' + escapeHtml(bet.land) + ')' : ''
-      }</div>`
-    );
-  }
-
-  // Optional fun fact, looked up against PARKS data.
-  const fact = getFactForBet(bet);
-  if (fact) {
-    parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Fun fact</div>`);
-    parts.push(`<div class="hint">${escapeHtml(fact)}</div>`);
-  }
-
-  // Hot Round metadata for display.
-  if (bet.hotRound && bet.hotRoundBonus > 0) {
-    parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Hot Round</div>`);
-    parts.push(`<div class="hint">This was a Hunny Pot Hot Round with ${bet.hotRoundBonus} extra points available from the Hunny Pot.</div>`);
-  }
-
-  // Winner summary.
-  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Winners</div>`);
-  if (anyCorrect && winnerLines.length) {
-    parts.push(`<div class="hint">${winnerLines.map(escapeHtml).join('<br>')}</div>`);
-  } else if (losersPot > 0) {
-    parts.push(`<div class="hint">No one guessed correctly. All wagers went to the Hunny Pot.</div>`);
-  } else {
-    parts.push(`<div>No one placed a wager this round.</div>`);
-  }
-
-  // List individual Hot Round bonus payouts (if any).
-  if (hotRoundLines.length) {
-    parts.push(`<div class="hint">${hotRoundLines.map(escapeHtml).join('<br>')}</div>`);
-  }
-
-  // Catch-up mechanic using Hunny Pot to reduce largest gap.
+  // 3) Catch-up mechanic using Hunny Pot to reduce largest gap.
   const ranked = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
   if (state.pot > 0 && ranked.length >= 2) {
     const leader = ranked[0];
@@ -710,7 +725,10 @@ export function resolveGuessingBet(betId) {
         ? Math.max(0, secondLast.currentPoints - last.currentPoints)
         : gap;
 
-      const maxToLeaderMinusOne = Math.max(0, leader.currentPoints - 1 - last.currentPoints);
+      const maxToLeaderMinusOne = Math.max(
+        0,
+        leader.currentPoints - 1 - last.currentPoints
+      );
 
       const hardCap = Math.min(
         5,              // never give more than 5 at once
@@ -722,18 +740,14 @@ export function resolveGuessingBet(betId) {
       if (hardCap > 0) {
         last.currentPoints = clampScore(last.currentPoints + hardCap);
         state.pot -= hardCap;
-        enforceMinPot();
-
-        parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Catch-up</div>`);
-        parts.push(
-          `<div class="hint">Gave ${hardCap} points from the Hunny Pot to ${escapeHtml(last.name)}.</div>`
-        );
+        adjustments.catchUpLine =
+          `Gave ${hardCap} points from the Hunny Pot to ${last.name} ` +
+          `to help them catch up without passing anyone.`;
       }
     }
   }
 
-  // Save again so scoreboard reflects catch-up.
-  saveState();
+  enforceMinPot();
 
   // Store per-player score changes on this bet for history.
   const scoreChanges = state.players.map(p => {
@@ -749,46 +763,10 @@ export function resolveGuessingBet(betId) {
   });
   bet.scoreChanges = scoreChanges;
 
-  const rankedAfter = [...state.players].sort((a, b) => b.currentPoints - a.currentPoints);
+  adjustments.potAfter = state.pot;
 
-  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Scores this round</div>`);
-  parts.push(
-    `<div class="hint">` +
-      rankedAfter
-        .map(p => {
-          const before = beforeScores[p.id] ?? 0;
-          const after = clampScore(p.currentPoints);
-          const delta = after - before;
-          const deltaText =
-            delta > 0 ? `(+${delta})` :
-            delta < 0 ? `(${delta})` :
-            `(no change)`;
-          return `${escapeHtml(p.name)}: ${before} → ${after} ${deltaText}`;
-        })
-        .join('<br>') +
-    `</div>`
-  );
-
-  parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Hunny Pot</div>`);
-  parts.push(`<div class="hint">${state.pot} points</div>`);
-
-  if (roundBonuses && roundBonuses.length) {
-    const bonusLines = roundBonuses
-      .map(b => {
-        const p = state.players.find(pl => pl.id === b.playerId);
-        return p ? `${p.name}: +${b.amount} (${b.reason})` : null;
-      })
-      .filter(Boolean);
-
-    parts.push(`<div class="reveal-section-title" style="margin-top:.75rem;">Bonus points this round</div>`);
-    parts.push(`<div class="hint">${bonusLines.map(escapeHtml).join('<br>')}</div>`);
-  }
-
-  // Return the HTML summary for the modal body and summary panel.
-  return {
-    bet,
-    html: parts.join('')
-  };
+  saveState();
+  return adjustments;
 }
 
 // ---------- PARK data helpers ----------
