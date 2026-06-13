@@ -33,7 +33,8 @@ import {
   getRandomQuestionForAttractionWithFallback,
   rerollCurrentSelectedAnswer,
   validateTableStakes,
-  resetGameKeepingPlayers
+  resetGameKeepingPlayers,
+  applyRoundAdjustments
 } from './game-logic.js';
 
 // ---------- DOM element lookups ----------
@@ -96,7 +97,12 @@ const els = {
   scoreboardScoresScreen: document.getElementById('scoreboardScoresScreen'),
   qualifiedBonusPanelScores: document.getElementById('qualifiedBonusPanelScores'),
 
-  revealSummary: document.getElementById('revealSummary')
+  revealSummary: document.getElementById('revealSummary'),
+
+  // Adjustments modal (new)
+  adjustmentsBackdrop: document.getElementById('adjustmentsModalBackdrop'),
+  adjustmentsBody: document.getElementById('adjustmentsModalBody'),
+  adjustmentsClose: document.getElementById('adjustmentsModalClose')
 };
 
 // ---------- Screen elements / navigation ----------
@@ -113,8 +119,12 @@ const navEls = {
   nextRoundBtn: document.getElementById('nextRoundBtn'),
   viewHistoryBtn: document.getElementById('viewHistoryBtn'),
   backToScoresBtn: document.getElementById('backToScoresBtn'),
-  restartGameBtn: document.getElementById('restartGameBtn')
+  restartGameBtn: document.getElementById('restartGameBtn'),
+  viewAdjustmentsBtn: document.getElementById('viewAdjustmentsBtn')
 };
+
+// Keep track of last resolved bet for adjustments
+let lastResolvedBetId = null;
 
 // Switch which “screen” is visible.
 function showScreen(id) {
@@ -813,7 +823,7 @@ function renderHistory() {
         ? `<div class="hint" style="margin-top:.35rem;"><strong>Hot Round:</strong> +${bet.hotRoundBonus} Hunny Pot bonus</div>`
         : '';
 
-      // New: per-player point changes from this round, if present.
+      // Per-player point changes from this round, if present.
       let scoreChangeHtml = '';
       if (Array.isArray(bet.scoreChanges) && bet.scoreChanges.length) {
         const lines = bet.scoreChanges.map(change => {
@@ -1008,6 +1018,128 @@ function reuseQuestion(betId) {
 }
 window.reuseQuestion = reuseQuestion;
 
+// ---------- Reveal rendering (simple, wagers only) ----------
+
+function renderSimpleReveal(result) {
+  const parts = [];
+
+  // Author
+  const authorLabel = result.authorNames.length > 1 ? 'Authors' : 'Author';
+  parts.push(`<div class="reveal-section-title">${authorLabel}</div>`);
+  parts.push(
+    `<div class="hint">${escapeHtml(
+      result.authorNames.join(', ') || 'Unknown'
+    )}</div>`
+  );
+
+  // Attraction / land
+  if (result.attraction || result.land) {
+    parts.push(
+      `<div class="reveal-section-title" style="margin-top:.75rem;">Attraction / Land</div>`
+    );
+    const meta = [result.attraction, result.land].filter(Boolean).join(' • ');
+    parts.push(`<div class="hint">${escapeHtml(meta || 'Unknown')}</div>`);
+  }
+
+  // Winners based on wagers.
+  parts.push(
+    `<div class="reveal-section-title" style="margin-top:.75rem;">Winners (wagers only)</div>`
+  );
+  if (result.anyCorrect && result.winners.length) {
+    parts.push(
+      `<div class="hint">${escapeHtml(result.winners.join(', '))}</div>`
+    );
+  } else if (result.losersPot > 0) {
+    parts.push(
+      '<div class="hint">No one guessed correctly. All losing wagers went to the Hunny Pot.</div>'
+    );
+  } else {
+    parts.push('<div class="hint">No one placed a wager this round.</div>');
+  }
+
+  const html = parts.join('');
+  els.revealTitle.textContent = 'Round result';
+  els.revealSub.textContent =
+    'Who said it and how wagers paid out (before bonuses).';
+  els.revealBody.innerHTML = html;
+  if (els.revealSummary) {
+    els.revealSummary.innerHTML = html;
+  }
+}
+
+// ---------- Adjustments modal (Hot Round, bonuses, catch-up) ----------
+
+function openAdjustmentsModal() {
+  if (!lastResolvedBetId) {
+    alertLike('No round has just been resolved.');
+    return;
+  }
+
+  const summary = applyRoundAdjustments(lastResolvedBetId);
+  if (!summary) {
+    alertLike('No adjustments to apply for this round.');
+    return;
+  }
+
+  const parts = [];
+
+  if (summary.hotRoundLines && summary.hotRoundLines.length) {
+    parts.push('<div class="reveal-section-title">Hunny Pot Hot Round</div>');
+    parts.push(
+      `<div class="hint">${escapeHtml(summary.hotRoundLines.join('<br>'))}</div>`
+    );
+  }
+
+  if (summary.bonusLines && summary.bonusLines.length) {
+    parts.push(
+      '<div class="reveal-section-title" style="margin-top:.75rem;">Bonuses</div>'
+    );
+    parts.push(
+      `<div class="hint">${escapeHtml(summary.bonusLines.join('<br>'))}</div>`
+    );
+  }
+
+  if (summary.catchUpLine) {
+    parts.push(
+      '<div class="reveal-section-title" style="margin-top:.75rem;">Catch-up</div>'
+    );
+    parts.push(
+      `<div class="hint">${escapeHtml(summary.catchUpLine)}</div>`
+    );
+  }
+
+  parts.push(
+    '<div class="reveal-section-title" style="margin-top:.75rem;">Hunny Pot</div>'
+  );
+  parts.push(
+    `<div class="hint">Before: ${summary.potBefore} · After: ${summary.potAfter}</div>`
+  );
+
+  if (!parts.length) {
+    parts.push('<div class="hint">No adjustments this round.</div>');
+  }
+
+  els.adjustmentsBody.innerHTML = parts.join('');
+  els.adjustmentsBackdrop.style.display = 'flex';
+
+  // Re-render so scoreboard / history reflect new scores.
+  render();
+}
+
+if (els.adjustmentsClose) {
+  els.adjustmentsClose.addEventListener('click', () => {
+    els.adjustmentsBackdrop.style.display = 'none';
+  });
+}
+
+if (els.adjustmentsBackdrop) {
+  els.adjustmentsBackdrop.addEventListener('click', event => {
+    if (event.target === els.adjustmentsBackdrop) {
+      els.adjustmentsBackdrop.style.display = 'none';
+    }
+  });
+}
+
 // ---------- Attraction / land prefill UI ----------
 
 function setupAttractionSuggestions() {
@@ -1135,7 +1267,7 @@ document.getElementById('clearBetFormBtn')?.addEventListener('click', () => {
   renderBetPlayers();
 });
 
-// Lock guesses, resolve round, and show reveal screen.
+// Lock guesses, resolve round (wagers only), and show reveal screen.
 document.getElementById('lockGuessesBtn')?.addEventListener('click', () => {
   const bet = getCurrentGuessingBet();
   if (!bet) {
@@ -1160,13 +1292,8 @@ document.getElementById('lockGuessesBtn')?.addEventListener('click', () => {
   const result = resolveGuessingBet(bet.id);
   if (!result) return;
 
-  if (els.revealSummary) {
-    els.revealSummary.innerHTML = result.html;
-  }
-
-  els.revealTitle.textContent = 'Round result';
-  els.revealSub.textContent = 'Here is who said the answer and how the points changed.';
-  els.revealBody.innerHTML = result.html;
+  lastResolvedBetId = bet.id;
+  renderSimpleReveal(result);
   els.revealBackdrop.style.display = 'none';
 
   render();
@@ -1216,6 +1343,11 @@ navEls.restartGameBtn?.addEventListener('click', () => {
   resetGameKeepingPlayers();
   render();
   goToSetup();
+});
+
+// View adjustments button (on reveal screen)
+navEls.viewAdjustmentsBtn?.addEventListener('click', () => {
+  openAdjustmentsModal();
 });
 
 // Reveal modal close behavior
