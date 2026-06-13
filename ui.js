@@ -33,26 +33,37 @@ import {
 } from './game-state.js';
 
 import {
+  addPlayer,
+  removePlayer,
+  giveFromPot,
+  addToPot,
+  clearPot,
+  getCurrentGuessingBet,
+  finalizeCreateBet,
+  startAnswerPhase,
+  getNextAnswerPrompt,
+  savePlayerAnswer,
+  normalizeGuesses,
+  resolveGuessingBet,
+  rerollCurrentSelectedAnswer,
+  validateTableStakes,
+  resetGameKeepingPlayers,
+  applyRoundAdjustments,
+  awardBonus                 // ← ensure awardBonus is here
+} from './game-logic-rounds.js';
+
+import {
+  getRandomUnusedGlobalQuestion,
+  getRandomQuestionForAttractionWithFallback
+} from './game-logic-questions.js';
+
+import {
   els,
   render,
   renderHistory,
   renderSimpleReveal,
   alertLike
 } from './ui-render.js';
-
-import {
-  addPlayer, removePlayer, giveFromPot, addToPot, clearPot,
-  getCurrentGuessingBet, finalizeCreateBet, startAnswerPhase,
-  getNextAnswerPrompt, savePlayerAnswer, normalizeGuesses,
-  resolveGuessingBet, rerollCurrentSelectedAnswer,
-  validateTableStakes, resetGameKeepingPlayers, applyRoundAdjustments
-} from './game-logic-rounds.js';
-
-import {
-  getRandomUnusedGlobalQuestion,
-  getRandomQuestionForAttractionWithFallback,
-  awardBonus
-} from './game-logic-questions.js';
 
 // ============================================================
 // SCREEN NAVIGATION
